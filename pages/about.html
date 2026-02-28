@@ -5,194 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - EMC Artisan</title>
     <link rel="icon" type="image/gif" href= "artisanLogo.png">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background: #000; color: #fff; }
-        a { color: rgb(161,255,20); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-
-/* ===== Navbar ===== */
-.navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 20px;
-    background-color: #000000;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Logo */
-.navbar .logo img {
-    height: 50px;
-}
-
-/* Container for logo + search */
-.navbar .left-group {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-/* Search bar */
-.search-bar {
-    display: flex;
-    align-items: center;
-}
-
-/* Input Field */
-.input-wrapper input {
-    background-color: #16171d;
-    border: none;
-    padding: 1rem;
-    font-size: 1rem;
-    width: 35em;
-    border-radius: 30px;
-    color: #ffffff;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.116);
-    cursor: pointer;
-    transition: 0.5s;
-}
-
-.input-wrapper input:focus {
-    outline-color: rgb(161, 255, 20);
-}
-
-/* Select Dropdown */
-.search-select {
-    padding: 0.8rem;
-    border-radius: 30px;
-    border: none;
-    margin-left: 0.5rem;
-    cursor: pointer;
-    background-color: #2c2c2c;
-    color: #ffffff;
-    font-weight: 600;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.116);
-    appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5H5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 12px;
-}
-
-.search-select:hover {
-    background-color: #3a3a3a;
-}
-
-/* Search Button */
-.search-btn {
-    padding: 0.8rem 1rem;
-    margin-left: 0.5rem;
-    border-radius: 30px;
-    border: none;
-    background-color: rgb(161, 255, 20);
-    color: #000000;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.116);
-    transition: 0.3s;
-}
-
-.search-btn:hover {
-    background-color: #64b408;
-    color: #FFFFFF;
-}
-
-/* Nav links */
-.navbar .nav-links {
-    display: flex;
-    align-items: center;
-    list-style: none;
-    margin-left: auto;
-}
-
-.navbar .nav-links li {
-    margin-left: 15px;
-}
-
-.navbar .nav-links a,
-.navbar .nav-links button {
-    text-decoration: none;
-    color: #FFFFFF;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-
-        /* Hero Section */
-        .hero {
-            text-align: center; padding: 5rem 2rem; background: #111;
-            border-bottom: 2px solid rgb(161,255,20);
-        }
-        .hero h1 { font-size: 3rem; color: rgb(161,255,20); margin-bottom: 1rem; }
-        .hero p { font-size: 1.2rem; max-width: 700px; margin: 0 auto; line-height: 1.6; color: #ccc; }
-
-        /* Developer Cards */
-        .team-section { padding: 4rem 2rem; max-width: 1200px; margin: auto; }
-        .team-section h2 { text-align: center; font-size: 2.5rem; color: rgb(161,255,20); margin-bottom: 3rem; }
-        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
-        .team-card {
-            background: #1a1a1a; border-radius: 10px; overflow: hidden; text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s; padding-bottom: 1rem;
-        }
-        .team-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,0,0.5); }
-        .team-card img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    object-fit: contain;
-    background: #000;
-    border-bottom: 2px solid rgb(161,255,20);
-}
-
-        .team-card h3 { margin: 1rem 0 0.5rem; color: rgb(161,255,20); }
-        .team-card p { color: #ccc; font-size: 0.95rem; }
-
-        /* Project Description */
-        .project-desc { padding: 4rem 2rem; background: #111; border-top: 2px solid rgb(161,255,20); border-bottom: 2px solid rgb(161,255,20); }
-        .project-desc h2 { text-align: center; font-size: 2.5rem; color: rgb(161,255,20); margin-bottom: 2rem; }
-        .project-desc p { max-width: 800px; margin: 0 auto; color: #ccc; line-height: 1.6; font-size: 1.1rem; }
-
-        /* Footer */
-        footer { padding: 2rem; text-align: center; color: #ccc; font-size: 0.9rem; border-top: 2px solid rgb(161,255,20); }
-        footer a { margin: 0 0.5rem; }
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/about.css">
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <!-- Logo -->
+        <div class="logo"><a href="home.html"><img src="/assets/images/artisanLogo.png" alt="EMC Artisan Logo"></a></div>
 
-    <!-- Navbar -->
-<nav class="navbar">
-    <div class="left-group">
-        <div class="logo">
-            <a href="home.html">
-                <img src="artisanLogo.png" alt="EMC Artisan Logo">
-            </a>
-        </div>
+        <!-- Search Bar -->
+        <input type="text" placeholder="Search" class="search-bar">
 
-        <div class="search-bar">
-            <div class="input-wrapper">
-                <input type="text" placeholder="Search artworks...">
-            </div>
+        <!-- Filter Dropdown-->
+        <!-- TODO: Make proper categories for sorting -->
+        <select class="search-select">
+            <option value="all">All</option>
+            <option value="student">Artwork Name</option>
+            <option value="artwork">Student Name</option>
+            <option value="genre">Genre</option>
+        </select>
 
-            <select class="search-select">
-                <option>All</option>
-                <option>Painting</option>
-                <option>Photography</option>
-                <option>Digital Art</option>
-            </select>
-
-            <button class="search-btn">Search</button>
-        </div>
-    </div>
+        <!-- Search Button -->
+        <button type="button" class="search-btn">Search</button>
 
     <ul class="nav-links">
-        <li><a href="home.html">Home</a></li>
-        <li><a href="gallery.html">Gallery</a></li>
-        <li><a href="contact.html">Contact</a></li>
-    </ul>
-</nav>
+        <li><a href="/pages/about.html">About</a></li>
+        <li><a href="/pages/contact.html">Contact Us</a></li>
+        <li class="dropdown-container">
+        <div class="dropdown-trigger">
+        <a href="/pages/login.html"><img src="/assets/images/profile_icon.png" alt="Profile" class="nav-profile"></a>
+    </div>
 
 
     <!-- Hero Section -->
