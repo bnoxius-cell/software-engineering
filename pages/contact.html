@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - EMC Artisan</title>
+     <link rel="icon" type="image/gif" href= "artisanLogo.png">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+        }
+
+        a {
+            color: rgb(161,255,20);
+            text-decoration: none;
+        }
+
+        /* ===== Navbar (same structure) ===== */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar .left-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .navbar .logo img {
+            height: 50px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 15px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            font-size: 16px;
+        }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #111;
+            border-bottom: 2px solid rgb(161,255,20);
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            color: rgb(161,255,20);
+            margin-bottom: 1rem;
+        }
+
+        .page-header p {
+            color: #ccc;
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        /* ===== Contact Cards ===== */
+        .contact-section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .contact-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(161,255,20,0.3);
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(161,255,20,0.4);
+        }
+
+        .contact-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+
+        .contact-card h3 {
+            color: rgb(161,255,20);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .contact-card p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .contact-card a {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            padding: 2rem;
+            text-align: center;
+            color: #ccc;
+            font-size: 0.9rem;
+            border-top: 2px solid rgb(161,255,20);
+        }
+
+        footer a {
+            margin: 0 0.5rem;
+        }
+
+        /* ===== Mobile ===== */
+        @media (max-width: 600px) {
+            .page-header h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="left-group">
+            <div class="logo">
+                <a href="home.html">
+                    <img src="artisanLogo.png" alt="EMC Artisan Logo">
+                </a>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <h1>Contact Us</h1>
+        <p>Get in touch with the departments and institutions behind the EMC Artisan project.</p>
+    </section>
+
+    <!-- Contact Cards -->
+    <section class="contact-section">
+        <div class="contact-grid">
+
+            <!-- OLFU -->
+            <div class="contact-card">
+                <img src="olfu_logo.png" alt="OLFU Logo">
+                <h3>Our Lady of Fatima University</h3>
+                <p>Official institution supporting academic excellence and innovation.</p>
+                <a href="https://fatima.edu.ph" target="_blank">Visit Website</a>
+            </div>
+
+            <!-- Computer Science -->
+            <div class="contact-card">
+                <img src="ccs_logo.jpg" alt="Computer Science Logo">
+                <h3>Department of Computer Science</h3>
+                <p>Focused on software engineering, computing research, and system development.</p>
+                <a href="#">Email Department</a>
+            </div>
+
+            <!-- EMC -->
+            <div class="contact-card">
+                <img src="emc_logo.jpg" alt="EMC Logo">
+                <h3>Entertainment & Multimedia Computing</h3>
+                <p>Creative technology program combining design, media, and computing.</p>
+                <a href="https://fatima.edu.ph/bachelor-of-science-in-entertainment-and-multimedia-computing-major-in-digital-animation-technology/" target="_blank">
+                    Program Details
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2025 EMC Artisan | BSCS – SOFE311 | Our Lady of Fatima University
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Users - Admin Dashboard</title>
+    <link rel="icon" type="image/gif" href="artisanLogo.png">
+    <style>
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== BACKGROUND EFFECT ===== */
+        .admin-bg {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            z-index: -1;
+            background: #000;
+            background-image:
+                radial-gradient(4px 100px at 0px 235px, rgb(161,255,20), #0000),
+                radial-gradient(4px 100px at 300px 235px, rgb(161,255,20), #0000),
+                radial-gradient(1.5px 1.5px at 150px 117.5px, rgb(161,255,20) 100%, #0000 150%);
+            background-size: 300px 235px;
+            animation: neonRain 120s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes neonRain {
+            from { background-position: 0 0; }
+            to { background-position: 0 6000px; }
+        }
+
+
+        /* ===== ADMIN PROFILE LINK ===== */
+.admin-profile-link {
+    display: inline-block;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.admin-profile-link:hover {
+    transform: scale(1.05);
+}
+
+.admin-profile-link:hover .admin-profile {
+    border-color: rgba(161, 255, 20, 0.8);
+    box-shadow: 0 0 10px rgba(161, 255, 20, 0.3);
+}
+
+        /* ===== DASHBOARD LAYOUT ===== */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 280px;
+            background-color: rgba(17, 24, 39, 1);
+            border-right: 1px solid rgba(55, 65, 81, 1);
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 1.5rem;
+            line-height: 2rem;
+            font-weight: 700;
+            color: rgb(161, 255, 20);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(55, 65, 81, 1);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .menu-item {
+            width: 100%;
+        }
+
+        .menu-btn, .menu-link {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background-color: transparent;
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.375rem;
+            color:white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-btn:hover, .menu-link:hover {
+            background-color: rgba(161, 255, 20, 0.1);
+            border-color: rgb(161, 255, 20);
+            color: #ffffff;
+        }
+
+        .menu-item.active .menu-btn, .menu-item.active .menu-link {
+            background-color: rgba(161, 255, 20, 0.15);
+            border-color: rgb(161, 255, 20);
+            color: rgb(161, 255, 20);
+            font-weight: 600;
+        }
+
+        .menu-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .logout-item {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(55, 65, 81, 1);
+        }
+
+        .logout-link {
+            color:white;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-link:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            padding: 1.75rem;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* ===== TOP BAR ===== */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(55, 65, 81, 1);
+        }
+
+        .topbar h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: rgb(161, 255, 20);
+        }
+
+        .admin-profile {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgb(161, 255, 20);
+            padding: 2px;
+        }
+
+        .admin-profile img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* ===== ACTION BUTTONS SECTION ===== */
+        .action-section {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: rgb(161, 255, 20);
+            color: #000000;
+        }
+
+        .btn-primary:hover {
+            background-color: rgba(161, 255, 20, 0.9);
+            box-shadow: 0 0 15px rgba(161, 255, 20, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: rgba(55, 65, 81, 0.5);
+            color: #ffffff;
+            border: 1px solid rgba(161, 255, 20, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(161, 255, 20, 0.1);
+            border-color: rgb(161, 255, 20);
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            background-color: rgba(17, 24, 39, 1);
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.375rem;
+            padding: 0.75rem 1rem;
+            color: #ffffff;
+            font-size: 0.875rem;
+            min-width: 250px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgb(161, 255, 20);
+        }
+
+        /* ===== USERS TABLE ===== */
+        .users-section {
+            background-color: rgba(17, 24, 39, 1);
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: rgb(161, 255, 20);
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: rgba(55, 65, 81, 0.3);
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            color: rgba(156, 163, 175, 1);
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-bottom: 2px solid rgba(55, 65, 81, 1);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            color: rgba(243, 244, 246, 1);
+            border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+            font-size: 0.875rem;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(161, 255, 20, 0.05);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: rgba(161, 255, 20, 0.15);
+            color: rgb(161, 255, 20);
+        }
+
+        .status-suspended {
+            background-color: rgba(255, 87, 87, 0.15);
+            color: #ff5757;
+        }
+
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+        }
+
+        /* Role Badges */
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .role-admin {
+            background-color: rgba(161, 255, 20, 0.15);
+            color: rgb(161, 255, 20);
+            border: 1px solid rgba(161, 255, 20, 0.3);
+        }
+
+        .role-student {
+            background-color: rgba(33, 150, 243, 0.15);
+            color: #2196f3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .role-faculty {
+            background-color: rgba(156, 39, 176, 0.15);
+            color: #9c27b0;
+            border: 1px solid rgba(156, 39, 176, 0.3);
+        }
+
+        /* Action Buttons in Table */
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.25rem;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            border-color: rgb(161, 255, 20);
+            color: rgb(161, 255, 20);
+        }
+
+        /* ===== FORM STYLES ===== */
+        .form-container {
+            background-color: rgba(17, 24, 39, 1);
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-header {
+            color: rgb(161, 255, 20);
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: rgba(156, 163, 175, 1);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: rgba(55, 65, 81, 0.3);
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.375rem;
+            color: #ffffff;
+            font-size: 0.875rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgb(161, 255, 20);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* ===== ADDITIONAL ACTIONS ===== */
+        .additional-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-card {
+            background-color: rgba(55, 65, 81, 0.2);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            border-color: rgb(161, 255, 20);
+            background-color: rgba(161, 255, 20, 0.05);
+        }
+
+        .action-card h3 {
+            color: rgb(161, 255, 20);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-card p {
+            color: rgba(156, 163, 175, 1);
+            font-size: 0.75rem;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1024px) {
+            .dashboard {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(55, 65, 81, 1);
+            }
+            
+            .sidebar-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .menu-btn, .menu-link {
+                min-width: 140px;
+            }
+            
+            .action-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .search-input {
+                min-width: unset;
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .action-btns {
+                flex-direction: column;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effect -->
+    <div class="admin-bg"></div>
+
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="brand">Admin Panel</h2>
+            <ul class="sidebar-menu">
+                <li class="menu-item">
+                    <a href="admin_dashboard.html" class="menu-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M14,10V22H4a2,2,0,0,1-2-2V10Z"></path>
+                            <path d="M22,10V20a2,2,0,0,1-2,2H16V10Z"></path>
+                            <path d="M22,4V8H2V4A2,2,0,0,1,4,2H20A2,2,0,0,1,22,4Z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="menu-item active">
+                    <a href="useradmin.html" class="menu-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M12,14c-5,0-9,4-9,9h18C21,18,17,14,12,14z"></path>
+                        </svg>
+                        Users
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="admin_portfolios.html" class="menu-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                            <line x1="9" y1="12" x2="15" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                        Portfolios
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="admin_requests.html" class="menu-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M22,12A10,10,0,1,1,12,2,10,10,0,0,1,22,12Z"></path>
+                            <circle cx="12" cy="12" r="4"></circle>
+                        </svg>
+                        Reports
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="admin_settings.html" class="menu-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4,15a1.65,1.65,0,0,0,.33,1.82l.06.06a2,2,0,0,1-2.83,2.83l-.06-.06a1.65,1.65,0,0,0-1.82-.33,1.65,1.65,0,0,0-1,1.51V21a2,2,0,0,1-4,0V19.5a1.65,1.65,0,0,0-1-1.51,1.65,1.65,0,0,0-1.82.33l-.06.06a2,2,0,0,1-2.83-2.83l.06-.06A1.65,1.65,0,0,0,4.6,15a1.65,1.65,0,0,0-1.51-1H3a2,2,0,0,1,0-4H4.5A1.65,1.65,0,0,0,6,9.4a1.65,1.65,0,0,0-.33-1.82l-.06-.06a2,2,0,0,1,2.83-2.83l.06.06a1.65,1.65,0,0,0,1.82.33H9.4a1.65,1.65,0,0,0,1-1.51V3a2,2,0,0,1,4,0V4.5a1.65,1.65,0,0,0,1,1.51,1.65,1.65,0,0,0,1.82-.33l.06-.06a2,2,0,0,1,2.83,2.83l-.06.06A1.65,1.65,0,0,0,19.4,9a1.65,1.65,0,0,0,1.51,1H21a2,2,0,0,1,0,4H19.5A1.65,1.65,0,0,0,18,14.6Z"></path>
+                        </svg>
+                        Settings
+                    </a>
+                </li>
+                <li class="menu-item logout-item">
+                    <a href="login.html" class="logout-link">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M10,22H5a2,2,0,0,1-2-2V4A2,2,0,0,1,5,2h5"></path>
+                            <polyline points="17 16 21 12 17 8"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <h1>User Management</h1>
+<a href="home.html" class="admin-profile-link">
+    <div class="admin-profile">
+        <img src="profile_icon.png" alt="Admin Profile">
+    </div>
+</a>
+            </header>
+
+            <!-- Action Buttons -->
+            <section class="action-section">
+                <div class="action-buttons">
+                    <a href="#create-user-form" class="btn btn-primary">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Create New User
+                    </a>
+                    <a href="#create-admin-form" class="btn btn-secondary">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        Create Admin User
+                    </a>
+                    <button class="btn btn-secondary" disabled title="Bulk Actions (Disabled for UI)">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                        Bulk Actions
+                    </button>
+                </div>
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search users..." disabled>
+                    <button class="btn btn-secondary" disabled title="Search (Disabled for UI)">
+                        <svg class="menu-icon" viewBox="0 0 24 24">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        Search
+                    </button>
+                </div>
+            </section>
+
+            <!-- Create User Form -->
+            <div id="create-user-form" class="form-container">
+                <h2 class="form-header">Create New User</h2>
+                <form action="#" method="post">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" placeholder="Enter user's full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter user's email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">User Role</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select a role</option>
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Initial Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter initial password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="reset" class="btn btn-secondary">Clear Form</button>
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Current Users Table -->
+            <section class="users-section">
+                <div class="section-header">
+                    <h2>Current Users (45 Total)</h2>
+                    <div>
+                        <select class="search-input" style="width: auto;" disabled title="Filter (Disabled for UI)">
+                            <option value="all">All Users</option>
+                            <option value="admin">Admin Users</option>
+                            <option value="student">Student Users</option>
+                            <option value="faculty">Faculty Users</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Joined Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#001</td>
+                            <td>Admin User</td>
+                            <td>admin@emcartisan.com</td>
+                            <td><span class="role-badge role-admin">Administrator</span></td>
+                            <td><span class="status-badge status-active">Active</span></td>
+                            <td>2024-12-01</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="#" class="action-btn">Edit</a>
+                                    <a href="#" class="action-btn">View</a>
+                                    <a href="#" class="action-btn">Suspend</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#002</td>
+                            <td>Maria Santos</td>
+                            <td>maria.s@student.com</td>
+                            <td><span class="role-badge role-student">Student</span></td>
+                            <td><span class="status-badge status-active">Active</span></td>
+                            <td>2025-01-12</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="#" class="action-btn">Edit</a>
+                                    <a href="#" class="action-btn">View</a>
+                                    <a href="#" class="action-btn">Suspend</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#003</td>
+                            <td>Juan Dela Cruz</td>
+                            <td>juan.d@student.com</td>
+                            <td><span class="role-badge role-student">Student</span></td>
+                            <td><span class="status-badge status-active">Active</span></td>
+                            <td>2025-01-10</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="#" class="action-btn">Edit</a>
+                                    <a href="#" class="action-btn">View</a>
+                                    <a href="#" class="action-btn">Suspend</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#004</td>
+                            <td>Dr. Carlos Reyes</td>
+                            <td>c.reyes@faculty.com</td>
+                            <td><span class="role-badge role-faculty">Faculty</span></td>
+                            <td><span class="status-badge status-pending">Pending</span></td>
+                            <td>2024-11-25</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="#" class="action-btn">Edit</a>
+                                    <a href="#" class="action-btn">View</a>
+                                    <a href="#" class="action-btn">Approve</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#005</td>
+                            <td>Michael Tan</td>
+                            <td>m.tan@student.com</td>
+                            <td><span class="role-badge role-student">Student</span></td>
+                            <td><span class="status-badge status-suspended">Suspended</span></td>
+                            <td>2024-10-15</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="#" class="action-btn">Edit</a>
+                                    <a href="#" class="action-btn">View</a>
+                                    <a href="#" class="action-btn">Activate</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Additional User Actions Section -->
+            <section class="users-section">
+                <div class="section-header">
+                    <h2>Additional User Actions</h2>
+                </div>
+                
+                <div class="additional-actions">
+                    <div class="action-card">
+                        <h3>Export User List</h3>
+                        <p>Download all user data in CSV or Excel format for reporting and analysis.</p>
+                        <button class="action-btn" style="margin-top: 0.5rem;" disabled>Export Data</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h3>Import Users</h3>
+                        <p>Upload a CSV file to create multiple users at once. Template available for download.</p>
+                        <button class="action-btn" style="margin-top: 0.5rem;" disabled>Import File</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h3>View Activity Logs</h3>
+                        <p>Monitor user login activity, changes made, and system interactions.</p>
+                        <button class="action-btn" style="margin-top: 0.5rem;" disabled>View Logs</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h3>Bulk Password Reset</h3>
+                        <p>Reset passwords for selected users. They'll receive email instructions.</p>
+                        <button class="action-btn" style="margin-top: 0.5rem;" disabled>Reset Passwords</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Create Admin User Form (Collapsed by default) -->
+            <details class="form-container" id="create-admin-form">
+                <summary class="form-header" style="cursor: pointer; list-style: none;">
+                    <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <svg class="menu-icon" viewBox="0 0 24 24" style="width: 1rem; height: 1rem;">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Create Administrator User (Advanced)
+                    </span>
+                </summary>
+                <div style="margin-top: 1.5rem;">
+                    <form action="#" method="post">
+                        <div class="form-group">
+                            <label for="adminFullName">Administrator Full Name</label>
+                            <input type="text" id="adminFullName" name="adminFullName" placeholder="Enter admin's full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminEmail">Admin Email Address</label>
+                            <input type="email" id="adminEmail" name="adminEmail" placeholder="Enter admin email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminPermissions">Admin Permissions Level</label>
+                            <select id="adminPermissions" name="adminPermissions" required>
+                                <option value="">Select permission level</option>
+                                <option value="full">Full Administrator</option>
+                                <option value="user_management">User Management Only</option>
+                                <option value="content_management">Content Management Only</option>
+                                <option value="view_only">View Only Access</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminPassword">Administrator Password</label>
+                            <input type="password" id="adminPassword" name="adminPassword" placeholder="Enter strong admin password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="reset" class="btn btn-secondary">Clear Form</button>
+                            <button type="submit" class="btn btn-primary">Create Administrator</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+        </main>
+    </div>
+</body>
+</html>
