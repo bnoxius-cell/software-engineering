@@ -270,38 +270,3 @@ a.button-link {
     border: 1px solid #777;
 }
 
-
-
-
-/* ===== Footer ===== */
-.footer {
-    background: #000;
-    border-top: 2px solid rgb(161,255,20);
-    padding: 40px 20px;
-    text-align: center;
-}
-
-.footer-content h3 {
-    color: rgb(161,255,20);
-    font-size: 1.6rem;
-}
-
-.footer-content p {
-    color: #ccc;
-    max-width: 600px;
-    margin: 0 auto 20px;
-}
-
-.footer-links a {
-    margin: 0 10px;
-    color: #fff;
-}
-
-.footer-links a:hover {
-    color: rgb(161,255,20);
-}
-
-.footer span {
-    font-size: 0.85rem;
-    color: #777;
-}
