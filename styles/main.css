@@ -173,6 +173,11 @@ body {
     transition: background 0.2s;
 }
 
+.dropdown-content img {
+    height: 24px;
+    width: auto;
+}
+
 .dropdown-content a:hover {
     background-color: #21262c;
 }
