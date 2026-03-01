@@ -179,7 +179,8 @@ body {
 .footer {
     background: #000;
     border-top: 2px solid rgb(161,255,20);
-    padding: 40px 20px;
+    padding: 5px;
+    padding-bottom: 30px;
     text-align: center;
 }
 
