@@ -125,35 +125,32 @@ body {
     transition: transform 0.3s ease;
 }
 
-/* Dropdown container - CRITICAL FIX */
 .dropdown-container {
     position: relative;
     display: inline-block;
 }
 
-/* Dropdown trigger - ADD display property */
 .dropdown-trigger {
     cursor: pointer;
-    display: inline-block; /* ADD THIS LINE */
+    display: inline-block;
     position: relative;
 }
 
-/* Dropdown menu */
 .dropdown-menu {
     position: absolute;
-    top: 100%;
+    top: calc(100% - 2px); /* 👈 tiny overlap = no gap */
     right: 0;
-    margin-top: 15px; /* Increased for spacing */
+
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-    z-index: 9999; /* Higher z-index */
+    transform: translateY(5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+
+    z-index: 9999;
     min-width: 220px;
-    pointer-events: none; /* Prevents interfering when hidden */
+    pointer-events: none;
 }
 
-/* HOVER VERSION - Add this selector */
 .dropdown-container:hover .dropdown-menu,
 .dropdown-trigger:focus + .dropdown-menu,
 .dropdown-menu:hover {
