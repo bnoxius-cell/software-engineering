@@ -22,7 +22,7 @@ fetch("../pages/components/header.html")
         menu.style.opacity = "0";
         menu.style.visibility = "hidden";
         menu.style.pointerEvents = "none";
-      }, 200); // Delay to allow hover before going away
+      }, 200); // Delay to allow hover before going away (THIS IS IN Milliseconds :DD)
     }
 
     trigger.addEventListener("mouseenter", showMenu);
@@ -32,3 +32,9 @@ fetch("../pages/components/header.html")
     menu.addEventListener("mouseleave", hideMenu);
   })
   .catch(err => console.error("Header load failed", err));
+
+fetch("../pages/components/footer.html") 
+  .then(response => response.text()) 
+  .then(html => { document.getElementById("footer").innerHTML = html; 
+  }) 
+  .catch(err => console.error("Footer load failed", err));
