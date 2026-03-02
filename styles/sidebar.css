@@ -1,14 +1,9 @@
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #000000;
-            color: #ffffff;
-            min-height: 100vh;
-            flex-direction: column;
-        }
-
 .sidebar {
+    position: fixed;       /* Fixes it in place */
+    top: 0;                /* Start at the top of the page */
+    left: 0;  
             width: 280px;
-            min-height: 100vh;  
+            height: 100vh;  
             background-color: rgba(17, 24, 39, 1);
             border-right: 1px solid rgba(55, 65, 81, 1);
             padding: 1.75rem;
@@ -56,13 +51,13 @@
             text-decoration: none;
         }
 
-        .menu-link:hover {
+        .menu-btn:hover, .menu-link:hover {
             background-color: rgba(161, 255, 20, 0.1);
             border-color: rgb(161, 255, 20);
             color: #ffffff;
         }
 
-        .menu-item:active .menu-link {
+        .menu-item.active .menu-btn, .menu-item.active .menu-link {
             background-color: rgba(161, 255, 20, 0.15);
             border-color: rgb(161, 255, 20);
             color: rgb(161, 255, 20);
