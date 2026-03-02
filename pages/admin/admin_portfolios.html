@@ -379,37 +379,6 @@
             </details>
         </main>
     </div>
-
-    <script>
-       
-        function toggleBulkActions() {
-            const panel = document.getElementById('bulk-actions-panel');
-            panel.open = !panel.open;
-        }
-
-        function refreshWorks() {
-           
-            alert('Refreshing works data...');
-            location.reload();
-        }
-
-        function selectAllWorks() {
-            
-            document.getElementById('selected-count').textContent = 'All';
-        }
-
-        function deselectAllWorks() {
-            
-            document.getElementById('selected-count').textContent = '0';
-        }
-
-       
-        document.getElementById('workFiles').addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                alert(`Selected ${files.length} file(s) for upload`);
-            }
-        });
-    </script>
+    
 </body>
 </html>
