@@ -13,11 +13,11 @@
     box-shadow: 0 0 10px rgba(161, 255, 20, 0.3);
 }
 
-        /* ===== BACKGROUND EFFECT ===== */
-        .admin-bg {
-            position: fixed;
-            top: 70px;
-            left: 0;
+/* ===== BACKGROUND EFFECT ===== */
+.admin-bg {
+    position: fixed;
+    top: 70px;
+    left: 0;
             width: 100%;
             height: calc(100vh - 70px);
             z-index: -1;
