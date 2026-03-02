@@ -1,4 +1,18 @@
-fetch("../pages/components/header.html")
+function highlightActiveLink() {
+  const currentPage = window.location.pathname.split("/").pop();
+
+  const links = document.querySelectorAll(".sidebar .menu-link");
+
+  links.forEach(link => {
+    const linkPage = link.getAttribute("href");
+
+    if (linkPage === currentPage) {
+      link.closest(".menu-item").classList.add("active");
+    }
+  });
+}
+
+fetch("/pages/components/header.html")
   .then(response => response.text())
   .then(html => {
     document.getElementById("header").innerHTML = html;
@@ -33,14 +47,15 @@ fetch("../pages/components/header.html")
   })
   .catch(err => console.error("Header load failed", err));
 
-fetch("../pages/components/footer.html") 
+fetch("/pages/components/footer.html") 
   .then(response => response.text()) 
   .then(html => { document.getElementById("footer").innerHTML = html; 
   }) 
   .catch(err => console.error("Footer load failed", err));
   
-fetch("../components/sidebar.html") 
+fetch("/pages/components/sidebar.html") 
   .then(response => response.text()) 
   .then(html => { document.getElementById("sidebar").innerHTML = html; 
+  highlightActiveLink();
   }) 
   .catch(err => console.error("Sidebar load failed", err));
