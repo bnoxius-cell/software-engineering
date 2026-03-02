@@ -1,60 +1,51 @@
-        
 
-        /* Status Badges */
-        .status-badge {
+        /* ===== USERS TABLE ===== */
+        .users-section {
+            background-color: rgba(17, 24, 39, 1);
+            border: 1px solid rgba(55, 65, 81, 1);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: rgb(161, 255, 20);
+            font-weight: 600;
+        }
+
+        /* Role Badges */
+        .role-badge {
             padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
+            border-radius: 0.375rem;
             font-size: 0.75rem;
             font-weight: 600;
             display: inline-block;
         }
 
-        .status-published {
+        .role-admin {
             background-color: rgba(161, 255, 20, 0.15);
             color: rgb(161, 255, 20);
+            border: 1px solid rgba(161, 255, 20, 0.3);
         }
 
-        .status-draft {
-            background-color: rgba(255, 193, 7, 0.15);
-            color: #ffc107;
-        }
-
-        .status-archived {
-            background-color: rgba(108, 117, 125, 0.15);
-            color: #6c757d;
-        }
-
-        /* Category Badges */
-        .category-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.751m;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .category-design {
+        .role-student {
             background-color: rgba(33, 150, 243, 0.15);
             color: #2196f3;
             border: 1px solid rgba(33, 150, 243, 0.3);
         }
 
-        .category-development {
+        .role-faculty {
             background-color: rgba(156, 39, 176, 0.15);
             color: #9c27b0;
             border: 1px solid rgba(156, 39, 176, 0.3);
-        }
-
-        .category-art {
-            background-color: rgba(255, 87, 87, 0.15);
-            color: #ff5757;
-            border: 1px solid rgba(255, 87, 87, 0.3);
-        }
-
-        .category-writing {
-            background-color: rgba(255, 193, 7, 0.15);
-            color: #ffc107;
-            border: 1px solid rgba(255, 193, 7, 0.3);
         }
 
         /* Action Buttons in Table */
@@ -108,8 +99,7 @@
         }
 
         .form-group input,
-        .form-group select,
-        .form-group textarea {
+        .form-group select {
             width: 100%;
             padding: 0.75rem;
             background-color: rgba(55, 65, 81, 0.3);
@@ -119,50 +109,10 @@
             font-size: 0.875rem;
         }
 
-        .form-group textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
         .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
+        .form-group select:focus {
             outline: none;
             border-color: rgb(161, 255, 20);
-        }
-
-        .file-upload {
-            border: 2px dashed rgba(55, 65, 81, 1);
-            padding: 2rem;
-            text-align: center;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-upload:hover {
-            border-color: rgb(161, 255, 20);
-            background-color: rgba(161, 255, 20, 0.05);
-        }
-
-        .file-upload input[type="file"] {
-            display: none;
-        }
-
-        .file-upload-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        .file-upload-icon {
-            width: 3rem;
-            height: 3rem;
-            stroke: rgba(161, 255, 20, 0.7);
-            fill: none;
-            stroke-width: 1.5;
         }
 
         .form-actions {
@@ -170,44 +120,6 @@
             justify-content: flex-end;
             gap: 1rem;
             margin-top: 1.5rem;
-        }
-
-
-        
-
-       /* ===== WORKS TABLE ===== */
-        .works-section {
-            background-color: rgba(17, 24, 39, 1);
-            border: 1px solid rgba(55, 65, 81, 1);
-            border-radius: 0.75rem;
-            padding: 1.75rem;
-            margin-bottom: 2rem;
-        }
-
-        /* ===== WORK PREVIEW ===== */
-        .work-preview {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .work-thumbnail {
-            width: 60px;
-            height: 60px;
-            border-radius: 0.375rem;
-            object-fit: cover;
-            border: 1px solid rgba(55, 65, 81, 1);
-        }
-
-        .work-info h4 {
-            font-size: 0.875rem;
-            margin-bottom: 0.25rem;
-            color: #ffffff;
-        }
-
-        .work-info p {
-            font-size: 0.75rem;
-            color: rgba(156, 163, 175, 1);
         }
 
         /* ===== ADDITIONAL ACTIONS ===== */
@@ -244,25 +156,6 @@
 
         /* ===== RESPONSIVE DESIGN ===== */
         @media (max-width: 1024px) {
-            .dashboard {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid rgba(55, 65, 81, 1);
-            }
-            
-            .sidebar-menu {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-            
-            .menu-btn, .menu-link {
-                min-width: 140px;
-            }
-            
             .action-section {
                 flex-direction: column;
                 align-items: stretch;
@@ -281,16 +174,12 @@
                 flex: 1;
             }
         }
+
         @media (max-width: 768px) {
             .section-header {
                 flex-direction: column;
                 gap: 1rem;
                 align-items: stretch;
-            }
-            
-            table {
-                display: block;
-                overflow-x: auto;
             }
             
             .action-btns {
@@ -299,14 +188,5 @@
             
             .form-actions {
                 flex-direction: column;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .work-preview {
-                flex-direction: column;
-                align-items: flex-start;
             }
         }
