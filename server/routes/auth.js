@@ -1,5 +1,7 @@
 const express = require("express");
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -8,7 +10,7 @@ router.post("/register", async (req, res) => {
     const { name, email, password, role } = req.body;
 
     try {
-        if (!username || !email || !password || !role) {
+        if (!name || !email || !password || !role) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -17,13 +19,15 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        const user = await User.create({ username, email, password, role });
+        const user = await User.create({ name, email, password, role });
+        const token = generateToken(user._id);
         res.status(201).json({ 
             message: "User registered successfully", 
             id: user._id,
-            username: user.username, 
+            name: user.name, 
             email: user.email, 
-            role: user.role
+            role: user.role,
+            token,
         });
     } catch (err) {
         console.error(err);
@@ -38,10 +42,19 @@ router.post("/login", async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        const userExists = await model.findOne({ email });
+        const userExists = await User.findOne({ email });
         if (!userExists || !(await userExists.matchPassword(password))) {
             return res.status(400).json({ message: "Invalid credentials" }); 
         }
+        const token = generateToken(userExists._id);
+        res.status(200).json({ 
+            message: "User logged in successfully", 
+            id: userExists._id,
+            name: userExists.name, 
+            email: userExists.email, 
+            role: userExists.role,
+            token,
+        });
 
     } catch (error) {
         console.error(error);
@@ -49,13 +62,12 @@ router.post("/login", async (req, res) => {
     }
 });
 
-/*router.post("/me", async (req, res) => {
-    res.status(200).json({
-        id: req.user._id,
-        username: req.user.username,
-        email: req.user.email,
-        role: req.user.role
-    });
-})*/
+router.get("/me", protect, async (req, res) => {
+    res.status(200).json(req.user);
+})
 
-export default router;
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+}
+
+module.exports = router;
