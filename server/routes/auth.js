@@ -1,5 +1,5 @@
 const express = require("express");
-const model = require("../models/User");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -12,13 +12,13 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const userExists = await model.findOne({ email });
+        const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        const user = await model.create({ username, email, password, role });
-        response.status(201).json({ 
+        const user = await User.create({ username, email, password, role });
+        res.status(201).json({ 
             message: "User registered successfully", 
             id: user._id,
             username: user.username, 
@@ -48,3 +48,14 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+
+/*router.post("/me", async (req, res) => {
+    res.status(200).json({
+        id: req.user._id,
+        username: req.user.username,
+        email: req.user.email,
+        role: req.user.role
+    });
+})*/
+
+export default router;
