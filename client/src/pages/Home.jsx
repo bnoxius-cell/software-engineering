@@ -1,5 +1,8 @@
-function App() {
- <>
+import React from 'react'
+
+const Home = () => {
+  return (
+    <>
     <section className="hero">
         <div className="hero-box">
             <div className="hero-text">
@@ -49,7 +52,8 @@ function App() {
             </div>
         </div>
     </section>
-  </>
+    </>
+  )
 }
 
-export default App;
+export default Home
