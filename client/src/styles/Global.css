@@ -4,9 +4,51 @@
 
 body {
     margin: 0;
+<<<<<<< HEAD
+    padding: 0;
+    background-color: #000;
+    color: #fff; /* default text color to contrast with dark background */
+}
+
+/* Basic about/hero styling */
+.hero {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.team-section,
+.project-desc {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.team-card {
+    width: 180px;
+    text-align: center;
+}
+
+.team-card img {
+    width: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.5rem;
+=======
     font-family: Arial, sans-serif;
     background: #000;
     color: #fff;
+>>>>>>> 8cb015ca0dd2ca753b8402300ce5eb6237992370
 }
 
 /* ===== FULLSCREEN BACKGROUND ANIMATION ===== */
