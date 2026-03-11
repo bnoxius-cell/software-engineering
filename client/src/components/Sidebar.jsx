@@ -3,25 +3,25 @@ import styles from './Sidebar.module.css'
 
 const Sidebar = () => {
   return (
-    <div className="sidebar">
-        <h2 className="brand">Admin Panel</h2>
-        <ul className="sidebar-menu">
-            <li className="menu-item">
+    <div className={styles["sidebar"]}>
+        <h2 className={styles["brand"]}>Admin Panel</h2>
+        <ul className={styles["sidebar-menu"]}>
+            <li className={styles["menu-item"]}>
                 <a href="/pages/admin/dashboard.html" className="menu-link">Dashboard</a>
             </li>
-            <li className="menu-item">
+            <li className={styles["menu-item"]}>
                 <a href="/pages/admin/user.html" className="menu-link">Users</a>
             </li>
-            <li className="menu-item">
+            <li className={styles["menu-item"]}>
                 <a href="/pages/admin/portfolios.html" className="menu-link">Works</a>
             </li>
-            <li className="menu-item">
+            <li className={styles["menu-item"]}>
                 <a href="/pages/admin/requests.html" className="menu-link">Requests</a>
             </li>
-            <li className="menu-item">
+            <li className={styles["menu-item"]}>
                 <a href="/pages/admin/settings.html" className="menu-link">Settings</a>
             </li>
-            <li className="menu-item logout-item">
+            <li className={styles["menu-item logout-item"]}>
                 <a href="/pages/login.html" className="logout-link">Logout</a>
             </li>
         </ul>
