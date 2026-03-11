@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
-import Home from './pages/Home'
-import Login from './pages/Login'
+import Index from './pages/Index/Index'
+import Login from './pages/Login/Login'
 import UserManagement from './pages/admin/UserManagement'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
@@ -18,10 +18,10 @@ function App() {
 
             if (token) {
                 try {
-                    const response = await axios.get('/api/auth/me', {
+                    const res = await axios.get('/api/auth/me', {
                         headers: { Authorization: `Bearer ${token}` }
                     })
-                    setUser(response.data);
+                    setUser(res.data);
                 } catch (err) {
                     console.error("Failed to fetch user:", err);
                     setError("Failed to fetch user data");
@@ -37,10 +37,10 @@ function App() {
             <Routes>
 
                 <Route element={<MainLayout />}>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<Index />} />
                 </Route>
 
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<Login setUser={setUser}  />} />
 
                 <Route element={<AdminLayout />} >
                     <Route path="/user" element={<UserManagement />} />
