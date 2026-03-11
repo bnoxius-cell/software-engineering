@@ -4,7 +4,6 @@
 
 body {
     margin: 0;
-<<<<<<< HEAD
     padding: 0;
     background-color: #000;
     color: #fff; /* default text color to contrast with dark background */
@@ -44,11 +43,9 @@ body {
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 0.5rem;
-=======
     font-family: Arial, sans-serif;
     background: #000;
     color: #fff;
->>>>>>> 8cb015ca0dd2ca753b8402300ce5eb6237992370
 }
 
 /* ===== FULLSCREEN BACKGROUND ANIMATION ===== */
