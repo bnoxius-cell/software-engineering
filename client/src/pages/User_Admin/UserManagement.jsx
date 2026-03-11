@@ -7,14 +7,17 @@ const UserManagement = () => {
     <div className={styles["admin-bg"]}></div>
 
     <div className={styles["dashboard"]}>
+
         {/*<!-- Main Content -->*/}
         <main className={styles["main-content"]}>
+
+            {/* TODO: missing topbar css; fix admin pages css */}
             {/*<!-- Top Bar -->*/}
             <header className={styles["topbar"]}>
                 <h1>User Management</h1>
                 <a href="home.html" className={styles["admin-profile-link"]}>
                     <div className={styles["admin-profile"]}>
-                        <img src="/assets/images/profile_icon.png" alt="Admin Profile" />
+                        <img src="../../assets/images/profile_icon.png" alt="Admin Profile" />
                     </div>
                 </a>
             </header>
