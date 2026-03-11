@@ -4,7 +4,10 @@ import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
 import Index from './pages/Index/Index'
 import Login from './pages/Login/Login'
-import UserManagement from './pages/admin/UserManagement'
+import Gallery from './pages/Gallery/Gallery'
+import About from './pages/About/About'
+import Contact from './pages/Contact/Contact'
+import UserManagement from './pages/User_Admin/UserManagement'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 
@@ -38,6 +41,9 @@ function App() {
 
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<Index />} />
+                    <Route path="/gallery" element={<Gallery />} />
+                    <Route path="/about" element={<About/>} />
+                    <Route path="/contact" element={<Contact />} />
                 </Route>
 
                 <Route path="/login" element={<Login setUser={setUser}  />} />

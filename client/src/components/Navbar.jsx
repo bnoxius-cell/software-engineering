@@ -27,8 +27,9 @@ const Navbar = () => {
 
         {/*<!-- Navigation Links -->*/}
         <ul className={styles["nav-links"]}>
-            <li><a href="/pages/about.html">About</a></li>
-            <li><a href="/pages/contact.html">Contact Us</a></li>
+            <li><a href="/About">About</a></li>
+            <li><a href="/Gallery">Gallery</a></li>
+            <li><a href="/Contact">Contact Us</a></li>
 
             {/*<!-- TODO: dropdown-container img should be expandable -->*/}
             <li className={styles["dropdown-container"]} 

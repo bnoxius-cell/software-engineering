@@ -3,9 +3,39 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #000;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: #fff;
 }
 
+/* ===== FULLSCREEN BACKGROUND ANIMATION ===== */
+.background-animation {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.background-animation::before {
+    content: "";
+    position: absolute;
+    inset: -150%;
+    transform: rotate(-45deg);
+    background-image:
+        radial-gradient(4px 100px at 0px 235px, #0f0, transparent),
+        radial-gradient(4px 100px at 300px 235px, #0f0, transparent),
+        radial-gradient(1.5px 1.5px at 150px 117.5px, #0f0 100%, transparent 150%);
+    background-size: 300px 235px;
+    animation: hi 150s linear infinite;
+}
+
+@keyframes hi {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 0 7000px;
+    }
+}
