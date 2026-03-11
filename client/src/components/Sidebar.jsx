@@ -1,7 +1,15 @@
 import React from 'react'
 import styles from './Sidebar.module.css'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  }
+
   return (
     <div className={styles["sidebar"]}>
         <h2 className={styles["brand"]}>Admin Panel</h2>
