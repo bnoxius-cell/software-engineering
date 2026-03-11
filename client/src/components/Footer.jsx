@@ -1,9 +1,10 @@
 import React from 'react'
+import styles from './Footer.module.css'
 
 const Footer = () => {
   return (
-    <footer className="footer">
-        <div className="footer-content">
+    <footer className={styles.footer}>
+        <div className={styles["footer-content"]}>
             <h3>EMC Artisan</h3>
             <p>
                 A student-developed e-portfolio platform showcasing creative works
@@ -11,7 +12,7 @@ const Footer = () => {
                 Our Lady of Fatima University.
             </p>
 
-            <div className="footer-links">
+            <div className={styles["footer-links"]}>
                 <a href="home.html">Home</a>
                 <a href="gallery.html">Gallery</a>
                 <a href="about.html">About</a>
