@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
 import Index from './pages/Index/Index'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Gallery from './pages/Gallery'
 import Login from './pages/Login/Login'
 import UserManagement from './pages/admin/UserManagement'
 import axios from 'axios'
@@ -38,6 +41,9 @@ function App() {
 
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/gallery" element={<Gallery />} />
                 </Route>
 
                 <Route path="/login" element={<Login setUser={setUser}  />} />

@@ -1,28 +1,30 @@
 import React from 'react'
 import styles from './Sidebar.module.css'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  }
+
   return (
     <div className="sidebar">
         <h2 className="brand">Admin Panel</h2>
         <ul className="sidebar-menu">
             <li className="menu-item">
-                <a href="/pages/admin/dashboard.html" className="menu-link">Dashboard</a>
+                <Link to="/user" className="menu-link">Users</Link>
             </li>
             <li className="menu-item">
-                <a href="/pages/admin/user.html" className="menu-link">Users</a>
+                <Link to="/user" className="menu-link">Works</Link>
             </li>
             <li className="menu-item">
-                <a href="/pages/admin/portfolios.html" className="menu-link">Works</a>
-            </li>
-            <li className="menu-item">
-                <a href="/pages/admin/requests.html" className="menu-link">Requests</a>
-            </li>
-            <li className="menu-item">
-                <a href="/pages/admin/settings.html" className="menu-link">Settings</a>
+                <Link to="/user" className="menu-link">Requests</Link>
             </li>
             <li className="menu-item logout-item">
-                <a href="/pages/login.html" className="logout-link">Logout</a>
+                <button onClick={handleLogout} className="logout-link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit' }}>Logout</button>
             </li>
         </ul>
     </div>
