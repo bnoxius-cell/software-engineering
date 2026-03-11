@@ -15,22 +15,22 @@ const Sidebar = () => {
         <h2 className={styles["brand"]}>Admin Panel</h2>
         <ul className={styles["sidebar-menu"]}>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/dashboard.html" className="menu-link">Dashboard</a>
+                <a href="/pages/admin/dashboard.html" className={styles["menu-link"]}>Dashboard</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/user.html" className="menu-link">Users</a>
+                <a href="/pages/admin/user.html" className={styles["menu-link"]}>Users</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/portfolios.html" className="menu-link">Works</a>
+                <a href="/pages/admin/portfolios.html" className={styles["menu-link"]}>Works</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/requests.html" className="menu-link">Requests</a>
+                <a href="/pages/admin/requests.html" className={styles["menu-link"]}>Requests</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/settings.html" className="menu-link">Settings</a>
+                <a href="/pages/admin/settings.html" className={styles["menu-link"]}>Settings</a>
             </li>
             <li className={styles["menu-item logout-item"]}>
-                <a href="/pages/login.html" className="logout-link">Logout</a>
+                <a href="/pages/login.html" className={styles["logout-link"]}>Logout</a>
             </li>
         </ul>
     </div>

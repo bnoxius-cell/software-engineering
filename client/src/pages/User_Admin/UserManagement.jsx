@@ -206,7 +206,7 @@ const UserManagement = () => {
                     <div className={styles["action-card"]}>
                         <h3>Import Users</h3>
                         <p>Upload a CSV file to create multiple users at once. Template available for download.</p>
-                        <button className="action-btn" disabled>Import File</button>
+                        <button className={styles["action-btn"]} disabled>Import File</button>
                     </div>
                     
                     <div className={styles["action-card"]}>
