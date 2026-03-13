@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
-
 import Index from './pages/Index/Index'
 import About from './pages/About/About'
-import Contact from './pages/Contact'
-import Gallery from './pages/Gallery'
+import Contact from './pages/Contact/Contact'
+import Gallery from './pages/Gallery/Gallery'
 import Login from './pages/Login/Login'
-
 import UserManagement from './pages/User_Admin/UserManagement'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 
