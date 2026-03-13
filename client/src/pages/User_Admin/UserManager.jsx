@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import styles from './UserManagement.module.css'
+import styles from './UserManager.module.css'
 import Topbar from "../../components/Topbar";
 import axios from 'axios'
 
-const UserManagement = () => {
+const UserManager = () => {
     const [ formData, setFormData ] = useState({
         name: "",
         email: "",
@@ -214,4 +214,4 @@ const UserManagement = () => {
   )
 }
 
-export default UserManagement
+export default UserManager
