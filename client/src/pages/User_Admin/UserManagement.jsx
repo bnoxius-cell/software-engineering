@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import styles from './UserManagement.module.css'
 import Topbar from "../../components/Topbar";
 import axios from 'axios'
@@ -10,7 +10,7 @@ const UserManagement = () => {
         password: "",
         role: ""
     })
-    
+
     // eslint-disable-next-line no-unused-vars
     const [ error, setError] = useState('');
 
@@ -41,6 +41,30 @@ const UserManagement = () => {
         }
     }
 
+    const [users, setUsers] = useState([]); // state to hold users
+    const [totalUsers, setTotalUsers] = useState(0);
+    
+
+    useEffect(() => {
+    const token = localStorage.getItem("token"); // token stored after login
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/auth/", {
+        headers: {
+        Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized or failed to fetch users");
+        return res.json();
+        })
+        .then((data) => {
+            setUsers(data.users)
+            setTotalUsers(data.total)
+        })
+        .catch((err) => console.error(err));
+    }, []);
+
     return (
     <>
     <div className={styles["dashboard"]}>
@@ -70,8 +94,8 @@ const UserManagement = () => {
                         <label htmlFor="role">User Role</label>
                         <select id="role" name="role" value={formData.role} onChange={handleChange} required>
                             <option value="">Select a role</option>
-                            <option value="student">Student</option>
-                            <option value="faculty">Faculty</option>
+                            <option value="Student">Student</option>
+                            <option value="Faculty">Faculty</option>
                         </select>
                     </div>
 
@@ -92,7 +116,7 @@ const UserManagement = () => {
             {/*<!-- Current Users Table -->*/}
             <section className={styles["users-section"]}>
                 <div className={styles["section-header"]}>
-                    <h2>Current Users (45 Total)</h2>
+                    <h2>Current Users ({totalUsers})</h2>
                     <div>
                         <select className={styles["search-input"]} title="Filter (Disabled for UI)">
                             <option value="all">All Users</option>
@@ -114,6 +138,20 @@ const UserManagement = () => {
                             <th>Actions</th>
                         </tr>
                     </thead>
+                    {users.map((user) => (
+                        <tr key={user._id}>
+                        <td>{user._id}</td>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>{user.role}</td>
+                        <td>{user.status || "active"}</td>
+                        <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button>Edit</button>
+                            <button>Delete</button>
+                        </td>
+                        </tr>
+                    ))}
                 </table>    
             </section>
 

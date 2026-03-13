@@ -4,13 +4,17 @@ import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
+
 import Index from './pages/Index/Index'
 import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Gallery from './pages/Gallery/Gallery'
+
 import Login from './pages/Login/Login'
+
 import UserManagement from './pages/User_Admin/UserManagement'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
+import Portfolios from './pages/Portfolios/Portfolios'
 
 
 function App() {
@@ -52,6 +56,7 @@ function App() {
                 <Route element={<AdminLayout />} >
                     <Route path="/user" element={ <UserManagement setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/portfolios" element={<Portfolios />} />
                 </Route>
             </Routes>
         </Router>
