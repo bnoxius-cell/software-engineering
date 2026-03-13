@@ -21,13 +21,13 @@ const Sidebar = () => {
                 <a href="/user" className={styles["menu-link"]}>Users</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/portfolios.html" className={styles["menu-link"]}>Works</a>
+                <a href="/upload" className={styles["menu-link"]}>Upload</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/requests.html" className={styles["menu-link"]}>Requests</a>
+                <a href="/requests" className={styles["menu-link"]}>Requests</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/settings.html" className={styles["menu-link"]}>Settings</a>
+                <a href="settings" className={styles["menu-link"]}>Settings</a>
             </li>
             <li className={styles["menu-item logout-item"]}>
                 <a href="/login" className={styles["logout-link"]} onClick={handleLogout}>Logout</a>
@@ -35,6 +35,6 @@ const Sidebar = () => {
         </ul>
     </div>
     )
-    }
+}
 
 export default Sidebar
