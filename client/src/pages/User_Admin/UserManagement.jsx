@@ -2,9 +2,8 @@ import React, { useState } from 'react'
 import styles from './UserManagement.module.css'
 import Topbar from "../../components/Topbar";
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
 
-const UserManagement = ({ setUser }) => {
+const UserManagement = () => {
     const [ formData, setFormData ] = useState({
         name: "",
         email: "",
@@ -12,8 +11,8 @@ const UserManagement = ({ setUser }) => {
         role: ""
     })
     
+    // eslint-disable-next-line no-unused-vars
     const [ error, setError] = useState('');
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({...formData, [e.target.name]: e.target.value})
