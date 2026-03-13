@@ -46,7 +46,7 @@ const Navbar = () => {
                 <option value="category">Category</option>
             </select>
             <button type="submit" className={styles["search-btn"]}>Search</button>
-        </form>  
+        </form>
 
         {/*<!-- Navigation Links -->*/}
         <ul className={styles["nav-links"]}>
@@ -62,17 +62,15 @@ const Navbar = () => {
                     <img src={loginBtn} alt="Profile" className={styles["nav-profile"]} />
                 </Link>
 
-                {open && (
-                    <div className={styles["dropdown-menu"]}>
-                        <div className={styles["dropdown-content"]}>
-                            <a href="#"><img src="/" alt="Profile" />Profile</a>
-                            <a href="#"><img src="/assets/images/icons/account.png" alt="Account" />Account</a>
-                            <a href="#"><img src="/assets/images/icons/setting.png" alt="Settings" />Settings</a>
-                            <a href="#"><img src="/assets/images/icons/accessibility.png" alt="Accessibility" />Accessibility</a>
-                            <a href="#"><img src="/assets/images/icons/notification.png" alt="Notifications" />Notifications</a>
-                        </div>
+                <div className={styles["dropdown-menu"]}>
+                    <div className={styles["dropdown-content"]}>
+                        <a href="#"><img src="/" alt="Profile" />Profile</a>
+                        <a href="#"><img src="/assets/images/icons/account.png" alt="Account" />Account</a>
+                        <a href="#"><img src="/assets/images/icons/setting.png" alt="Settings" />Settings</a>
+                        <a href="#"><img src="/assets/images/icons/accessibility.png" alt="Accessibility" />Accessibility</a>
+                        <a href="#"><img src="/assets/images/icons/notification.png" alt="Notifications" />Notifications</a>
                     </div>
-                )}
+                </div>
             </li>
         </ul>
     </header>

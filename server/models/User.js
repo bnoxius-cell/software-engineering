@@ -21,8 +21,14 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "student"],
-      default: "student"
+      enum: ["faculty", "student", "admin"],
+      default: "student",
+      required: true
+    },
+
+    permissions: {
+      type: [String],
+      default: undefined
     }
   },
   { timestamps: true }
@@ -35,6 +41,12 @@ userSchema.pre("save", async function (next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+
+  if (!this.permissions) {
+    if (this.role === "student" || this.role === "faculty") this.permissions = ["basic_access"];
+    // else if (this.role === "faculty") this.permissions = ["course_access"];
+    // Admin permissions will come from form
+  }
 })
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

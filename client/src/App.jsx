@@ -52,7 +52,7 @@ function App() {
                 <Route path="/login" element={<Login setUser={setUser}  />} />
 
                 <Route element={<AdminLayout />} >
-                    <Route path="/user" element={<UserManagement setUser={setUser} />} />
+                    <Route path="/user" element={ <UserManagement setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                 </Route>
             </Routes>

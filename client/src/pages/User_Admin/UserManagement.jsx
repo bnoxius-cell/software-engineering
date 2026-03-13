@@ -72,7 +72,6 @@ const UserManagement = () => {
                             <option value="">Select a role</option>
                             <option value="student">Student</option>
                             <option value="faculty">Faculty</option>
-                            <option value="admin">Administrator</option>
                         </select>
                     </div>
 
@@ -82,9 +81,9 @@ const UserManagement = () => {
                         <input type="password" id="password" name="password" placeholder="Enter initial password" value={formData.password} onChange={handleChange} required />
                     </div>
 
-                    {/* Form Buttons */}
+                    {/* Action Buttons */}
                     <div className={styles["form-actions"]}>
-                        <button onClick={resetForm} className={styles["btn btn-secondary"]}>Clear Form</button>
+                        <button onClick={resetForm} className={`${styles["btn"]} ${styles["btn-secondary"]}`}>Clear Form</button>
                         <button className={styles["btn btn-primary"]}>Create User</button>
                     </div>
                 </form>
@@ -95,17 +94,16 @@ const UserManagement = () => {
                 <div className={styles["section-header"]}>
                     <h2>Current Users (45 Total)</h2>
                     <div>
-                        <select className={styles["search-input"]}  disabled title="Filter (Disabled for UI)">
+                        <select className={styles["search-input"]} title="Filter (Disabled for UI)">
                             <option value="all">All Users</option>
-                            <option value="admin">Admin Users</option>
-                            <option value="student">Student Users</option>
-                            <option value="faculty">Faculty Users</option>
+                            <option value="admin">Admins</option>
+                            <option value="student">Students</option>
+                            <option value="faculty">Faculty</option>
                         </select>
                     </div>
                 </div>
-
                 <table>
-                    <thead>
+                    <thead> 
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
@@ -116,117 +114,7 @@ const UserManagement = () => {
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#001</td>
-                            <td>Admin User</td>
-                            <td>admin@emcartisan.com</td>
-                            <td><span className={styles["role-badge role-admin"]}>Administrator</span></td>
-                            <td><span className={styles["status-badge status-active"]}>Active</span></td>
-                            <td>2024-12-01</td>
-                            <td>
-                                <div className={styles["action-btns"]}>
-                                    <a href="#">Edit</a>
-                                    <a href="#">View</a>
-                                    <a href="#">Suspend</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#002</td>
-                            <td>Maria Santos</td>
-                            <td>maria.s@student.com</td>
-                            <td><span className={styles["role-badge role-student"]}>Student</span></td>
-                            <td><span className={styles["status-badge status-active"]}>Active</span></td>
-                            <td>2025-01-12</td>
-                            <td>
-                                <div className={styles["action-btns"]}>
-                                    <a href="#">Edit</a>
-                                    <a href="#">View</a>
-                                    <a href="#">Suspend</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#003</td>
-                            <td>Juan Dela Cruz</td>
-                            <td>juan.d@student.com</td>
-                            <td><span className={styles["role-badge role-student"]}>Student</span></td>
-                            <td><span className={styles["status-badge status-active"]}>Active</span></td>
-                            <td>2025-01-10</td>
-                            <td>
-                                <div className={styles["action-btns"]}>
-                                    <a href="#">Edit</a>
-                                    <a href="#">View</a>
-                                    <a href="#">Suspend</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#004</td>
-                            <td>Dr. Carlos Reyes</td>
-                            <td>c.reyes@faculty.com</td>
-                            <td><span className={styles["role-badge role-faculty"]}>Faculty</span></td>
-                            <td><span className={styles["status-badge status-pending"]}>Pending</span></td>
-                            <td>2024-11-25</td>
-                            <td>
-                                <div className={styles["action-btns"]}>
-                                    <a href="#">Edit</a>
-                                    <a href="#">View</a>
-                                    <a href="#">Approve</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#005</td>
-                            <td>Michael Tan</td>
-                            <td>m.tan@student.com</td>
-                            <td><span className={styles["role-badge role-student"]}>Student</span></td>
-                            <td><span className={styles["status-badge status-suspended"]}>Suspended</span></td>
-                            <td>2024-10-15</td>
-                            <td>
-                                <div className={styles["action-btns"]}>
-                                    <a href="#">Edit</a>
-                                    <a href="#">View</a>
-                                    <a href="#">Activate</a>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-            {/*<!-- Additional User Actions Section -->*/}
-            <section className={styles["users-section"]}>
-                <div className={styles["section-header"]}>
-                    <h2>Additional User Actions</h2>
-                </div>
-                
-                <div className={styles["additional-actions"]}>
-                    <div className={styles["action-card"]}>
-                        <h3>Export User List</h3>
-                        <p>Download all user data in CSV or Excel format for reporting and analysis.</p>
-                        <button className={styles["action-btn"]} disabled>Export Data</button>
-                    </div>
-                    
-                    <div className={styles["action-card"]}>
-                        <h3>Import Users</h3>
-                        <p>Upload a CSV file to create multiple users at once. Template available for download.</p>
-                        <button className={styles["action-btn"]} disabled>Import File</button>
-                    </div>
-                    
-                    <div className={styles["action-card"]}>
-                        <h3>View Activity Logs</h3>
-                        <p>Monitor user login activity, changes made, and system interactions.</p>
-                        <button className={styles["action-btn"]} disabled>View Logs</button>
-                    </div>
-                    
-                    <div className={styles["action-card"]}>
-                        <h3>Bulk Password Reset</h3>
-                        <p>Reset passwords for selected users. They'll receive email instructions.</p>
-                        <button className={styles["action-btn"]} disabled>Reset Passwords</button>
-                    </div>
-                </div>
+                </table>    
             </section>
 
             {/*<!-- Create Admin User Form (Collapsed by default) -->*/}
@@ -240,16 +128,23 @@ const UserManagement = () => {
                     </span>
                 </summary>
                 <div className={styles["form1"]}>
-                
+
+                    {/* Admin Admin Form */}
                     <form action="#" method="post">
+
+                        {/* Name */}
                         <div className={styles["form-group"]}>
                             <label htmlFor="adminFullName">Administrator Full Name</label>
                             <input type="text" id="adminFullName" name="adminFullName" placeholder="Enter admin's full name" required />
                         </div>
+
+                        {/* Email */}
                         <div className={styles["form-group"]}>
                             <label htmlFor="adminEmail">Admin Email Address</label>
                             <input type="email" id="adminEmail" name="adminEmail" placeholder="Enter admin email" required />
                         </div>
+
+                        {/* Admin Permissions */}
                         <div className={styles["form-group"]}>
                             <label htmlFor="adminPermissions">Admin Permissions Level</label>
                             <select id="adminPermissions" name="adminPermissions" required>
@@ -260,13 +155,17 @@ const UserManagement = () => {
                                 <option value="view_only">View Only Access</option>
                             </select>
                         </div>
+                        
+                        {/* Password */}
                         <div className={styles["form-group"]}>
                             <label htmlFor="adminPassword">Administrator Password</label>
                             <input type="password" id="adminPassword" name="adminPassword" placeholder="Enter strong admin password" required />
                         </div>
+
+                        {/* Action Buttons */}
                         <div className={styles["form-actions"]}>
-                            <button type="reset" className={styles["btn btn-secondary"]}>Clear Form</button>
-                            <button type="submit" className={styles["btn btn-primary"]}>Create Administrator</button>
+                            <button type="reset" className={`${styles["btn"]} ${styles["btn-secondary"]}`}>Clear Form</button>
+                            <button type="submit" className={`${styles["btn"]} ${styles["btn-primary"]}`}>Create Administrator</button>
                         </div>
                     </form>
                 </div>
