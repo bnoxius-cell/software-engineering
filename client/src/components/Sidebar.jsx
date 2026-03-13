@@ -15,10 +15,10 @@ const Sidebar = () => {
         <h2 className={styles["brand"]}>Admin Panel</h2>
         <ul className={styles["sidebar-menu"]}>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/dashboard.html" className={styles["menu-link"]}>Dashboard</a>
+                <a href="/dashboard" className={styles["menu-link"]}>Dashboard</a>
             </li>
             <li className={styles["menu-item"]}>
-                <a href="/pages/admin/user.html" className={styles["menu-link"]}>Users</a>
+                <a href="/user" className={styles["menu-link"]}>Users</a>
             </li>
             <li className={styles["menu-item"]}>
                 <a href="/pages/admin/portfolios.html" className={styles["menu-link"]}>Works</a>
@@ -30,7 +30,7 @@ const Sidebar = () => {
                 <a href="/pages/admin/settings.html" className={styles["menu-link"]}>Settings</a>
             </li>
             <li className={styles["menu-item logout-item"]}>
-                <a href="/pages/login.html" className={styles["logout-link"]}>Logout</a>
+                <a href="/pages/login.html" className={styles["logout-link"]} onClick={handleLogout}>Logout</a>
             </li>
         </ul>
     </div>

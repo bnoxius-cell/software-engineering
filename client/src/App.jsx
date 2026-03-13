@@ -1,15 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
+
 import Index from './pages/Index/Index'
 import About from './pages/About/About'
 import Contact from './pages/Contact'
 import Gallery from './pages/Gallery'
 import Login from './pages/Login/Login'
+
 import UserManagement from './pages/User_Admin/UserManagement'
-import axios from 'axios'
-import { useEffect, useState } from 'react'
+import Dashboard from './pages/Dashboard_Admin/Dashboard'
+
 
 function App() {
     const [ user, setUser ] = useState(null);
@@ -38,9 +42,8 @@ function App() {
     return (
         <Router>
             <Routes>
-
                 <Route element={<MainLayout />}>
-                    <Route path="/" element={<Index />} />
+                    <Route path="/" element={<Index user={user} error={error} />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/gallery" element={<Gallery />} />
@@ -49,7 +52,8 @@ function App() {
                 <Route path="/login" element={<Login setUser={setUser}  />} />
 
                 <Route element={<AdminLayout />} >
-                    <Route path="/user" element={<UserManagement />} />
+                    <Route path="/user" element={<UserManagement setUser={setUser} />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                 </Route>
             </Routes>
         </Router>
