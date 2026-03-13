@@ -35,7 +35,7 @@ const Gallery = () => {
                   <h3>{art.title}</h3>
                   <p>by {art.artistName}</p>
                   <p>Genre: {art.genre}</p>
-                  <p>{art.createdAt}</p>
+                  <p>{new Date(art.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             ))}
