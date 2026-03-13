@@ -12,9 +12,9 @@ import Gallery from './pages/Gallery/Gallery'
 
 import Login from './pages/Login/Login'
 
-import UserManagement from './pages/User_Admin/UserManagement'
+import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
-import Portfolios from './pages/Portfolios/Portfolios'
+import UploadManager from './pages/Upload_Admin/UploadManager'
 
 
 function App() {
@@ -54,9 +54,9 @@ function App() {
                 <Route path="/login" element={<Login setUser={setUser}  />} />
 
                 <Route element={<AdminLayout />} >
-                    <Route path="/user" element={ <UserManagement setUser={setUser} />} />
+                    <Route path="/user" element={ <UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/portfolios" element={<Portfolios />} />
+                    <Route path="/upload" element={<UploadManager />} />
                 </Route>
             </Routes>
         </Router>
