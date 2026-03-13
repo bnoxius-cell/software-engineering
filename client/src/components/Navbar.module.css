@@ -177,10 +177,6 @@ body {
     transition: all 0.25s;
 }
 
-.profile-item:hover {
-    background: rgb(59,59,59);
-    color: white;
-}
 
 /* Dropdown Icons */
 .profile-icon {

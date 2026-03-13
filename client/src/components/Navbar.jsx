@@ -6,7 +6,6 @@ import loginBtn from '../assets/images/profile_icon.png'
 
 const Navbar = () => {
     const [open, setOpen] = useState(false)
-    const [locked, setLocked] = useState(false)
 
     const [searchTerm, setSearchTerm] = useState('')
     const [searchType, setSearchType] = useState('all')
@@ -28,7 +27,6 @@ const Navbar = () => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setOpen(false)
-                setLocked(false)
             }
         }
 
@@ -74,21 +72,11 @@ const Navbar = () => {
                 <li><Link to="/about">About</Link></li>
                 <li><Link to="/contact">Contact Us</Link></li>
 
-                <li
-                    ref={dropdownRef}
-                    className={styles["profile-container"]}
-                    onMouseEnter={() => setOpen(true)}
-                    onMouseLeave={() => {
-                        if (!locked) setOpen(false)
-                    }}
-                >
+                <li ref={dropdownRef} className={styles["profile-container"]}>
                     <button
                         type="button"
                         className={styles["profile-btn"]}
-                        onClick={() => {
-                            setLocked(!locked)
-                            setOpen(true)
-                        }}
+                        onClick={() => setOpen(!open)}
                     >
                         <img src={loginBtn} alt="Profile" className={styles["nav-profile"]}/>
                     </button>
