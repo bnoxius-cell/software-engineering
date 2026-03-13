@@ -30,7 +30,7 @@ const Sidebar = () => {
                 <a href="/pages/admin/settings.html" className={styles["menu-link"]}>Settings</a>
             </li>
             <li className={styles["menu-item logout-item"]}>
-                <a href="/pages/login.html" className={styles["logout-link"]} onClick={handleLogout}>Logout</a>
+                <a href="/login" className={styles["logout-link"]} onClick={handleLogout}>Logout</a>
             </li>
         </ul>
     </div>
