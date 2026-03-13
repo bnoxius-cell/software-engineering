@@ -3,7 +3,6 @@ const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
 const authRoutes = require("./server/routes/auth")
-const artworkRoutes = require("./server/routes/artworks")
 const connectDB = require("./server/config/db");
 
 const app = express();
@@ -15,7 +14,6 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use("/api/auth", authRoutes);
-app.use("/api/artworks", artworkRoutes);
 
 // Connect to MongoDB
 connectDB();
