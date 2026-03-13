@@ -66,6 +66,18 @@ router.get("/me", protect, async (req, res) => {
     res.status(200).json(req.user);
 })
 
+// GET all users
+router.get("/", protect, async (req, res) => {
+    try {
+        const users = await User.find({}); // get all users
+        const count = await User.countDocuments({}); // count total
+        res.status(200).json({ users, total: count });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 }
