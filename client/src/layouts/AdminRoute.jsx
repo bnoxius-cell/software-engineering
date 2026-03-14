@@ -9,7 +9,7 @@ const AdminRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    if (role !== "admin") {
+    if (role !== "Admin") {
         return <Navigate to="/" replace />;
     }
 
