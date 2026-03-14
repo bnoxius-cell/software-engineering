@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
+import AdminLayout from './layouts/Adminlayout'
 
 import Index from './pages/Index/Index'
 import About from './pages/About/About'
@@ -15,7 +16,7 @@ import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import UploadManager from './pages/Upload_Admin/UploadManager'
 
-import AdminRoute from './layouts/AdminRoute'
+
 
 
 function App() {
@@ -54,9 +55,7 @@ function App() {
 
                 <Route path="/login" element={<Login setUser={setUser}  />} />
 
-                
-
-                <Route element={<AdminRoute />}>
+                <Route element={<AdminLayout />}>
                     <Route path="/user" element={ <UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/upload" element={<UploadManager />} />
