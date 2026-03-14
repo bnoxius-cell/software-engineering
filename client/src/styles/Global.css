@@ -6,10 +6,9 @@ body {
     margin: 0;
     padding: 0;
     background-color: #000;
-    color: #fff; /* default text color to contrast with dark background */
+    color: #fff;
 }
 
-/* Basic about/hero styling */
 .hero {
     padding: 4rem 2rem;
     text-align: center;
@@ -69,6 +68,9 @@ body {
     background-size: 300px 235px;
     animation: hi 150s linear infinite;
 }
+
+
+
 
 @keyframes hi {
     from {
