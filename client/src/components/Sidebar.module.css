@@ -12,7 +12,7 @@
     z-index: 10;
 }
 
-.sidebar .brand {
+.brand {
     text-align: center;
     font-size: 1.5rem;
     line-height: 2rem;
@@ -23,21 +23,28 @@
     border-bottom: 1px solid rgba(55, 65, 81, 1);
 }
 
-.sidebar-nav {
+.sidebarNav {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Takes up remaining vertical space so logout sits at the bottom */
+    flex: 1;
+}
+.navItem {
+    width: 100%;
 }
 
-.nav-list {
+.navList {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    padding: 0; /* REMOVES THE DEFAULT INDENT */
+    margin: 0;  /* REMOVES DEFAULT MARGIN */
+    width: 100%;
 }
 
-.nav-link {
+.navLink {
     width: 100%;
+    box-sizing: border-box; /* KEEPS PADDING INSIDE THE 100% WIDTH */
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -53,65 +60,51 @@
     text-decoration: none;
 }
 
-.nav-link:hover {
+.navLink:hover {
     background-color: rgba(161, 255, 20, 0.15);
     border-color: rgb(161, 255, 20);
     color: #ffffff;
 }
 
-/* Active Page Highlights */
-.nav-item.active .nav-link {
+.navItem.active .navLink {
     background-color: rgba(161, 255, 20, 0.15);
     border-color: rgb(161, 255, 20);
     color: rgb(161, 255, 20);
     font-weight: 600;
 }
 
-/* Logout Specific Styling */
-.logout-item {
+.logoutItem {
     padding-top: 1rem;
     border-top: 1px solid rgba(55, 65, 81, 1);
 }
 
-.logout-link {
+.logoutLink {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.logout-link:hover {
+.logoutLink:hover {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.5);
     color: #ffffff;
 }
 
-/* Mobile Adjustments */
+/* This fixes the giant SVGs */
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+}
+
 @media (max-width: 1024px) {
     .sidebar {
         width: 100%;
         height: auto;
-        position: static; /* Removes fixed position so it scrolls with page */
+        position: static;
         border-right: none;
         border-bottom: 1px solid rgba(55, 65, 81, 1);
     }
-
-    .sidebar-nav {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .nav-list {
-        flex-direction: row;
-        flex-wrap: wrap;
-        width: 100%;
-    }
-
-    .nav-item {
-        flex: 1; /* Makes buttons stretch evenly */
-        min-width: 140px;
-    }
-    
-    .logout-item {
-        border-top: none;
-        padding-top: 0;
-    }
+    .sidebarNav { flex-direction: row; flex-wrap: wrap; gap: 1rem; }
+    .navList { flex-direction: row; flex-wrap: wrap; width: 100%; }
+    .navItem { flex: 1; min-width: 140px; }
+    .logoutItem { border-top: none; padding-top: 0; }
 }

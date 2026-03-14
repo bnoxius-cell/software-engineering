@@ -1,6 +1,8 @@
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import '../styles/Admin.css';
 
-const AdminRoute = () => {
+const AdminLayout = () => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role'); 
 
@@ -12,7 +14,11 @@ const AdminRoute = () => {
         return <Navigate to="/" replace />;
     }
 
-    return <Outlet />;
+    return (
+        <div className="admin-theme-root">
+            <Outlet />
+        </div>
+    );
 };
 
-export default AdminRoute;
+export default AdminLayout;
