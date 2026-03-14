@@ -2,14 +2,13 @@ import { Navigate, Outlet } from 'react-router-dom';
 
 const AdminRoute = () => {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role'); // Make sure you are saving this in Login.jsx!
+    const role = localStorage.getItem('role'); 
 
-    // 1. If there is no token, redirect to Login
     if (!token) {
         return <Navigate to="/login" replace />;
     }
 
-    if (role !== "Admin") {
+    if (!role || role.toLowerCase().trim() !== "admin") {
         return <Navigate to="/" replace />;
     }
 

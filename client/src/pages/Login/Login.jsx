@@ -11,7 +11,7 @@ const Login = ({ setUser }) => {
 
     const [ error, setError] = useState('');
     const navigate = useNavigate();
-
+    
     const handleChange = (e) => {
         setFormData({...formData, [e.target.name]: e.target.value})
     }
@@ -24,6 +24,12 @@ const Login = ({ setUser }) => {
             console.log(res)
             
             localStorage.setItem('token', res.data.token)
+
+            const userRole = res.data.role; 
+            if (userRole) {
+                localStorage.setItem('role', userRole);
+            }
+
             setUser(res.data)
             navigate('/');
         } catch (err) {
