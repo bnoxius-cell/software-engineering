@@ -3,17 +3,18 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const Artwork = require("../../server/models/Artwork"); // Adjusted path to your model just in case!
+const jwt = require("jsonwebtoken"); 
+const Artwork = require("../models/Artwork"); // Corrected path to models
+const User = require("../models/User");       // Corrected path to models
 
-// 1. Climb out of /server/routes/ and go into /public/Artworks
+// 1. Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
 
-// Auto-create it if it somehow gets deleted
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// 2. Configure Multer
+// 2. Configure Multer Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir); 
@@ -26,7 +27,25 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// GET all artworks
+// 3. JWT Authentication Middleware
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(" ")[1]; 
+    
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ message: "Token is invalid or expired!" });
+      req.user = user; 
+      next();
+    });
+  } else {
+    return res.status(401).json({ message: "You are not authenticated!" });
+  }
+};
+
+// ==========================================
+// 4. THE MISSING GET ROUTE (Fetches the art)
+// ==========================================
 router.get("/", async (req, res) => {
   try {
     const artworks = await Artwork.find({});
@@ -36,24 +55,32 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST create new artwork
-// Notice the route is now "/" to match React, and we injected the Multer middleware!
-router.post("/", upload.single("artworkImage"), async (req, res) => {
+// ==========================================
+// 5. THE POST ROUTE (Uploads the art)
+// ==========================================
+router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) => {
   try {
-    // If multer failed to catch the file, stop right here
     if (!req.file) {
       return res.status(400).json({ message: "No image file uploaded." });
     }
 
-    // Create the Mongoose object manually using the text fields from req.body 
-    // and the new filename from req.file
+    const userId = req.user.id || req.user._id; 
+    const currentUser = await User.findById(userId);
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database." });
+    }
+
+    const artistName = currentUser.username || currentUser.name || "Unknown Artist";
+
     const newArtwork = await Artwork.create({
       title: req.body.title,
       medium: req.body.medium,
       description: req.body.description,
       tags: req.body.tags,
-      // We save the path exactly as your express.static middleware expects it
       image: `/Artworks/${req.file.filename}`, 
+      artistName: artistName,  
+      uploadedBy: currentUser._id 
     });
 
     res.status(201).json(newArtwork);
