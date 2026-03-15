@@ -1,0 +1,42 @@
+const mongoose = require("mongoose");
+
+const artworkSchema = new mongoose.Schema(
+{
+  title: {
+    type: String,
+    required: true
+  },
+  // Changed to match React's 'medium' dropdown
+  medium: { 
+    type: String,
+    required: true
+  },
+  // Added to support the new UI
+  description: {
+    type: String,
+    default: ""
+  },
+  // Added to support the new UI
+  tags: {
+    type: String,
+    default: ""
+  },
+  image: {
+    type: String, // path to uploaded file or Cloudinary URL
+    required: true
+  },
+  // We make this optional for now just so you can test the upload without auth blocking you
+  artistName: {
+    type: String,
+    required: false,
+    default: "Unknown Artist" 
+  },
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }
+},
+{ timestamps: true }
+);
+
+module.exports = mongoose.model("Artwork", artworkSchema);

@@ -7,7 +7,7 @@ const Sidebar = ({ activePage = "dashboard" }) => {
     
     const handleLogout = (e) => {
         e.preventDefault();
-        localStorage.removeItem("token"); 
+        localStorage.clear(); 
         navigate("/login"); 
     };
 

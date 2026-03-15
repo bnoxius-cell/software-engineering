@@ -1,9 +1,10 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const cors = require("cors");
 require("dotenv").config();
 const authRoutes = require("./server/routes/auth");
-const uploadRoutes = require("./server/routes/uploads");
+const uploadRoutes = require("./server/routes/artwork");
 const connectDB = require("./server/config/db");
 
 const app = express();
@@ -11,11 +12,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.use("/Artworks", express.static(path.join(__dirname, "public/Artworks")));
-
-app.use("/api/auth", authRoutes);
-
+// 1. Force the exact absolute path to the folder
+const artworksPath = path.join(__dirname, "public", "Artworks");
+// 2. Log it so we can see EXACTLY where Express is looking!
+console.log("Express is serving images from:", artworksPath);
+// 3. Serve it
+app.use("/Artworks", express.static(artworksPath));
 app.use("/api/artworks", uploadRoutes);
+
+// Login and register
+app.use("/api/auth", authRoutes);
 
 // Connect to MongoDB
 connectDB();

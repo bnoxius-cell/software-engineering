@@ -10,6 +10,8 @@ import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Gallery from './pages/Gallery/Gallery'
 
+import Upload from './pages/Upload/Upload'
+
 import Login from './pages/Login/Login'
 
 import UserManager from './pages/User_Admin/UserManager'
@@ -51,6 +53,7 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/gallery" element={<Gallery />} />
+                    <Route path="/upload" element={<Upload />} />
                 </Route>
 
                 <Route path="/login" element={<Login setUser={setUser}  />} />
