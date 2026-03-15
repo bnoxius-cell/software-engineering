@@ -1,49 +1,56 @@
 import React, { useEffect, useState } from "react";
+import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
 
-const Gallery = () => {
-  const [artworks, setArtworks] = useState([]);
+// Dummy data using Unsplash placeholders with random heights for the masonry effect
 
-  useEffect(() => {
-    fetch("http://localhost:5000/api/artworks")
-      .then((res) => res.json())
-      .then((data) => setArtworks(data))
-      .catch((err) => console.error("Could not load artworks", err));
-  }, []);
+const Index = () => {
+    const [artworks, setArtworks] = useState([]);
+    
+      useEffect(() => {
+        fetch("http://localhost:5000/api/artworks")
+          .then((res) => res.json())
+          .then((data) => setArtworks(data))
+          .catch((err) => console.error("Could not load artworks", err));
+      }, []);
 
-  return (
-    <>
-      <div className={styles["background-animation"]}></div>
-      <section className={styles["gallery"]}>
-        <div className={styles["container"]}>
-          {/* Gallery Header */}
-          <div className={styles["gallery-header"]}>
-            <h1>Gallery</h1>
-          </div>
 
-          {/* Artworks Grid */}
-          <div className={styles["artwork-grid"]} id="gallery-container">
-            {artworks.length === 0 && <p>Loading artworks...</p>}
-            {artworks.map((art) => (
-              <div key={art._id} className={styles["artwork-card"]}>
-                <img
-                  src={`http://localhost:5000/${art.image}`} 
-                  alt={art.title}
-                  onError={(e) => e.target.src = "/fallback.png"} // optional fallback
-                />
-                <div className={styles["artwork-info"]}>
-                  <h3>{art.title}</h3>
-                  <p>by {art.artistName}</p>
-                  <p>Genre: {art.genre}</p>
-                  <p>{new Date(art.createdAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
+    return (
+        <>
+            {/* Keeping your global dark background effect */}
+            <div className="background-fx"></div>
+
+            <Navbar />
+
+            <div className={styles.pageContainer}>
+                <header className={styles.feedHeader}>
+                    <h1>Discover Art</h1>
+                    <p>Curated works from our top students</p>
+                </header>
+
+                <main className={styles.masonryGrid}>
+                    {artworks.length === 0 && <p style={{ color: 'white', textAlign: 'center' }}>Loading artworks...</p>}
+                    
+                    {artworks.map((art) => (
+                        <div key={art._id} className={styles.artCard}>
+                            <img 
+                                src={`http://localhost:5000${art.image}`} 
+                                alt={art.title}
+                                className={styles.artImage} 
+                            />
+                            
+                            <div className={styles.cardOverlay}>
+                                <div>
+                                    <h3 className={styles.artTitle}>{art.title}</h3>
+                                    <p className={styles.artistName}>by {art.artistName}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </main>
+            </div>
+        </>
+    );
 };
 
-export default Gallery;
+export default Index;
