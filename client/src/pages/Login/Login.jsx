@@ -69,7 +69,7 @@ const Login = ({ setUser }) => {
                 <a aria-label="Log in with GitHub" className={styles["icon"]}><img src="/assets/images/icons/github.png" alt="GitHub Sign-in" /></a>
             </div>
             {/*<!-- TODO: No sign-up option since it is handled by the admin -->*/}
-            <p className={styles["signup"]}>Don't have an account? <a rel="noopener noreferrer" href="admin_dashboard.html">Sign up</a></p>
+            <p className={styles["signup"]}>Don't have an account? <a rel="noopener noreferrer" href="/register">Sign up</a></p>
         </div>
     </div>
   )

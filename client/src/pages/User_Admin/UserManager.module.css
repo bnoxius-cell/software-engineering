@@ -69,7 +69,7 @@
     margin-top: 1rem;
 }
 
-/* Buttons (Scoped to this module for now) */
+/* Base Buttons */
 .btn {
     padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem;
     font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
@@ -85,10 +85,23 @@
 .btnLink {
     padding: 0.25rem 0.5rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.25rem;
     background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 0.75rem; cursor: pointer;
-    transition: all 0.3s ease; text-decoration: none;
+    transition: all 0.3s ease; text-decoration: none; font-weight: 600;
 }
 .btnLink:hover { border-color: rgb(161, 255, 20); color: rgb(161, 255, 20); }
 .btnLink:disabled { opacity: 0.5; cursor: not-allowed; border-color: rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.3); }
+
+/* ===== DYNAMIC ACTION BUTTONS ===== */
+.btnApprove { border-color: rgba(63, 185, 80, 0.5); color: #3fb950; }
+.btnApprove:hover { border-color: #3fb950; color: #3fb950; background-color: rgba(63, 185, 80, 0.1); }
+
+.btnSuspend { border-color: rgba(210, 153, 34, 0.5); color: #d29922; }
+.btnSuspend:hover { border-color: #d29922; color: #d29922; background-color: rgba(210, 153, 34, 0.1); }
+
+.btnRestore { border-color: rgba(88, 166, 255, 0.5); color: #58a6ff; }
+.btnRestore:hover { border-color: #58a6ff; color: #58a6ff; background-color: rgba(88, 166, 255, 0.1); }
+
+.btnDelete { border-color: rgba(248, 81, 73, 0.5); color: #f85149; }
+.btnDelete:hover { border-color: #f85149; color: #f85149; background-color: rgba(248, 81, 73, 0.1); }
 
 .rowActions { display: flex; gap: 0.5rem; }
 
