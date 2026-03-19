@@ -48,10 +48,59 @@ const verifyToken = (req, res, next) => {
 // ==========================================
 router.get("/", async (req, res) => {
   try {
-    const artworks = await Artwork.find({});
+    const artworks = await Artwork.find({ status: "published" });
     res.status(200).json(artworks);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// ==========================================
+// 4.1. ADMIN ROUTE (Fetches pending art)
+// ==========================================
+router.get("/admin/pending", verifyToken, async (req, res) => {
+  try {
+    const artworks = await Artwork.find({ status: "pending" });
+    res.status(200).json(artworks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==========================================
+// 4.2. ADMIN ROUTE (Update artwork status)
+// ==========================================
+router.put("/:id/status", verifyToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const updatedArtwork = await Artwork.findByIdAndUpdate(
+      req.params.id, 
+      { status }, 
+      { new: true }
+    );
+    res.status(200).json(updatedArtwork);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==========================================
+// 4.5. THE PROFILE ROUTE (Fetches User & Artworks)
+// ==========================================
+router.get("/profile/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const artworks = await Artwork.find({ 
+      uploadedBy: req.params.userId, 
+      status: "published" 
+    });
+    res.status(200).json({ user, artworks });
+  } catch (error) {
+    console.error("Profile Fetch Error:", error);
+    res.status(500).json({ message: "Failed to fetch profile." });
   }
 });
 
@@ -80,7 +129,8 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
       tags: req.body.tags,
       image: `/Artworks/${req.file.filename}`, 
       artistName: artistName,  
-      uploadedBy: currentUser._id 
+      uploadedBy: currentUser._id ,
+      status: "pending"
     });
 
     res.status(201).json(newArtwork);
