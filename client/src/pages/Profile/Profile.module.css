@@ -1,0 +1,347 @@
+.pageWrapper {
+    position: relative;
+    background-color: #000000;
+    min-height: 100vh;
+    padding-top: 110px; /* Accounts for fixed navbar */
+    padding-bottom: 80px;
+    color: #c9d1d9;
+    overflow-x: hidden;
+}
+
+/* ===== ANIMATED NEON RAIN BACKGROUND ===== */
+.neonRainBg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    /* Creates vertical columns for the rain to fall down */
+    background-image: linear-gradient(to right, rgba(161, 255, 20, 0.05) 1px, transparent 1px);
+    background-size: 100px 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.neonRainBg::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    /* Creates the "falling light" gradient */
+    background-image: linear-gradient(to bottom, transparent 30%, rgba(161, 255, 20, 0.15) 50%, transparent 70%);
+    background-size: 100% 250px;
+    animation: rainFall 5s linear infinite;
+}
+
+@keyframes rainFall {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(50%); }
+}
+
+/* ===== MAIN CONTAINER ===== */
+.profileContainer {
+    position: relative;
+    z-index: 10; /* Keeps content above the rain */
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* ===== PROFILE CARD ===== */
+.profileCard {
+    background-color: rgba(13, 17, 23, 0.85); /* Frosted dark glass */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    border-radius: 24px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(161, 255, 20, 0.05);
+    transition: 0.3s ease;
+}
+
+.profileCard:hover {
+    border-color: rgba(161, 255, 20, 0.3);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(161, 255, 20, 0.1);
+}
+
+.topRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #a1ff14; /* Neon green ring */
+    box-shadow: 0 0 15px rgba(161, 255, 20, 0.2);
+}
+
+.nameBlock h1 {
+    color: #ffffff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem 0;
+    letter-spacing: -0.5px;
+}
+
+.stats {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 0.95rem;
+    color: #8b949e;
+}
+
+.stats strong {
+    color: #ffffff;
+}
+
+.actionBlock {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.followBtn {
+    background-color: #a1ff14;
+    color: #000;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.followBtn:hover {
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(161, 255, 20, 0.4);
+    transform: translateY(-2px);
+}
+
+.iconBtn {
+    background-color: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.iconBtn:hover {
+    background-color: #21262d;
+    color: #a1ff14;
+    border-color: #a1ff14;
+}
+
+.iconBtn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===== SOCIAL & BIO ===== */
+.socialRow {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.socialIcon {
+    color: #8b949e;
+    transition: 0.2s;
+    display: flex;
+    background: #161b22;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+}
+
+.socialIcon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.socialIcon:hover {
+    color: #a1ff14;
+    border-color: #a1ff14;
+    background: rgba(161, 255, 20, 0.1);
+}
+
+.bioBlock {
+    max-width: 800px;
+}
+
+.bioBlock p {
+    color: #c9d1d9;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin: 0;
+    white-space: pre-line; 
+}
+
+/* ===== TABS ===== */
+.tabsContainer {
+    display: flex;
+    gap: 2.5rem;
+    border-bottom: 1px solid #30363d;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 0 0 1rem 0;
+    cursor: pointer;
+    position: relative;
+    transition: 0.2s;
+}
+
+.tab:hover {
+    color: #c9d1d9;
+}
+
+.activeTab {
+    color: #ffffff;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #a1ff14;
+    box-shadow: 0 -2px 10px rgba(161, 255, 20, 0.4);
+    border-radius: 3px 3px 0 0;
+}
+
+/* ===== PORTFOLIO GRID ===== */
+.portfolioSection {
+    padding-bottom: 2rem;
+}
+
+.sectionHeader {
+    margin-bottom: 1.5rem;
+    padding-left: 1rem;
+}
+
+.sectionHeader h3 {
+    font-size: 1.2rem;
+    color: #ffffff;
+    font-weight: 700;
+    margin: 0;
+}
+
+.portfolioGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
+}
+
+.artCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.imageWrapper {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1; 
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.artImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.artCard:hover .artImage {
+    transform: scale(1.08);
+}
+
+.likeOverlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0;
+    transition: 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.likeOverlay svg {
+    width: 14px;
+    height: 14px;
+}
+
+.artCard:hover .likeOverlay {
+    opacity: 1;
+}
+
+.artTitle {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    transition: 0.2s;
+}
+
+.artCard:hover .artTitle {
+    color: #a1ff14;
+}
+
+.emptyState {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem;
+    color: #8b949e;
+    background-color: rgba(22, 27, 34, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px dashed #30363d;
+    border-radius: 16px;
+}
