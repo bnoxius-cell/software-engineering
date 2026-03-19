@@ -146,120 +146,132 @@ a.button-link {
     transform: rotate(250deg);
 }
 
-/* ===== Gallery Preview Section ===== */
-.gallery-preview {
-    position: relative;
-    background-color: rgb(192,255,20); 
-    padding: 60px 20px;
-}
-
-/* Container for smooth transition from hero box */
-.gallery-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    background-color: rgb(192,255,20);
-    border-radius: 24px 24px 0 0; /* rounded top corners */
-    box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
-    transition: all 0.6s ease-in-out; /* smooth fade-in / transition */
-}
-
-/* Section heading */
-.gallery-preview h2 {
-    color: #ffffff;
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2rem;
-}
-
-/* Artwork cards layout */
-.artwork-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    justify-items: center;
-}
-
-/* Card styling remains same */
-.card {
-    position: relative;
-    width: 350px;         /* old fixed width */
-    height: auto;         /* allow height to adjust */
-    background-color: #f2f2f2;
-    border-radius: 10px;
+/* ===== Carousel Section (Replaced Gallery Preview) ===== */
+.carousel-section {
+    padding: 80px 20px;
+    background-color: rgba(11, 17, 32, 0.95);
+    border-top: 1px solid rgba(55, 65, 81, 1);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    box-shadow: 0 0 0 5px #ffffff80;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.card svg {
-    width: 48px;
-    fill: #333;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.carousel-header {
+    text-align: center;
+    margin-bottom: 40px;
 }
 
-.card__image {
+.carousel-header h2 {
+    color: rgb(161, 255, 20);
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.carousel-header p {
+    color: rgba(156, 163, 175, 1);
+    font-size: 1.1rem;
+}
+
+.carousel-container {
+    position: relative;
     width: 100%;
-    height: auto;
-    object-fit: contain;  /* ensures the entire image fits inside the card */
-    display: block;
+    max-width: 1000px;
+    height: 500px;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    background-color: #000;
 }
 
-.card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+.carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.card__content {
-    position: absolute;
-    top: 0;
-    left: 0;
+.carousel-slide {
+    min-width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.carousel-image {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+}
+
+.carousel-info {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    color: #fff;
+    z-index: 10;
+    background: rgba(11, 17, 32, 0.8);
     padding: 20px;
-    box-sizing: border-box;
-    background-color: rgba(242, 242, 242, 0.95);
-    transform: rotateX(-90deg);
-    transform-origin: bottom;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(55, 65, 81, 1);
+    max-width: 400px;
 }
 
-
-.card:hover .card__content {
-    transform: rotateX(0deg);
+.carousel-info h3 {
+    font-size: 1.5rem;
+    color: rgb(161, 255, 20);
+    margin-bottom: 5px;
 }
 
-.card__title {
-    margin: 0;
-    font-size: 20px;
-    color: #333;
-    font-weight: 700;
+.carousel-info p {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: rgba(156, 163, 175, 1);
 }
 
-.card:hover svg {
-    scale: 0;
-}
-
-.card__description {
-    margin: 10px 0 10px;
-    font-size: 12px;
-    color: #777;
-    line-height: 1.4;
-}
-
-.card__button {
-    padding: 15px;
-    border-radius: 8px;
-    background: #777;
-    border: none;
-    color: white;
-}
-
-.secondary {
+.carousel-btn {
+    padding: 8px 20px;
     background: transparent;
-    color: #777;
-    border: 1px solid #777;
+    color: rgb(161, 255, 20);
+    border: 1px solid rgb(161, 255, 20);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.carousel-btn:hover {
+    background-color: rgb(161, 255, 20);
+    color: #000;
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 20;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgb(161, 255, 20);
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background-color: rgb(161, 255, 20);
+    transform: scale(1.2);
+}
+
+.loading-text {
+    color: rgba(156, 163, 175, 1);
+    font-size: 1.1rem;
+    padding: 40px;
 }

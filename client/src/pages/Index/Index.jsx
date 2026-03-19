@@ -1,9 +1,38 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './Index.module.css'
 import { Link } from 'react-router-dom'
 import backgroundImage from '../../assets/images/homeBackgroundImg.png'
 
 const Index = () => {
+  const [recentWorks, setRecentWorks] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Fetch latest artworks
+  useEffect(() => {
+    const fetchRecentWorks = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/artworks');
+        if (response.ok) {
+          const data = await response.json();
+          const latest = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+          setRecentWorks(latest);
+        }
+      } catch (error) {
+        console.error("Failed to fetch artworks:", error);
+      }
+    };
+    fetchRecentWorks();
+  }, []);
+
+  // Auto-play carousel
+  useEffect(() => {
+    if (recentWorks.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % recentWorks.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [recentWorks]);
+
   return (
     <>
     <section className={styles.hero}>
@@ -27,33 +56,35 @@ const Index = () => {
         </div>
     </section>
 
-    <section className={styles["gallery-preview"]}>
-        <h2>Recent Works</h2>
-        <div className={styles["artwork-grid"]}>
-
-            {/* TODO: Hardcoded images; fix later */}
-            <div className={styles.card}>
-                <img src="sampleArt_1.jpg" alt="Artwork 1" className={styles["card__image"]}/>
-                <div className={styles["card__content"]}>
-                    <p className={styles["card__title"]}>Artwork 1</p>
-                    <p className={styles["card__description"]}>Description for Artwork 1 the goes here.</p>
-                    <Link to="/gallery" className={styles["card__button-link"]}><button className={styles["card__button"]}>See more</button></Link>
-                    <button className={styles["card__button secondary"]}>Share</button>
-                </div>
-            </div>
-            <div className={styles["card"]}>
-                <img src="sampleArt_2.jpg" alt="Artwork 2" className={styles["card__image"]}/>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 5H4V19L13.2923 9.70649C13.6828 9.31595 14.3159 9.31591 14.7065 9.70641L20 15.0104V5ZM2 3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934ZM8 11C6.89543 11 6 10.1046 6 9C6 7.89543 6.89543 7 8 7C9.10457 7 10 7.89543 10 9C10 10.1046 9.10457 11 8 11Z"></path>
-                </svg>
-                <div className={styles["card__content"]}>
-                    <p className={styles["card__title"]}>Artwork 2</p>
-                    <p className={styles["card__description"]}>Description for Artwork 2 goes here.</p>
-                    <Link to="/gallery" className={styles["card__button-link"]}><button className={styles["card__button"]}>See more</button></Link>
-                    <button className={styles["card__button secondary"]}>Share</button>
-                </div>
-            </div>
+    <section className={styles["carousel-section"]}>
+        <div className={styles["carousel-header"]}>
+            <h2>Recent Uploads</h2>
+            <p>Discover the latest creations from our talented students.</p>
         </div>
+        
+        {recentWorks.length > 0 ? (
+            <div className={styles["carousel-container"]}>
+                <div className={styles["carousel-track"]} style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+                    {recentWorks.map((work) => (
+                        <div key={work._id} className={styles["carousel-slide"]}>
+                            <img src={`http://localhost:5000${work.image}`} alt={work.title} className={styles["carousel-image"]} />
+                            <div className={styles["carousel-info"]}>
+                                <h3>{work.title}</h3>
+                                <p>By {work.artistName}</p>
+                                <Link to="/gallery" className={styles["carousel-btn"]}>View Gallery</Link>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className={styles["carousel-indicators"]}>
+                    {recentWorks.map((_, idx) => (
+                        <button key={idx} className={`${styles["indicator"]} ${idx === currentIndex ? styles["active"] : ""}`} onClick={() => setCurrentIndex(idx)} aria-label={`Go to slide ${idx + 1}`}></button>
+                    ))}
+                </div>
+            </div>
+        ) : (
+            <p className={styles["loading-text"]}>Loading recent artworks...</p>
+        )}
     </section>
     </>
   )

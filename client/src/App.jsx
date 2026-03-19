@@ -9,7 +9,7 @@ import Index from './pages/Index/Index'
 import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Gallery from './pages/Gallery/Gallery'
-
+import Settings from './pages/Settings/Settings'
 import Upload from './pages/Upload/Upload'
 
 import Login from './pages/Login/Login'
@@ -17,9 +17,6 @@ import Login from './pages/Login/Login'
 import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import UploadManager from './pages/Upload_Admin/UploadManager'
-
-
-
 
 function App() {
     const [ user, setUser ] = useState(null);
@@ -54,16 +51,16 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/upload" element={<Upload />} />
+                    <Route path="/login" element={<Login setUser={setUser}  />} />
+                    <Route path="/settings" element={<Settings />} />
+                    {/* <Route path="/profile" element={<Profile />} /> */}
                 </Route>
-
-                <Route path="/login" element={<Login setUser={setUser}  />} />
 
                 <Route element={<AdminLayout />}>
                     <Route path="/user" element={ <UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/upload" element={<UploadManager />} />
                 </Route>
-
             </Routes>
         </Router>
     )
