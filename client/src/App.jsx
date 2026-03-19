@@ -14,6 +14,7 @@ import Profile from './pages/Profile/Profile'
 import Upload from './pages/Upload/Upload'
 
 import Login from './pages/Login/Login'
+import Register from './pages/Register/Register'
 
 import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
@@ -53,6 +54,7 @@ function App() {
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/upload" element={<Upload />} />
                     <Route path="/login" element={<Login setUser={setUser}  />} />
+                    <Route path="/register" element={<Register />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/profile" element={<Profile currentUser={user} />} />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />

@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
     permissions: {
       type: [String],
       default: undefined
+    },
+      status: {
+      type: String,
+      enum: ['pending', 'active', 'suspended'],
+      default: 'pending'
     }
   },
   { timestamps: true }
