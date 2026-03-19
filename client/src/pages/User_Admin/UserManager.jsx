@@ -1,25 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import axios from 'axios';
 
 // Import our new UI Components
 import Card from '../../components/ui/Card/Card';
 import Badge from '../../components/ui/Badge/Badge';
 
-// Import CSS Module (We no longer import Admin.css here, the Layout handles it)
+// Import CSS Module
 import styles from './UserManager.module.css';
 
-// Assuming Topbar and Sidebar stay the same for now
 import Topbar from "../../components/Topbar";
 import Sidebar from '../../components/Sidebar';
 
 const UserManager = () => {
+    const [users, setUsers] = useState([]);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [error, setError] = useState('');
+
+    // ===== THE RESTORED WORKING FETCH LOGIC =====
+    const fetchUsers = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            
+            if (!res.ok) throw new Error("Unauthorized or failed to fetch users");
+            
+            const data = await res.json();
+            
+            // Correctly mapping data.users and data.total from your backend
+            setUsers(data.users || []);
+            setTotalUsers(data.total || 0);
+        } catch (err) {
+            console.error("Failed to load users:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
     const [formData, setFormData] = useState({
         name: "", email: "", password: "", role: ""
     });
-    const [error, setError] = useState('');
-    const [users, setUsers] = useState([]); 
-    const [totalUsers, setTotalUsers] = useState(0);
-
+    
     const handleChange = (e) => {
         setFormData({...formData, [e.target.name]: e.target.value});
     };
@@ -31,30 +57,40 @@ const UserManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('/api/auth/register', formData);
+            // Admin created accounts are instantly active
+            const payload = { ...formData, status: 'Active' };
+            await axios.post('http://localhost:5000/api/auth/register', payload);
             resetForm();
+            
+            // Refresh the user table using the restored fetch function
+            fetchUsers();
         } catch (err) {
             setError(err.response?.data?.message || "Register failed.");
         }
     };
 
-    useEffect(() => {
+    const handleStatusChange = async (userId, newStatus) => {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        try {
+            // 👇 CHANGED 'users' TO 'auth' HERE 👇
+            const res = await fetch(`http://localhost:5000/api/auth/${userId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
 
-        fetch("http://localhost:5000/api/auth/", {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-            if (!res.ok) throw new Error("Unauthorized or failed to fetch users");
-            return res.json();
-        })
-        .then((data) => {
-            setUsers(data.users);
-            setTotalUsers(data.total);
-        })
-        .catch((err) => console.error(err));
-    }, []);
+            if (res.ok) {
+                fetchUsers(); // Refresh table to show updated status
+            } else {
+                alert("Failed to update user status.");
+            }
+        } catch (error) {
+            console.error("Error updating user status:", error);
+        }
+    };
 
     return (
         <>
@@ -102,6 +138,7 @@ const UserManager = () => {
                     {/* Create User Form */}
                     <section id="create-user-form" className={styles.panel}>
                         <h2 className={styles.panelTitle}>Create New User</h2>
+                        {error && <p style={{color: '#f85149', marginBottom: '1rem'}}>{error}</p>}
                         <form onSubmit={handleSubmit}>
                             <fieldset className={styles.fieldGroup}>
                                 <label htmlFor="name">Full Name</label>
@@ -165,41 +202,82 @@ const UserManager = () => {
                             </select>
                         </header>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Joined Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user) => (
-                                    <tr key={user._id}>
-                                        <td>{user._id}</td>
-                                        <td>{user.name}</td>
-                                        <td>{user.email}</td>
-                                        <td>
-                                            <Badge variant={user.role}>{user.role}</Badge>
-                                        </td>
-                                        <td>
-                                            <Badge variant="active">{user.status || "Active"}</Badge>
-                                        </td>
-                                        <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                                        <td>
-                                            <div className={styles.rowActions}>
-                                                <button className={styles.btnLink}>Edit</button>
-                                                <button className={styles.btnLink}>Delete</button>
-                                            </div>
-                                        </td>
+                        <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>ID</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Name</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Email</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Role</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Status</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Joined Date</th>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {users.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" style={{textAlign: 'center', padding: '2rem', color: '#8b949e'}}>
+                                                No users found or loading...
+                                            </td>
+                                        </tr>
+                                    ) : users.map((user) => {
+                                        const currentStatus = user.status ? user.status.toLowerCase() : 'pending';
+                                        
+                                        return (
+                                        <tr key={user._id} style={{ borderBottom: "1px solid #21262d" }}>
+                                            <td style={{ padding: "1rem", color: "#8b949e" }}>{user._id.substring(0, 8)}...</td>
+                                            <td style={{ padding: "1rem", fontWeight: "600" }}>{user.name}</td>
+                                            <td style={{ padding: "1rem" }}>{user.email}</td>
+                                            <td style={{ padding: "1rem" }}>
+                                                <Badge variant={user.role}>{user.role || 'Student'}</Badge>
+                                            </td>
+                                            <td style={{ padding: "1rem" }}>
+                                                <Badge variant={currentStatus === 'pending' ? 'Pending' : currentStatus === 'active' ? 'Active' : 'Suspended'}>
+                                                    {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                                                </Badge>
+                                            </td>
+                                            <td style={{ padding: "1rem", color: "#8b949e" }}>{new Date(user.createdAt).toLocaleDateString()}</td>
+                                            <td style={{ padding: "1rem" }}>
+                                                <div className={styles.rowActions}>
+                                                    
+                                                    {currentStatus === 'pending' && (
+                                                        <button 
+                                                            className={`${styles.btnLink} ${styles.btnApprove}`}
+                                                            onClick={() => handleStatusChange(user._id, 'Active')}
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                    )}
+
+                                                    {currentStatus === 'active' && user.role !== 'Admin' && (
+                                                        <button 
+                                                            className={`${styles.btnLink} ${styles.btnSuspend}`}
+                                                            onClick={() => handleStatusChange(user._id, 'Suspended')}
+                                                        >
+                                                            Suspend
+                                                        </button>
+                                                    )}
+
+                                                    {currentStatus === 'suspended' && (
+                                                        <button 
+                                                            className={`${styles.btnLink} ${styles.btnRestore}`}
+                                                            onClick={() => handleStatusChange(user._id, 'Active')}
+                                                        >
+                                                            Restore
+                                                        </button>
+                                                    )}
+
+                                                    <button className={styles.btnLink}>Edit</button>
+                                                    <button className={`${styles.btnLink} ${styles.btnDelete}`}>Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )})}
+                                </tbody>
+                            </table>
+                        </div>
                     </section>
 
                     {/* Additional User Actions Section */}
@@ -235,8 +313,6 @@ const UserManager = () => {
                             </Card>
                         </div>
                     </section>
-
-                    
                 </main>
             </div>
         </>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Dashboard.module.css';
 
 // Import our Reusable Components
@@ -7,6 +7,27 @@ import Topbar from '../../components/Topbar';
 import Badge from '../../components/ui/Badge/Badge';
 
 const Dashboard = () => {
+    const [users, setUsers] = useState([]);
+    const [totalUsers, setTotalUsers] = useState(0);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        fetch("http://localhost:5000/api/auth/", {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            setUsers(data.users || []);
+            setTotalUsers(data.total || 0);
+        })
+        .catch((err) => console.error("Failed to fetch users:", err));
+    }, []);
+
+    const pendingUsers = users.filter((u) => u.status === 'pending' || !u.status).length;
+    const recentUsers = [...users].reverse().slice(0, 5); // Gets the 5 most recent users
+
     return (
         <>
             {/* Background Effect (from Admin.css) */}
@@ -24,7 +45,7 @@ const Dashboard = () => {
                     <section className={styles.statsGrid}>
                         <div className={styles.statCard}>
                             <h3>Total Users</h3>
-                            <p className={styles.statNumber}>1,245</p>
+                            <p className={styles.statNumber}>{totalUsers}</p>
                         </div>
                         <div className={styles.statCard}>
                             <h3>Uploaded Works</h3>
@@ -32,7 +53,7 @@ const Dashboard = () => {
                         </div>
                         <div className={styles.statCard}>
                             <h3>Signup Requests</h3>
-                            <p className={styles.statNumber}>12</p>
+                            <p className={styles.statNumber}>{pendingUsers}</p>
                         </div>
                         <div className={styles.statCard}>
                             <h3>Drafts</h3>
@@ -54,30 +75,22 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>Juan Dela Cruz</td>
-                                    <td>Student</td>
-                                    <td><Badge variant="active">Active</Badge></td>
-                                    <td>2025-01-10</td>
-                                </tr>
-                                <tr>
-                                    <td>Maria Santos</td>
-                                    <td>Student</td>
-                                    <td><Badge variant="pending">Pending</Badge></td>
-                                    <td>2025-01-12</td>
-                                </tr>
-                                <tr>
-                                    <td>Admin User</td>
-                                    <td>Administrator</td>
-                                    <td><Badge variant="admin">Active</Badge></td>
-                                    <td>2024-12-01</td>
-                                </tr>
-                                <tr>
-                                    <td>Carlos Reyes</td>
-                                    <td>Student</td>
-                                    <td><Badge variant="active">Active</Badge></td>
-                                    <td>2024-11-25</td>
-                                </tr>
+                                {recentUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>No recent users</td>
+                                    </tr>
+                                ) : (
+                                    recentUsers.map((user) => (
+                                        <tr key={user._id}>
+                                            <td>{user.name}</td>
+                                            <td>{user.role}</td>
+                                            <td>
+                                                <Badge variant={user.status || "pending"}>{user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Pending"}</Badge>
+                                            </td>
+                                            <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </section>
