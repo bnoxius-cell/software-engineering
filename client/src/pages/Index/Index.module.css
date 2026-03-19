@@ -3,18 +3,18 @@
     overflow-x: hidden;
 }
 
-/* ===== ENHANCED HERO SECTION ===== */
+/* ===== ENHANCED HERO SECTION - REDUCED SIZE ===== */
 .hero {
     display: flex;
     justify-content: center;
-    padding: 160px 20px 80px 20px; 
+    padding: 120px 20px 60px 20px; /* Reduced top padding */
 }
 
 .hero-box {
     display: flex;
     width: 95%;
-    max-width: 1400px;
-    height: 700px; /* Large Hero Height */
+    max-width: 1200px; /* Reduced from 1400px */
+    height: 500px; /* REDUCED: From 700px to 500px */
     background-color: #0d1117;
     border: 1px solid #30363d;
     border-radius: 32px;
@@ -26,10 +26,10 @@
 
 .hero-text {
     flex: 1.1;
-    padding: 80px;
+    padding: 60px; /* Reduced from 80px */
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px; /* Reduced from 24px */
     justify-content: center;
 }
 
@@ -38,11 +38,11 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Slightly reduced */
 }
 
 .hero-text h1 {
-    font-size: 4.5rem;
+    font-size: 3.5rem; /* REDUCED: From 4.5rem */
     color: #fff;
     line-height: 1.1;
     font-weight: 900;
@@ -55,37 +55,45 @@
 
 .hero-text p {
     color: #8b949e;
-    font-size: 1.25rem;
-    line-height: 1.6;
-    max-width: 550px;
+    font-size: 1.1rem; /* Reduced from 1.25rem */
+    line-height: 1.5;
+    max-width: 500px; /* Reduced from 550px */
 }
 
-/* ===== UPDATED SCALED BUTTON ===== */
+/* ===== UPDATED BUTTON - SCALED BACK TO REASONABLE SIZE ===== */
 .button {
-    width: 200px; /* INCREASED: From 150px */
-    height: 70px;  /* INCREASED: From 55px */
+    width: 200px; /* Slightly wider to accommodate big icon */
+    height: 65px; /* Taller for the bigger icon */
     display: flex;
     align-items: center;
-    gap: 18px;
+    justify-content: flex-start; /* Align items to the left */
+    gap: 15px; /* Space between icon and text */
     background-color: rgb(161,255,20);
-    border-radius: 40px; /* More rounded for the larger size */
+    border-radius: 40px;
     color: #131313;
-    font-size: 22px; /* INCREASED: From 16px */
+    font-size: 20px; /* Slightly larger text */
     font-weight: 700;
     border: none;
     cursor: pointer;
-    padding-left: 12px;
+    padding: 0 25px 0 15px; /* Left padding for icon, right padding for balance */
     transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1;
 }
 
 .button-link {
     text-decoration: none;
+    display: inline-block; /* Ensures it wraps tightly around the button */
+    line-height: 0; /* Removes any extra line height spacing */
+    font-size: 0; /* Removes any extra space from inline elements */
+    width: fit-content; /* Makes the link container only as wide as the button */
+    height: fit-content; /* Makes the link container only as tall as the button */
 }
 
 .svgIcon {
-    height: 42px; /* INCREASED: From 35px */
-    width: auto;
+    height: 42px; /* BIG icon as requested */
+    width: 42px;
     transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0; /* Prevents icon from shrinking */
 }
 
 .button:hover {
@@ -118,7 +126,7 @@
 /* ===== 3D GALLERY BACKGROUND EFFECTS ===== */
 .galleryPreviewSection {
     position: relative;
-    padding: 150px 0;
+    padding: 100px 0; /* Reduced from 150px */
     background-color: #000;
     overflow: hidden;
     perspective: 1000px;
@@ -175,7 +183,7 @@
 
 .sectionHeader {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 50px; /* Reduced from 60px */
     position: relative;
     z-index: 10;
 }
@@ -185,6 +193,13 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     font-weight: 800;
+    font-size: 0.9rem; /* Added font size */
+}
+
+.sectionHeader h2 {
+    font-size: 2.5rem; /* Added heading size */
+    color: #fff;
+    margin: 10px 0 0;
 }
 
 .neonDivider {
@@ -278,10 +293,37 @@
 .cardInfo h4 {
     color: #fff;
     margin: 0;
+    font-size: 1.2rem; /* Added font size */
 }
 
 .cardInfo span {
     color: #a1ff14;
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+/* Optional: Add responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .hero-box {
+        height: auto;
+        flex-direction: column;
+    }
+    
+    .hero-text {
+        padding: 40px;
+    }
+    
+    .hero-text h1 {
+        font-size: 2.5rem;
+    }
+    
+    .button {
+        width: 160px;
+        height: 55px;
+        font-size: 16px;
+    }
+    
+    .svgIcon {
+        height: 30px;
+    }
 }
