@@ -5,13 +5,14 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false); // NEW: Controls the custom filter dropdown
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState('all');
     
-    // NEW: State to control the popup visibility
     const [showAuthModal, setShowAuthModal] = useState(false);
     
     const menuRef = useRef(null);
+    const filterRef = useRef(null); // NEW: Ref for detecting outside clicks on the filter
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
@@ -19,11 +20,16 @@ const Navbar = () => {
     const userAvatar = localStorage.getItem('avatar') || '/assets/images/profile_icon.png';
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 
+    // Handle clicks outside of dropdowns to close them
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setIsMenuOpen(false);
+            }
+            if (filterRef.current && !filterRef.current.contains(event.target)) {
+                setIsFilterOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -39,6 +45,12 @@ const Navbar = () => {
         }
     };
 
+    const handleOptionSelect = (type, e) => {
+        e.stopPropagation(); // Prevents the click from instantly closing/reopening
+        setSearchType(type);
+        setIsFilterOpen(false);
+    };
+
     const handleLogout = () => {
         localStorage.clear();
         window.location.href = '/login';
@@ -52,34 +64,65 @@ const Navbar = () => {
                 </Link>
             </div>
 
+            {/* ===== PREMIUM NEON SEARCH BAR ===== */}
             <form onSubmit={handleSearch} className={styles.searchContainer}>
+                <div className={styles.searchIcon}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+
                 <input 
                     type="text" 
                     className={styles.searchInput} 
-                    placeholder="Search" 
+                    placeholder="Query The Aether..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
-                <select
-                    className={styles.searchSelect}
-                    value={searchType}
-                    onChange={(e) => setSearchType(e.target.value)}
-                >
-                    <option value="all">All</option>
-                    <option value="student">Student Name</option>
-                    <option value="artwork">Artwork Name</option>
-                    <option value="category">Category</option>
-                </select>
-
-                <button type="submit" className={styles.searchBtn}>Search</button>
+                {/* ===== CUSTOM FILTER DROPDOWN ===== */}
+                <div className={styles.filterWrapper} title="Search Filter" ref={filterRef} onClick={toggleFilter}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="4.8 4.56 14.832 15.408" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z"></path>
+                    </svg>
+                    
+                    {isFilterOpen && (
+                        <ul className={styles.customFilterMenu}>
+                            <li 
+                                className={`${styles.filterOption} ${searchType === 'all' ? styles.filterOptionActive : ''}`} 
+                                onClick={(e) => handleOptionSelect('all', e)}
+                            >
+                                All Categories
+                            </li>
+                            <li 
+                                className={`${styles.filterOption} ${searchType === 'student' ? styles.filterOptionActive : ''}`} 
+                                onClick={(e) => handleOptionSelect('student', e)}
+                            >
+                                Student Name
+                            </li>
+                            <li 
+                                className={`${styles.filterOption} ${searchType === 'artwork' ? styles.filterOptionActive : ''}`} 
+                                onClick={(e) => handleOptionSelect('artwork', e)}
+                            >
+                                Artwork Name
+                            </li>
+                            <li 
+                                className={`${styles.filterOption} ${searchType === 'category' ? styles.filterOptionActive : ''}`} 
+                                onClick={(e) => handleOptionSelect('category', e)}
+                            >
+                                Medium / Tag
+                            </li>
+                        </ul>
+                    )}
+                </div>
             </form>
+            {/* ===== END PREMIUM SEARCH BAR ===== */}
 
             <ul className={styles.navLinks}>
                 <li><Link to="/about">About</Link></li>
                 <li><Link to="/contact">Contact Us</Link></li>
                 
-                {/* CHANGED: Upload Button with Upward Pointing Arrows */}
                 <li>
                     {token ? (
                         <Link to="/upload" className={styles.animatedButton}>
@@ -158,7 +201,7 @@ const Navbar = () => {
                 </li>
             </ul>
 
-            {/* NEW: The Auth Required Modal */}
+            {/* The Auth Required Modal */}
             {showAuthModal && (
                 <div className={styles.modalOverlay} onClick={() => setShowAuthModal(false)}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>

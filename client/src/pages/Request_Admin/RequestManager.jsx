@@ -1,22 +1,54 @@
 import React, { useState, useEffect } from "react";
-import styles from "./UploadManager.module.css";
+import styles from "./RequestManager.module.css";
 import Topbar from "../../components/Topbar";
+import Sidebar from "../../components/Sidebar";
 
 const UploadManager = () => {
   const [works, setWorks] = useState([]);
   const [selectedWorks, setSelectedWorks] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
 
-  // Example fetch works from backend
-  // useEffect(() => {
-  //   fetch("http://localhost:5000/api/works")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setWorks(data.works);
-  //       setTotalWorks(data.total);
-  //     })
-  //     .catch((err) => console.error(err));
-  // }, []);
+  // 1. Fetch all works (Pending, Published, Drafts)
+  const fetchWorks = () => {
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:5000/api/artworks", {
+      headers: { Authorization: `Bearer ${token}` } 
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setWorks(data);
+        setTotalWorks(data.length);
+      })
+      .catch((err) => console.error("Failed to load works:", err));
+  };
+
+  useEffect(() => {
+    fetchWorks();
+  }, []);
+
+  // 2. The Approval Function (Updates status in the database)
+  const handleStatusChange = async (workId, newStatus) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/artworks/${workId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (res.ok) {
+        // Refresh the table to show the new status
+        fetchWorks(); 
+      } else {
+        alert("Failed to update status.");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
 
   const toggleSelectWork = (workId) => {
     setSelectedWorks((prev) =>
@@ -42,13 +74,14 @@ const UploadManager = () => {
   };
 
   return (
-    <div className={styles.dashboard}>
-      <main className={styles["main-content"]}>
-        <Topbar title="Works Management" />
+    <div className="admin-layout">
+      <Sidebar activePage="requests" />
+      <main className="main-view">
+        <Topbar title="Request Manager" />
 
         {/* 1. UPLOAD FORM IS NOW AT THE TOP */}
         <div id="upload-work-form" className={styles["form-container"]} style={{ marginTop: "1rem" }}>
-          <h2 className={styles["form-header"]}>Upload New Work</h2>
+          <h2 className={styles["form-header"]}>Upload an artwork</h2>
           <form>
             <div className={styles["form-group"]}>
               <label htmlFor="workTitle">Work Title</label>
@@ -229,8 +262,22 @@ const UploadManager = () => {
                       <td>{new Date(work.createdAt).toLocaleDateString()}</td>
                       <td>{work.views || 0}</td>
                       <td className={styles["action-btns"]}>
-                        <button className={styles["action-btn"]}>Edit</button>
-                        <button className={styles["action-btn"]}>View</button>
+                        {work.status !== 'published' && (
+                            <button 
+                                className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
+                                onClick={() => handleStatusChange(work._id, 'published')}
+                            >
+                                Approve
+                            </button>
+                        )}
+                        {work.status !== 'archived' && (
+                            <button 
+                                className={styles["action-btn"]}
+                                onClick={() => handleStatusChange(work._id, 'archived')}
+                            >
+                                Archive
+                            </button>
+                        )}
                       </td>
                     </tr>
                   ))
