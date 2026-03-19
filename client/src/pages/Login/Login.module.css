@@ -1,29 +1,225 @@
-@keyframes neonRain {
-  from {
-    background-position: 0 0;
+@keyframes move {
+  0% {
+    transform: translateX(0em) translateY(0em);
   }
-  to {
-    background-position: 0 6000px;
+  25% {
+    transform: translateY(-0.5em) translateX(-0.5em);
+    rotate: -5deg;
+  }
+  50% {
+    transform: translateY(0.5em) translateX(-0.5em);
+  }
+  75% {
+    transform: translateY(-0.75em) translateX(0.5em);
+    rotate: 5deg;
+  }
+  100% {
+    transform: translateX(0em) translateY(0em);
+  }
+}
+
+@keyframes glowing-stars {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
   }
 }
 
 .login-bg {
     position: fixed;
-    top: 70px;
+    top: 75px; /* Starts right after navbar */
     left: 0;
     width: 100%;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 75px); /* Full viewport minus navbar (footer removed) */
     z-index: -1;
-    background: #000;
-    background-image:
-    radial-gradient(4px 100px at 0px 235px, rgb(161,255,20), #0000),
-    radial-gradient(4px 100px at 300px 235px, rgb(161,255,20), #0000),
-    radial-gradient(1.5px 1.5px at 150px 117.5px, rgb(161,255,20) 100%, #0000 150%);
-    background-size: 300px 235px;
-    animation: neonRain 120s linear infinite;
+    background: radial-gradient(ellipse at 20% 30%, #0a2e0b 0%, #000000 70%);
     pointer-events: none;
+    overflow: hidden;
 }
 
+/* Stars Background - Multiple layers for depth - NEON GREEN THEME */
+.stars, .stars2, .stars3 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Layer 1 - Small distant stars (neon green) */
+.stars::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 5% 10%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 15% 25%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 25% 45%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 35% 15%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 45% 60%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 55% 30%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 65% 70%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 75% 20%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 85% 50%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 95% 80%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 8% 90%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 18% 40%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 28% 75%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 38% 55%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 48% 85%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 58% 95%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 68% 35%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 78% 65%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 88% 25%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 98% 45%, #8cff00, rgba(0,0,0,0));
+    background-size: 200px 200px;
+    animation: glowing-stars 4s ease-in-out infinite;
+}
+
+/* Layer 2 - Medium stars (brighter neon green) */
+.stars2::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 12% 18%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 22% 35%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 32% 55%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 42% 25%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 52% 70%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 62% 40%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 72% 80%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 82% 30%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 92% 60%, #a1ff14, rgba(0,0,0,0));
+    background-size: 300px 300px;
+    animation: glowing-stars 5s ease-in-out infinite 0.5s;
+}
+
+/* Layer 3 - Large scattered stars */
+.stars3::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(3px 3px at 7% 22%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(4px 4px at 17% 48%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 27% 68%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(4px 4px at 37% 38%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 47% 88%, #a1ff14, rgba(0,0,0,0)),
+        radial-gradient(4px 4px at 57% 58%, #8cff00, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 67% 18%, #7fff00, rgba(0,0,0,0)),
+        radial-gradient(4px 4px at 77% 78%, #a1ff14, rgba(0,0,0,0));
+    background-size: 400px 400px;
+    animation: glowing-stars 6s ease-in-out infinite 1s;
+}
+
+/* Moon in top left corner - Now with neon green tint */
+.moon {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0f0e0, #d4d4a8);
+    box-shadow: 0 0 50px rgba(161, 255, 20, 0.3),
+                inset -10px -10px 20px rgba(0,0,0,0.3);
+    z-index: 2;
+    animation: float 8s ease-in-out infinite;
+}
+
+.moon::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 25px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    box-shadow: 25px 18px 0 4px rgba(0,0,0,0.05),
+                40px 30px 0 3px rgba(0,0,0,0.05),
+                12px 40px 0 6px rgba(0,0,0,0.03);
+}
+
+.moon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4);
+}
+
+/* Astronaut Container - Positioned on LEFT side, aligned with confirm password area */
+.astronaut-container {
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    transform: translateY(-50%);
+    width: 200px;
+    height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.astronaut {
+    width: 180px;
+    height: auto;
+    animation: move 12s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px rgba(161, 255, 20, 0.5));
+    z-index: 6;
+    position: relative;
+}
+
+/* Neon Green Glow Effect behind astronaut */
+.glow {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(161, 255, 20, 0.3) 0%, transparent 70%);
+    filter: blur(20px);
+    z-index: 4;
+    pointer-events: none;
+    animation: pulse 4s ease-in-out infinite;
+}
 
 /*  LOGIN CARD */ 
 .form-container {
