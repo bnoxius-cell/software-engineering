@@ -1,0 +1,146 @@
+/* ===== MAIN CONTAINER ===== */
+.settingsLayout {
+    display: flex;
+    max-width: 1100px;
+    margin: 100px auto 50px auto; 
+    
+    /* THE FIX: Hard-coded height so the box never stretches or shrinks */
+    height: 700px; 
+    
+    background-color: #0D1117; 
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #c9d1d9;
+}
+
+/* ===== LEFT SIDEBAR ===== */
+.sidebar {
+    width: 280px;
+    height: 100%; /* Respects the 700px parent height */
+    background-color: #161b22; 
+    border-right: 1px solid #30363d;
+    padding: 2rem 1rem;
+    overflow-y: auto; /* Scrollable if you add many tabs later */
+}
+
+.sidebarTitle {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-left: 1rem;
+}
+
+.navMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.navItem {
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.navItem:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #c9d1d9;
+}
+
+/* The Neon Active State */
+.active {
+    background-color: rgba(161, 255, 20, 0.1) !important;
+    color: #a1ff14 !important;
+    border-left: 3px solid #a1ff14;
+    border-radius: 0 6px 6px 0;
+}
+
+.divider {
+    height: 1px;
+    background-color: #30363d;
+    margin: 1rem 0;
+}
+
+/* ===== RIGHT CONTENT AREA ===== */
+.contentArea {
+    flex: 1;
+    height: 100%; /* Respects the 700px parent height */
+    padding: 3rem 4rem;
+    background-color: #0D1117;
+    overflow-y: auto; /* THE FIX: Internal scrollbar for tall content */
+}
+
+.tabContent h2 {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.subtext {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #30363d;
+}
+
+/* ===== FORM ELEMENTS ===== */
+.formGroup {
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+}
+
+.formGroup label {
+    display: block;
+    color: #c9d1d9;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.input, .textarea {
+    width: 100%;
+    background-color: #010409;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.input:focus, .textarea:focus {
+    outline: none;
+    border-color: #a1ff14;
+    box-shadow: 0 0 0 1px #a1ff14;
+}
+
+.saveBtn {
+    margin-top: 1rem;
+    background-color: #a1ff14;
+    color: #000;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.saveBtn:hover {
+    background-color: #8cde11;
+    transform: translateY(-2px);
+}
