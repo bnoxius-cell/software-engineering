@@ -1,0 +1,12 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Takes full height of screen */
+    background-color: #000;
+}
+
+.mainContent {
+    flex: 1; /* This grows to fill all available space, pushing footer down */
+    display: flex;
+    flex-direction: column;
+}
