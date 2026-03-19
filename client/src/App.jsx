@@ -10,6 +10,7 @@ import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Gallery from './pages/Gallery/Gallery'
 import Settings from './pages/Settings/Settings'
+import Profile from './pages/Profile/Profile'
 import Upload from './pages/Upload/Upload'
 
 import Login from './pages/Login/Login'
@@ -53,7 +54,8 @@ function App() {
                     <Route path="/upload" element={<Upload />} />
                     <Route path="/login" element={<Login setUser={setUser}  />} />
                     <Route path="/settings" element={<Settings />} />
-                    {/* <Route path="/profile" element={<Profile />} /> */}
+                    <Route path="/profile" element={<Profile currentUser={user} />} />
+                    <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
                 </Route>
 
                 <Route element={<AdminLayout />}>

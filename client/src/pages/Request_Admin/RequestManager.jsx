@@ -8,10 +8,10 @@ const UploadManager = () => {
   const [selectedWorks, setSelectedWorks] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
 
-  // 1. Fetch all works (Pending, Published, Drafts)
+  // 1. Fetch ONLY pending works
   const fetchWorks = () => {
     const token = localStorage.getItem("token");
-    fetch("http://localhost:5000/api/artworks", {
+    fetch("http://localhost:5000/api/artworks/admin/pending", {
       headers: { Authorization: `Bearer ${token}` } 
     })
       .then((res) => res.json())
@@ -48,6 +48,24 @@ const UploadManager = () => {
     } catch (error) {
       console.error("Error updating status:", error);
     }
+  };
+
+  // 3. Edit functionality (Populates top form)
+  const handleEdit = (work) => {
+    const formPanel = document.getElementById("upload-work-form");
+    if (formPanel) {
+      formPanel.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    const titleField = document.getElementById("workTitle");
+    const descField = document.getElementById("workDescription");
+    const tagsField = document.getElementById("workTags");
+    const categoryField = document.getElementById("workCategory");
+
+    if (titleField) titleField.value = work.title || "";
+    if (descField) descField.value = work.description || "";
+    if (tagsField) tagsField.value = work.tags ? work.tags.join(", ") : "";
+    if (categoryField) categoryField.value = work.category || "";
   };
 
   const toggleSelectWork = (workId) => {
@@ -221,7 +239,7 @@ const UploadManager = () => {
         {/* 4. CURRENT WORKS TABLE AT THE BOTTOM */}
         <section className={styles["works-section"]}>
           <div className={styles["section-header"]} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>Current Works ({totalWorks} Total)</h2>
+            <h2 style={{ margin: 0 }}>Pending Approvals ({totalWorks} Total)</h2>
             <select className={styles["search-input"]} style={{ width: "auto" }}>
               <option value="all">All Works</option>
               <option value="published">Published Only</option>
@@ -248,7 +266,7 @@ const UploadManager = () => {
                 {works.length === 0 ? (
                   <tr>
                     <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
-                      No works uploaded yet.
+                      No pending artworks at the moment.
                     </td>
                   </tr>
                 ) : (
@@ -262,22 +280,31 @@ const UploadManager = () => {
                       <td>{new Date(work.createdAt).toLocaleDateString()}</td>
                       <td>{work.views || 0}</td>
                       <td className={styles["action-btns"]}>
-                        {work.status !== 'published' && (
-                            <button 
-                                className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
-                                onClick={() => handleStatusChange(work._id, 'published')}
-                            >
-                                Approve
-                            </button>
-                        )}
-                        {work.status !== 'archived' && (
-                            <button 
-                                className={styles["action-btn"]}
-                                onClick={() => handleStatusChange(work._id, 'archived')}
-                            >
-                                Archive
-                            </button>
-                        )}
+                        <button 
+                            className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
+                            onClick={() => handleStatusChange(work._id, 'published')}
+                        >
+                            Approve
+                        </button>
+                        <button 
+                            className={styles["action-btn"]}
+                            onClick={() => handleEdit(work)}
+                        >
+                            Edit
+                        </button>
+                        <button 
+                            className={styles["action-btn"]}
+                            style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }}
+                            onClick={() => handleStatusChange(work._id, 'rejected')}
+                        >
+                            Reject
+                        </button>
+                        <button 
+                            className={styles["action-btn"]}
+                            onClick={() => handleStatusChange(work._id, 'archived')}
+                        >
+                            Archive
+                        </button>
                       </td>
                     </tr>
                   ))
