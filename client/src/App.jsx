@@ -16,7 +16,7 @@ import Login from './pages/Login/Login'
 
 import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
-import UploadManager from './pages/Upload_Admin/UploadManager'
+import RequestManager from './pages/Request_Admin/RequestManager'
 
 function App() {
     const [ user, setUser ] = useState(null);
@@ -59,7 +59,7 @@ function App() {
                 <Route element={<AdminLayout />}>
                     <Route path="/user" element={ <UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/upload" element={<UploadManager />} />
+                    <Route path="/requests" element={<RequestManager />} />
                 </Route>
             </Routes>
         </Router>
