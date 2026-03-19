@@ -34,6 +34,11 @@ const artworkSchema = new mongoose.Schema(
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
+  },
+  status: { 
+    type: String, 
+    enum: ['pending', 'published', 'rejected', 'archived'], 
+    default: 'pending' // <--- THIS IS THE MAGIC KEY
   }
 },
 { timestamps: true }

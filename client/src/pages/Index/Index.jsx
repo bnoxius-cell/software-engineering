@@ -9,11 +9,20 @@ const Index = () => {
   useEffect(() => {
     const fetchRecentWorks = async () => {
       try {
+        // We still request only published works from the API...
         const response = await fetch('http://localhost:5000/api/artworks?status=published');
         if (response.ok) {
           const data = await response.json();
-          // Take the latest 10 works for the infinite slider
-          const latest = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
+          
+          // ...but we add a strict frontend filter just to be 100% safe 
+          // against pending, rejected, or archived works slipping through!
+          const publishedOnly = data.filter(work => work.status === 'published');
+          
+          // Sort by newest first, then take the top 10 for the infinite slider
+          const latest = publishedOnly
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 10);
+            
           setRecentWorks(latest);
         }
       } catch (error) {
@@ -58,8 +67,7 @@ const Index = () => {
         <div className={styles.horizonGlow}></div>
 
         <div className={styles.sectionHeader}>
-            {/* TODO: optimization  */}
-            <span className={styles.neonLabel}>Archive</span>
+            <span className={styles.neonLabel}>Museum Archive</span>
             <h2>Recent Submissions</h2>
             <div className={styles.neonDivider}></div>
         </div>
