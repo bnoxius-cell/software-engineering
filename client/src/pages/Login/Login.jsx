@@ -101,6 +101,8 @@ return (
             
             {/* Sign up link */}
             <p className={styles["signup"]}>Don't have an account? <a rel="noopener noreferrer" href="admin_dashboard.html">Sign up</a></p>
+            {/*<!-- TODO: No sign-up option since it is handled by the admin -->*/}
+            <p className={styles["signup"]}>Don't have an account? <a rel="noopener noreferrer" href="/register">Sign up</a></p>
         </div>
     </div>
 )
