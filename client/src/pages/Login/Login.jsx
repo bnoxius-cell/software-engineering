@@ -38,7 +38,7 @@ const Login = ({ setUser }) => {
     }
 
   return (
-    <>
+    <div className={styles["login-wrapper"]} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', minHeight: '80vh', padding: '2rem' }}>
         {/*<!-- for background effect-->*/}
         <div className={styles["login-bg"]}></div>
         <div className={styles["form-container"]}>
@@ -71,7 +71,7 @@ const Login = ({ setUser }) => {
             {/*<!-- TODO: No sign-up option since it is handled by the admin -->*/}
             <p className={styles["signup"]}>Don't have an account? <a rel="noopener noreferrer" href="admin_dashboard.html">Sign up</a></p>
         </div>
-    </>
+    </div>
   )
 }
 
