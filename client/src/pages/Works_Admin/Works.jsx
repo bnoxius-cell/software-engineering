@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
-import styles from "./RequestManager.module.css";
+import styles from "./Works.module.css";
 import Topbar from "../../components/Topbar";
 import Sidebar from "../../components/Sidebar";
 
-const UploadManager = () => {
+const Works = () => {
   const [works, setWorks] = useState([]);
   const [selectedWorks, setSelectedWorks] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
 
-  // 1. Fetch ONLY pending works
+  // Search and Sort State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingWork, setEditingWork] = useState(null);
+
   const fetchWorks = () => {
     const token = localStorage.getItem("token");
-    fetch("http://localhost:5000/api/artworks/admin/pending", {
+    fetch("http://localhost:5000/api/artworks", {
       headers: { Authorization: `Bearer ${token}` } 
     })
       .then((res) => res.json())
@@ -50,22 +55,14 @@ const UploadManager = () => {
     }
   };
 
-  // 3. Edit functionality (Populates top form)
   const handleEdit = (work) => {
-    const formPanel = document.getElementById("upload-work-form");
-    if (formPanel) {
-      formPanel.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    const titleField = document.getElementById("workTitle");
-    const descField = document.getElementById("workDescription");
-    const tagsField = document.getElementById("workTags");
-    const categoryField = document.getElementById("workCategory");
+    setEditingWork(work);
+    setIsEditModalOpen(true);
+  };
 
-    if (titleField) titleField.value = work.title || "";
-    if (descField) descField.value = work.description || "";
-    if (tagsField) tagsField.value = work.tags ? work.tags.join(", ") : "";
-    if (categoryField) categoryField.value = work.category || "";
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingWork(null);
   };
 
   const toggleSelectWork = (workId) => {
@@ -87,15 +84,52 @@ const UploadManager = () => {
     if (panel) panel.open = !panel.open;
   };
 
-  const refreshWorks = () => {
-    console.log("Refresh works...");
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    // Placeholder for actual update logic (PUT/PATCH to backend)
+    // Once successful, you would call fetchWorks() to update the table
+    alert("Artwork updated successfully! (Hook this up to your API)");
+    closeEditModal();
+    fetchWorks();
   };
+
+  // Derived state for filtering the table dynamically
+  const filteredWorks = works.filter((work) => {
+    const matchesSearch = work.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          work.authorName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === "all" || work.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="admin-layout">
-      <Sidebar activePage="requests" />
+      <Sidebar activePage="works" />
       <main className="main-view">
-        <Topbar title="Request Manager" />
+        <Topbar title="Works Manager" />
+
+        {/* 2. STATS OVERVIEW MOVED BELOW THE FORM */}
+        <section className={styles["stats-grid"]}>
+          <div className={styles["stat-card"]}>
+            <h3>Total Works</h3>
+            <p className={styles["stat-number"]}>{totalWorks}</p>
+          </div>
+          <div className={styles["stat-card"]}>
+            <h3>Published Works</h3>
+            <p className={styles["stat-number"]}>{works.filter(w => w.status === "published").length}</p>
+          </div>
+          <div className={styles["stat-card"]}>
+            <h3>Drafts</h3>
+            <p className={styles["stat-number"]}>{works.filter(w => w.status === "draft").length}</p>
+          </div>
+          <div className={styles["stat-card"]}>
+            <h3>This Month Uploads</h3>
+            <p className={styles["stat-number"]}>{works.filter(w => {
+              const date = new Date(w.createdAt);
+              const now = new Date();
+              return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+            }).length}</p>
+          </div>
+        </section>
 
         {/* 1. UPLOAD FORM IS NOW AT THE TOP */}
         <div id="upload-work-form" className={styles["form-container"]} style={{ marginTop: "1rem" }}>
@@ -172,80 +206,38 @@ const UploadManager = () => {
           </form>
         </div>
 
-        {/* 2. STATS OVERVIEW MOVED BELOW THE FORM */}
-        <section className={styles["stats-grid"]}>
-          <div className={styles["stat-card"]}>
-            <h3>Total Works</h3>
-            <p className={styles["stat-number"]}>{totalWorks}</p>
-          </div>
-          <div className={styles["stat-card"]}>
-            <h3>Published Works</h3>
-            <p className={styles["stat-number"]}>{works.filter(w => w.status === "published").length}</p>
-          </div>
-          <div className={styles["stat-card"]}>
-            <h3>Drafts</h3>
-            <p className={styles["stat-number"]}>{works.filter(w => w.status === "draft").length}</p>
-          </div>
-          <div className={styles["stat-card"]}>
-            <h3>This Month Uploads</h3>
-            <p className={styles["stat-number"]}>{works.filter(w => {
-              const date = new Date(w.createdAt);
-              const now = new Date();
-              return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-            }).length}</p>
-          </div>
-        </section>
+        
 
-        {/* 3. SEARCH AND ACTIONS */}
         <section className={styles["action-section"]}>
-          <div className={styles["action-buttons"]}>
-            <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={toggleBulkActions}>
-              Bulk Actions
-            </button>
-            <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={refreshWorks}>
-              Refresh Data
-            </button>
-          </div>
-
-          <div className={styles["search-container"]}>
+          <div className={styles["search-container"]} style={{ maxWidth: '100%', justifyContent: 'flex-start' }}>
             <input
               type="text"
               className={styles["search-input"]}
-              placeholder="Search existing works..."
+              placeholder="Search by title or author..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ maxWidth: '300px' }}
             />
-            <button className={`${styles.btn} ${styles["btn-secondary"]}`}>Search</button>
+            <select 
+              className={styles["search-input"]} 
+              style={{ width: "auto" }}
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="published">Published</option>
+              <option value="draft">Drafts</option>
+              <option value="archived">Archived</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={fetchWorks}>Refresh</button>
           </div>
         </section>
 
-        {/* Bulk Actions Panel (Hidden by default) */}
-        <details className={styles["form-container"]} id="bulk-actions-panel" style={{ marginBottom: "1rem" }}>
-          <summary style={{ color: "#a1ff14", cursor: "pointer", fontWeight: "bold" }}>Bulk Actions Settings</summary>
-          <div className={styles["form-group"]} style={{ marginTop: "1rem" }}>
-            <label>Select Action</label>
-            <select className={styles["search-input"]}>
-              <option value="">Choose bulk action...</option>
-              <option value="publish">Publish Selected</option>
-              <option value="draft">Move to Draft</option>
-              <option value="archive">Archive Selected</option>
-              <option value="delete">Delete Selected</option>
-            </select>
-          </div>
-          <div className={styles["form-actions"]}>
-            <button type="button" className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={toggleBulkActions}>Cancel</button>
-            <button type="button" className={`${styles.btn} ${styles["btn-primary"]}`}>Apply Bulk Action</button>
-          </div>
-        </details>
-
-        {/* 4. CURRENT WORKS TABLE AT THE BOTTOM */}
         <section className={styles["works-section"]}>
           <div className={styles["section-header"]} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>Pending Approvals ({totalWorks} Total)</h2>
-            <select className={styles["search-input"]} style={{ width: "auto" }}>
-              <option value="all">All Works</option>
-              <option value="published">Published Only</option>
-              <option value="draft">Drafts Only</option>
-              <option value="archived">Archived</option>
-            </select>
+            <h2 style={{ margin: 0 }}>All Artworks ({filteredWorks.length})</h2>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -263,14 +255,14 @@ const UploadManager = () => {
                 </tr>
               </thead>
               <tbody>
-                {works.length === 0 ? (
+                {filteredWorks.length === 0 ? (
                   <tr>
                     <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
-                      No pending artworks at the moment.
+                      No artworks found matching your criteria.
                     </td>
                   </tr>
                 ) : (
-                  works.map((work) => (
+                  filteredWorks.map((work) => (
                     <tr key={work._id}>
                       <td>{work._id}</td>
                       <td>{work.title}</td>
@@ -315,8 +307,65 @@ const UploadManager = () => {
         </section>
 
       </main>
+
+      {/* ===== EDIT ARTWORK MODAL ===== */}
+      {isEditModalOpen && editingWork && (
+        <div className={styles.modalOverlay} onClick={closeEditModal}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 className={styles["form-header"]} style={{ margin: 0 }}>Edit Artwork</h2>
+              <button className={styles.closeBtn} onClick={closeEditModal}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit}>
+              <div className={styles.modalGrid}>
+                {/* Left Column: Image Preview */}
+                <div className={styles.modalImageCol}>
+                  <img src={`http://localhost:5000${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
+                  <div className={styles["form-group"]} style={{ marginTop: '1rem' }}>
+                    <label>Update Image (Optional)</label>
+                    <input type="file" style={{ width: '100%' }} accept="image/*" />
+                  </div>
+                </div>
+                
+                {/* Right Column: Form Fields */}
+                <div className={styles.modalFormCol}>
+                  <div className={styles["form-group"]}>
+                    <label>Title</label>
+                    <input type="text" defaultValue={editingWork.title} required />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div className={styles["form-group"]}>
+                      <label>Category / Medium</label>
+                      <input type="text" defaultValue={editingWork.category || editingWork.medium} required />
+                    </div>
+                    <div className={styles["form-group"]}>
+                      <label>Status</label>
+                      <select defaultValue={editingWork.status} required>
+                        <option value="pending">Pending</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label>Description</label>
+                    <textarea defaultValue={editingWork.description} style={{ minHeight: '100px' }}></textarea>
+                  </div>
+                  <div className={styles["form-actions"]}>
+                    <button type="button" className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={closeEditModal}>Cancel</button>
+                    <button type="submit" className={`${styles.btn} ${styles["btn-primary"]}`}>Save Changes</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default UploadManager;
+export default Works;
