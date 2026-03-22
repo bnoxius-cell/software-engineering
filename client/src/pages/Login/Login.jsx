@@ -76,7 +76,6 @@ const Login = ({ setUser }) => {
                 <div className={styles["stars3"]}></div>
                 <div className={styles["moon"]}></div>
                 <div className={styles["astronaut-container"]}>
-                    {/* Use a reliable image source or import locally */}
                     <img src="/assets/images/icons/astronaut.png" alt="Astronaut" className={styles["astronaut"]} />
                     <div className={styles["glow"]}></div>
                 </div>
