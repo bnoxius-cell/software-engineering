@@ -115,17 +115,17 @@ const Works = () => {
   };
 
   const filteredWorks = works.filter((work) => {
+    // Completely hide pending works from this page
+    if (work.status === 'pending') return false;
+    
     const matchesSearch = work.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           work.artistName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || work.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const pendingWorks = filteredWorks.filter(w => w.status === 'pending');
-  const otherWorks = filteredWorks.filter(w => w.status !== 'pending');
-  
-  const totalPages = Math.ceil(otherWorks.length / ITEMS_PER_PAGE);
-  const paginatedWorks = otherWorks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredWorks.length / ITEMS_PER_PAGE);
+  const paginatedWorks = filteredWorks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const renderRow = (work) => (
     <tr key={work._id} onClick={() => handleView(work)} className={styles.tableRow} style={{ cursor: "pointer" }}>
@@ -138,11 +138,6 @@ const Works = () => {
       <td>{work.views || 0}</td>
       <td className={styles["action-btns"]} onClick={(e) => e.stopPropagation()}>
         {/* 1. APPROVE / RESTORE ACTIONS */}
-        {work.status === 'pending' && (
-          <button className={`${styles["action-btn"]} ${styles["btn-primary"]}`} onClick={() => handleStatusChange(work._id, 'published')}>
-            Approve
-          </button>
-        )}
         {(work.status === 'archived' || work.status === 'rejected') && (
           <button className={styles["action-btn"]} style={{ backgroundColor: '#28a745', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'published')}>
             Restore
@@ -166,17 +161,10 @@ const Works = () => {
           </button>
         )}
 
-        {/* 4. REJECT / REMOVE ACTIONS */}
-        {work.status === 'pending' && (
-          <button className={styles["action-btn"]} style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'rejected')} title="Artwork will be permanently deleted after 30 days">
-            Reject
-          </button>
-        )}
-        {work.status !== 'pending' && (
-          <button className={styles["action-btn"]} style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'rejected')} title="Artwork will be permanently deleted after 30 days">
-            Remove
-          </button>
-        )}
+        {/* 4. REMOVE ACTION */}
+        <button className={styles["action-btn"]} style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'rejected')} title="Artwork will be permanently deleted after 30 days">
+          Remove
+        </button>
       </td>
     </tr>
   );
@@ -229,7 +217,6 @@ const Works = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
               <option value="published">Published</option>
               <option value="draft">Drafts</option>
               <option value="archived">Archived</option>
@@ -239,44 +226,10 @@ const Works = () => {
           </div>
         </section>
 
-        {/* ===== PENDING APPROVALS TABLE ===== */}
-        <section className={styles["works-section"]} style={{ marginBottom: "2rem" }}>
-          <div className={styles["section-header"]} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, color: '#ffc107' }}>Pending Approvals ({pendingWorks.length})</h2>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Medium</th>
-                  <th>Status</th>
-                  <th>Upload Date</th>
-                  <th>Views</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingWorks.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
-                      No pending approvals at the moment.
-                    </td>
-                  </tr>
-                ) : (
-                  pendingWorks.map(renderRow)
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
         {/* ===== ALL OTHER ARTWORKS TABLE ===== */}
         <section className={styles["works-section"]}>
           <div className={styles["section-header"]} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>All Artworks ({otherWorks.length})</h2>
+            <h2 style={{ margin: 0 }}>All Artworks ({filteredWorks.length})</h2>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -294,7 +247,7 @@ const Works = () => {
                 </tr>
               </thead>
               <tbody>
-                {otherWorks.length === 0 ? (
+                {filteredWorks.length === 0 ? (
                   <tr>
                     <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
                       No additional artworks found matching your criteria.
@@ -323,154 +276,77 @@ const Works = () => {
         </section>
 
 
-<div id="upload-work-form" className={styles["form-container"]} style={{ marginTop: "1rem" }}>
-
+        <div id="upload-work-form" className={styles["form-container"]} style={{ marginTop: "1rem" }}>
           <h2 className={styles["form-header"]}>Upload an artwork</h2>
-
           <form>
-
             <div className={styles["form-group"]}>
-
               <label htmlFor="workTitle">Work Title</label>
-
               <input type="text" id="workTitle" name="workTitle" placeholder="Enter work title" required />
-
             </div>
-
-
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-
               <div className={styles["form-group"]}>
-
                 <label htmlFor="workAuthor">Author/Creator</label>
-
                 <select id="workAuthor" name="workAuthor" required>
-
                   <option value="">Select author</option>
-
                   {works.map((work) => (
-
                     <option key={work._id} value={work._id}>
-
                       {work.authorName}
-
                     </option>
-
                   ))}
-
                 </select>
-
               </div>
-
-
-
               <div className={styles["form-group"]}>
-
                 <label htmlFor="workCategory">Category</label>
-
                 <select id="workCategory" name="workCategory" required>
-
                   <option value="">Select category</option>
-
                   <option value="design">Digital Art</option>
-
                   <option value="development">Illustration</option>
-
                   <option value="art">Photography</option>
-
                   <option value="writing">Abstract</option>
-
                   <option value="photography">Animation</option>
-
                   <option value="music">Portrait</option>
-
                 </select>
-
               </div>
-
             </div>
 
-
-
             <div className={styles["form-group"]}>
-
               <label htmlFor="workDescription">Description</label>
-
               <textarea id="workDescription" name="workDescription" placeholder="Describe the work..." required />
-
             </div>
-
-
-
             <div className={styles["form-group"]}>
-
               <label>Upload Files</label>
-
               <div className={styles["file-upload"]}>
-
                 <label className={styles["file-upload-label"]} htmlFor="workFiles">
-
                   <span style={{ fontSize: "1rem", fontWeight: "bold", color: "#a1ff14" }}>Click to browse or drag files here</span>
-
                   <span style={{ fontSize: "0.85rem", color: "gray" }}>(Images, PDF, DOC, ZIP)</span>
-
                 </label>
-
                 <input type="file" id="workFiles" name="workFiles" multiple accept="image/*,.pdf,.doc,.zip" />
-
               </div>
-
             </div>
-
-
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-
               <div className={styles["form-group"]}>
-
                 <label htmlFor="workStatus">Status</label>
-
                 <select id="workStatus" name="workStatus" required>
-
                   <option value="published">Published</option>
-
                   <option value="draft">Draft</option>
-
                   <option value="archived">Archived</option>
-
                 </select>
-
               </div>
-
-
 
               <div className={styles["form-group"]}>
-
                 <label htmlFor="workTags">Tags (comma separated)</label>
-
                 <input type="text" id="workTags" name="workTags" placeholder="e.g., digital art, anime" />
-
               </div>
-
             </div>
-
-
 
             <div className={styles["form-actions"]}>
-
               <button type="reset" className={`${styles.btn} ${styles["btn-secondary"]}`}>Clear Form</button>
-
               <button type="submit" className={`${styles.btn} ${styles["btn-primary"]}`}>Upload Work</button>
-
             </div>
-
           </form>
-
         </div>
-
       </main>
-      
 
       {/* ===== VIEW ARTWORK MODAL ===== */}
       {isViewModalOpen && viewingWork && (
