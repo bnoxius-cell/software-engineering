@@ -48,7 +48,13 @@ const verifyToken = (req, res, next) => {
 // ==========================================
 router.get("/", async (req, res) => {
   try {
-    const artworks = await Artwork.find({ status: "published" });
+    // Dynamically filter by status if the frontend requests it
+    const query = {};
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+    
+    const artworks = await Artwork.find(query);
     res.status(200).json(artworks);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -130,7 +136,8 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
       image: `/Artworks/${req.file.filename}`, 
       artistName: artistName,  
       uploadedBy: currentUser._id ,
-      status: "pending"
+      // Changed from "pending" to "published" so artworks show up instantly
+      status: "published" 
     });
 
     res.status(201).json(newArtwork);
