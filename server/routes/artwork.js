@@ -85,6 +85,54 @@ router.put("/:id/status", verifyToken, async (req, res) => {
 });
 
 // ==========================================
+// 4.3. ADMIN ROUTE (Fetches ALL art regardless of status)
+// ==========================================
+router.get("/all", verifyToken, async (req, res) => {
+  try {
+    // Fetches everything, sorted by newest first
+    const artworks = await Artwork.find({}).sort({ createdAt: -1 });
+    res.status(200).json(artworks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==========================================
+// 4.4. ADMIN ROUTE (Full Edit / Update Artwork)
+// ==========================================
+router.put("/:id", verifyToken, upload.single("artworkImage"), async (req, res) => {
+  try {
+    // Grab the text fields from the request
+    const updateData = {
+      title: req.body.title,
+      medium: req.body.medium,
+      status: req.body.status,
+      description: req.body.description
+    };
+
+    // If the admin uploaded a NEW image, update the image path too
+    if (req.file) {
+      updateData.image = `/Artworks/${req.file.filename}`;
+    }
+
+    const updatedArtwork = await Artwork.findByIdAndUpdate(
+      req.params.id, 
+      updateData, 
+      { new: true } // Returns the updated document
+    );
+
+    if (!updatedArtwork) {
+      return res.status(404).json({ message: "Artwork not found" });
+    }
+
+    res.status(200).json(updatedArtwork);
+  } catch (error) {
+    console.error("Update Artwork Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==========================================
 // 4.5. THE PROFILE ROUTE (Fetches User & Artworks)
 // ==========================================
 router.get("/profile/:userId", async (req, res) => {

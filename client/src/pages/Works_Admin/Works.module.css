@@ -299,6 +299,15 @@ th {
     background-color: rgba(161, 255, 20, 0.05);
 }
 
+/* Table Row Hover for Clickability */
+.tableRow {
+    transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+    background-color: rgba(55, 65, 81, 0.4);
+}
+
 /* Responsive Grid fix for smaller screens */
 @media (max-width: 768px) {
     .main-content {
@@ -387,4 +396,34 @@ th {
     .modalGrid {
         flex-direction: column;
     }
+}
+
+/* ===== PAGINATION STYLES ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.page-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: rgba(55, 65, 81, 1);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.page-dot:hover {
+    background-color: rgba(156, 163, 175, 1);
+}
+
+.page-dot.active {
+    background-color: rgb(161, 255, 20);
+    transform: scale(1.2);
 }
