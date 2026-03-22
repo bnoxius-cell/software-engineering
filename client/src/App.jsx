@@ -19,6 +19,7 @@ import Register from './pages/Register/Register'
 import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import Works from './pages/Works_Admin/Works'
+import Requests from './pages/Requests_Admin/Requests'
 
 function App() {
     const [ user, setUser ] = useState(null);
@@ -64,6 +65,7 @@ function App() {
                     <Route path="/user" element={ <UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/works" element={<Works />} />
+                    <Route path="/requests" element={<Requests />} />
                 </Route>
             </Routes>
         </Router>

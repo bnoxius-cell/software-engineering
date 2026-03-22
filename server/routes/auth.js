@@ -5,6 +5,13 @@ const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
+const requireAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== "Admin") {
+        return res.status(403).json({ message: "Admin access required." });
+    }
+    next();
+};
+
 // Register
 router.post("/register", async (req, res) => {
     const { name, email, password, role, status } = req.body;
@@ -80,12 +87,56 @@ router.get("/", protect, async (req, res) => {
     }
 });
 
+router.put("/:id", protect, requireAdmin, async (req, res) => {
+    try {
+        const { name, email, role, password } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (email && email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+                return res.status(400).json({ message: "Email is already in use" });
+            }
+        }
+
+        if (typeof name === "string" && name.trim()) {
+            user.name = name.trim();
+        }
+
+        if (typeof email === "string" && email.trim()) {
+            user.email = email.trim();
+        }
+
+        if (typeof role === "string" && role.trim()) {
+            user.role = role.trim();
+        }
+
+        if (typeof password === "string" && password.trim()) {
+            user.password = password.trim();
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            message: "User request updated successfully",
+            user,
+        });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ message: "Server error updating user" });
+    }
+});
+
 // PUT route to update a user's status
 // Make sure you import your User model at the top if it isn't already!
 // const User = require('../models/User');
 
 // PUT route to update a user's status
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', protect, requireAdmin, async (req, res) => {
     try {
         // 1. Force the incoming string to lowercase so Mongoose accepts it!
         const status = req.body.status.toLowerCase(); 
