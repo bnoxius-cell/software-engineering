@@ -43,6 +43,21 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+const requireAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const currentUser = await User.findById(userId);
+
+    if (!currentUser || currentUser.role !== "Admin") {
+      return res.status(403).json({ message: "Admin access required." });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to verify admin access." });
+  }
+};
+
 // ==========================================
 // 4. THE MISSING GET ROUTE (Fetches the art)
 // ==========================================
@@ -58,7 +73,7 @@ router.get("/", async (req, res) => {
 // ==========================================
 // 4.1. ADMIN ROUTE (Fetches pending art)
 // ==========================================
-router.get("/admin/pending", verifyToken, async (req, res) => {
+router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" });
     res.status(200).json(artworks);
@@ -70,7 +85,26 @@ router.get("/admin/pending", verifyToken, async (req, res) => {
 // ==========================================
 // 4.2. ADMIN ROUTE (Update artwork status)
 // ==========================================
-router.put("/:id/status", verifyToken, async (req, res) => {
+router.put("/:id", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { title, medium, description, tags, artistName } = req.body;
+    const updatedArtwork = await Artwork.findByIdAndUpdate(
+      req.params.id,
+      { title, medium, description, tags, artistName },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedArtwork) {
+      return res.status(404).json({ message: "Artwork not found." });
+    }
+
+    res.status(200).json(updatedArtwork);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const updatedArtwork = await Artwork.findByIdAndUpdate(
