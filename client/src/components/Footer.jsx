@@ -13,10 +13,10 @@ const Footer = () => {
             </p>
 
             <div className={styles["footer-links"]}>
-                <a href="home.html">Home</a>
-                <a href="gallery.html">Gallery</a>
-                <a href="about.html">About</a>
-                <a href="contact.html">Contact</a>
+                <a href="/">Home</a>
+                <a href="/gallery">Gallery</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
             </div>
 
             <span>
