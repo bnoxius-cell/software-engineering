@@ -4,8 +4,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken"); 
-const Artwork = require("../models/Artwork"); // Corrected path to models
-const User = require("../models/User");       // Corrected path to models
+const Artwork = require("../models/Artwork"); 
+const User = require("../models/User");       
 
 // 1. Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -59,7 +59,7 @@ const requireAdmin = async (req, res, next) => {
 };
 
 // ==========================================
-// 4. THE MISSING GET ROUTE (Fetches the art)
+// 4. GET ROUTES
 // ==========================================
 router.get("/", async (req, res) => {
   try {
@@ -70,9 +70,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ==========================================
-// 4.1. ADMIN ROUTE (Fetches pending art)
-// ==========================================
 router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" });
@@ -82,28 +79,32 @@ router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// 4.2. ADMIN ROUTE (Update artwork status)
-// ==========================================
-router.put("/:id", verifyToken, requireAdmin, async (req, res) => {
+router.get("/all", verifyToken, async (req, res) => {
   try {
-    const { title, medium, description, tags, artistName } = req.body;
-    const updatedArtwork = await Artwork.findByIdAndUpdate(
-      req.params.id,
-      { title, medium, description, tags, artistName },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedArtwork) {
-      return res.status(404).json({ message: "Artwork not found." });
-    }
-
-    res.status(200).json(updatedArtwork);
+    const artworks = await Artwork.find({}).sort({ createdAt: -1 });
+    res.status(200).json(artworks);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
+router.get("/profile/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    const artworks = await Artwork.find({ uploadedBy: req.params.userId, status: "published" });
+    res.status(200).json({ user, artworks });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch profile." });
+  }
+});
+
+// ==========================================
+// 5. UPDATE ROUTES (PUT)
+// ==========================================
+
+// Quick Status Update
 router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
@@ -118,89 +119,50 @@ router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// 4.3. ADMIN ROUTE (Fetches ALL art regardless of status)
-// ==========================================
-router.get("/all", verifyToken, async (req, res) => {
+// FULL Edit / Update Artwork (This is the only /:id route now!)
+router.put("/:id", verifyToken, requireAdmin, upload.single("artworkImage"), async (req, res) => {
   try {
-    // Fetches everything, sorted by newest first
-    const artworks = await Artwork.find({}).sort({ createdAt: -1 });
-    res.status(200).json(artworks);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    const updateData = {};
+    if (req.body.title) updateData.title = req.body.title;
+    if (req.body.medium) updateData.medium = req.body.medium;
+    if (req.body.description) updateData.description = req.body.description;
+    
+    if (req.body.status) {
+        const lowerStatus = req.body.status.toLowerCase();
+        if (['pending', 'published', 'rejected', 'archived'].includes(lowerStatus)) {
+            updateData.status = lowerStatus;
+        }
+    }
 
-// ==========================================
-// 4.4. ADMIN ROUTE (Full Edit / Update Artwork)
-// ==========================================
-router.put("/:id", verifyToken, upload.single("artworkImage"), async (req, res) => {
-  try {
-    // Grab the text fields from the request
-    const updateData = {
-      title: req.body.title,
-      medium: req.body.medium,
-      status: req.body.status,
-      description: req.body.description
-    };
-
-    // If the admin uploaded a NEW image, update the image path too
     if (req.file) {
       updateData.image = `/Artworks/${req.file.filename}`;
     }
 
     const updatedArtwork = await Artwork.findByIdAndUpdate(
       req.params.id, 
-      updateData, 
-      { new: true } // Returns the updated document
+      { $set: updateData }, 
+      { new: true, runValidators: true } 
     );
 
-    if (!updatedArtwork) {
-      return res.status(404).json({ message: "Artwork not found" });
-    }
-
+    if (!updatedArtwork) return res.status(404).json({ message: "Artwork not found" });
     res.status(200).json(updatedArtwork);
+    
   } catch (error) {
-    console.error("Update Artwork Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("🔥 Update Artwork Error:", error); 
+    res.status(500).json({ message: error.message || "Failed to update artwork" });
   }
 });
 
 // ==========================================
-// 4.5. THE PROFILE ROUTE (Fetches User & Artworks)
-// ==========================================
-router.get("/profile/:userId", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const artworks = await Artwork.find({ 
-      uploadedBy: req.params.userId, 
-      status: "published" 
-    });
-    res.status(200).json({ user, artworks });
-  } catch (error) {
-    console.error("Profile Fetch Error:", error);
-    res.status(500).json({ message: "Failed to fetch profile." });
-  }
-});
-
-// ==========================================
-// 5. THE POST ROUTE (Uploads the art)
+// 6. UPLOAD ROUTE (POST)
 // ==========================================
 router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No image file uploaded." });
-    }
+    if (!req.file) return res.status(400).json({ message: "No image file uploaded." });
 
     const userId = req.user.id || req.user._id; 
     const currentUser = await User.findById(userId);
-
-    if (!currentUser) {
-      return res.status(404).json({ message: "User not found in database." });
-    }
+    if (!currentUser) return res.status(404).json({ message: "User not found in database." });
 
     const artistName = currentUser.username || currentUser.name || "Unknown Artist";
 
@@ -217,7 +179,6 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
 
     res.status(201).json(newArtwork);
   } catch (error) {
-    console.error("Upload Route Error:", error);
     res.status(500).json({ message: error.message });
   }
 });

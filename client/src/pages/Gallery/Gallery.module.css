@@ -144,3 +144,135 @@
 .masonryGrid .artCard:hover .cardOverlay {
     opacity: 1;
 }
+
+/* ===== POKEMON CARD POPUP MODAL ===== */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 2rem;
+}
+
+.modalCard {
+    position: relative;
+    background-color: #0b1120;
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    border-radius: 24px;
+    border: 2px solid rgba(161, 255, 20, 0.4);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(161, 255, 20, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: popInCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popInCard {
+    from { 
+        opacity: 0; 
+        transform: scale(0.8) translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.closeBtn:hover {
+    background: #ff4c4c;
+    border-color: #ff4c4c;
+    transform: scale(1.1) rotate(90deg);
+}
+
+.modalImageContainer {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(17,24,39,1) 0%, rgba(0,0,0,1) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid rgba(55, 65, 81, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+.modalImage {
+    width: 100%;
+    max-height: 50vh;
+    object-fit: contain;
+    display: block;
+}
+
+.modalInfo {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.modalTitle {
+    font-size: 2rem;
+    color: rgb(161, 255, 20);
+    margin-bottom: 0.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.modalArtist {
+    font-size: 1.1rem;
+    color: #e5e7eb;
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+}
+
+.modalBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.modalBadge {
+    background-color: rgba(161, 255, 20, 0.1);
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    color: rgb(161, 255, 20);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modalDesc {
+    color: #9aa6b2;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}

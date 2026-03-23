@@ -15,6 +15,7 @@ const Works = () => {
   const [editingWork, setEditingWork] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingWork, setViewingWork] = useState(null);
+  const [isUploadMinimized, setIsUploadMinimized] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -41,25 +42,44 @@ const Works = () => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus]);
 
-  const handleStatusChange = async (workId, newStatus) => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(`http://localhost:5000/api/artworks/${workId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
+  const toggleWorkSelection = (workId) => {
+    setSelectedWorks((current) =>
+      current.includes(workId)
+        ? current.filter((id) => id !== workId)
+        : [...current, workId]
+    );
+  };
 
-      if (res.ok) {
-        fetchWorks(); 
-      } else {
-        alert("Failed to update status.");
-      }
+  const toggleSelectAllWorks = () => {
+    if (filteredWorks.length > 0 && selectedWorks.length === filteredWorks.length) {
+      setSelectedWorks([]);
+    } else {
+      setSelectedWorks(filteredWorks.map((w) => w._id));
+    }
+  };
+
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedWorks.length === 0) return;
+    const token = localStorage.getItem("token");
+
+    try {
+      await Promise.all(
+        selectedWorks.map((id) =>
+          fetch(`http://localhost:5000/api/artworks/${id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+          })
+        )
+      );
+      setSelectedWorks([]);
+      fetchWorks();
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Error updating statuses:", error);
+      alert("Failed to update some artworks.");
     }
   };
 
@@ -88,18 +108,23 @@ const Works = () => {
     e.preventDefault();
     const token = localStorage.getItem("token");
     
-    // FormData automatically grabs all inputs with a 'name' attribute
-    const formData = new FormData(e.target);
+    // Extract form data to send as JSON to avoid 500 errors if backend lacks multer on PUT
+    const form = e.target;
+    const payload = {
+      title: form.title.value,
+      medium: form.medium.value,
+      status: form.status.value,
+      description: form.description.value
+    };
 
     try {
       const res = await fetch(`http://localhost:5000/api/artworks/${editingWork._id}`, {
         method: 'PUT',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-          // Note: DO NOT set 'Content-Type' when sending FormData. 
-          // The browser sets it automatically with the correct boundaries!
         },
-        body: formData
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
@@ -114,7 +139,37 @@ const Works = () => {
     }
   };
 
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    const formData = new FormData(e.target);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/artworks", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        e.target.reset();
+        fetchWorks();
+        alert("Artwork uploaded successfully!");
+      } else {
+        const errData = await res.json();
+        alert(`Failed to upload: ${errData?.message || 'Server error'}`);
+      }
+    } catch (error) {
+      console.error("Error uploading artwork:", error);
+    }
+  };
+
   const filteredWorks = works.filter((work) => {
+    // 🛡️ SAFETY NET: If the database returned a corrupted null work, ignore it!
+    if (!work) return false; 
+    
     // Completely hide pending works from this page
     if (work.status === 'pending') return false;
     
@@ -127,8 +182,32 @@ const Works = () => {
   const totalPages = Math.ceil(filteredWorks.length / ITEMS_PER_PAGE);
   const paginatedWorks = filteredWorks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
+  const emptyRowsCount = Math.max(0, ITEMS_PER_PAGE - paginatedWorks.length);
+
   const renderRow = (work) => (
     <tr key={work._id} onClick={() => handleView(work)} className={styles.tableRow} style={{ cursor: "pointer" }}>
+      <td onClick={(e) => e.stopPropagation()}>
+        <label className={styles["ios-checkbox"]}>
+          <input
+            type="checkbox"
+            checked={selectedWorks.includes(work._id)}
+            onChange={() => toggleWorkSelection(work._id)}
+          />
+          <div className={styles["checkbox-wrapper"]}>
+            <div className={styles["checkbox-bg"]}></div>
+            <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
+              <path
+                className={styles["check-path"]}
+                d="M4 12L10 18L20 6"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </label>
+      </td>
       <td style={{ color: "#8b949e" }}>{work._id.substring(0,8)}...</td>
       <td style={{ fontWeight: "600" }}>{work.title}</td>
       <td>{work.artistName}</td>
@@ -137,33 +216,11 @@ const Works = () => {
       <td style={{ color: "#8b949e" }}>{new Date(work.createdAt).toLocaleDateString()}</td>
       <td>{work.views || 0}</td>
       <td className={styles["action-btns"]} onClick={(e) => e.stopPropagation()}>
-        {/* 1. APPROVE / RESTORE ACTIONS */}
-        {(work.status === 'archived' || work.status === 'rejected') && (
-          <button className={styles["action-btn"]} style={{ backgroundColor: '#28a745', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'published')}>
-            Restore
-          </button>
-        )}
-        {work.status === 'draft' && (
-          <button className={`${styles["action-btn"]} ${styles["btn-primary"]}`} onClick={() => handleStatusChange(work._id, 'published')}>
-            Publish
-          </button>
-        )}
-        
-        {/* 2. EDIT ACTION */}
-        <button className={styles["action-btn"]} onClick={() => handleEdit(work)}>
-            Edit
+        <button className={styles.inlineAction} onClick={() => handleEdit(work)}>
+          Edit
         </button>
-
-        {/* 3. ARCHIVE ACTION */}
-        {(work.status === 'published' || work.status === 'draft') && (
-          <button className={styles["action-btn"]} onClick={() => handleStatusChange(work._id, 'archived')}>
-            Archive
-          </button>
-        )}
-
-        {/* 4. REMOVE ACTION */}
-        <button className={styles["action-btn"]} style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }} onClick={() => handleStatusChange(work._id, 'rejected')} title="Artwork will be permanently deleted after 30 days">
-          Remove
+        <button className={styles.inlineAction} onClick={() => alert("Logs feature coming soon!")}>
+          View Logs
         </button>
       </td>
     </tr>
@@ -232,29 +289,102 @@ const Works = () => {
             <h2 style={{ margin: 0 }}>All Artworks ({filteredWorks.length})</h2>
           </div>
 
+          <div className={styles.bulkToolbar}>
+            <label className={styles.selectAllToggle}>
+              <label className={styles["ios-checkbox"]}>
+                <input
+                  type="checkbox"
+                  checked={filteredWorks.length > 0 && selectedWorks.length === filteredWorks.length}
+                  onChange={toggleSelectAllWorks}
+                />
+                <div className={styles["checkbox-wrapper"]}>
+                  <div className={styles["checkbox-bg"]}></div>
+                  <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
+                    <path
+                      className={styles["check-path"]}
+                      d="M4 12L10 18L20 6"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              </label>
+              <span>Select all</span>
+            </label>
+
+            <div className={styles.bulkInfo}>
+              <span>{selectedWorks.length} selected</span>
+            </div>
+
+            <div className={styles.bulkActions}>
+              <button
+                type="button"
+                className={styles.inlineAction}
+                onClick={() => handleBulkStatusChange('published')}
+                disabled={selectedWorks.length === 0}
+              >
+                Publish Selected
+              </button>
+              <button
+                type="button"
+                className={styles.inlineAction}
+                onClick={() => handleBulkStatusChange('archived')}
+                disabled={selectedWorks.length === 0}
+              >
+                Archive Selected
+              </button>
+              <button
+                type="button"
+                className={styles.inlineAction}
+                onClick={() => handleBulkStatusChange('rejected')}
+                disabled={selectedWorks.length === 0}
+              >
+                Remove Selected
+              </button>
+            </div>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table>
               <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Medium</th>
-                  <th>Status</th>
-                  <th>Upload Date</th>
-                  <th>Views</th>
-                  <th>Actions</th>
+                <tr style={{ height: "60px" }}>
+                  <th style={{ width: "80px" }}>Select</th>
+                  <th style={{ width: "100px" }}>ID</th>
+                  <th style={{ width: "20%" }}>Title</th>
+                  <th style={{ width: "15%" }}>Author</th>
+                  <th style={{ width: "15%" }}>Medium</th>
+                  <th style={{ width: "120px" }}>Status</th>
+                  <th style={{ width: "120px" }}>Upload Date</th>
+                  <th style={{ width: "80px" }}>Views</th>
+                  <th style={{ width: "210px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredWorks.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
-                      No additional artworks found matching your criteria.
-                    </td>
-                  </tr>
+                  <>
+                    <tr style={{ height: "75px" }}>
+                      <td colSpan="9" style={{ textAlign: "center", color: "gray" }}>
+                        No additional artworks found matching your criteria.
+                      </td>
+                    </tr>
+                    {Array.from({ length: 9 }).map((_, idx) => (
+                      <tr key={`empty-zero-${idx}`} style={{ height: "75px" }}>
+                        <td colSpan="9" style={{ border: "none", padding: 0 }}></td>
+                      </tr>
+                    ))}
+                  </>
                 ) : (
-                  paginatedWorks.map(renderRow)
+                  <>
+                    {paginatedWorks.map(renderRow)}
+                    {/* Render empty rows to prevent table stretching and keep the table size consistent */}
+                    {emptyRowsCount > 0 && Array.from({ length: emptyRowsCount }).map((_, idx) => (
+                      <tr key={`empty-${idx}`} style={{ height: "75px" }}>
+                        <td colSpan="9" style={{ border: "none", padding: 0 }}></td>
+                      </tr>
+                    ))}
+                  </>
                 )}
               </tbody>
             </table>
@@ -263,6 +393,13 @@ const Works = () => {
           {/* ===== PAGINATION DOTS ===== */}
           {totalPages > 1 && (
             <div className={styles.pagination}>
+              <button
+                className={styles["page-btn"]}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
@@ -271,14 +408,34 @@ const Works = () => {
                   aria-label={`Go to page ${page}`}
                 />
               ))}
+              <button
+                className={styles["page-btn"]}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
         </section>
 
 
         <div id="upload-work-form" className={styles["form-container"]} style={{ marginTop: "1rem" }}>
-          <h2 className={styles["form-header"]}>Upload an artwork</h2>
-          <form>
+          <div 
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+            onClick={() => setIsUploadMinimized(!isUploadMinimized)}
+          >
+            <h2 className={styles["form-header"]} style={{ margin: 0 }}>Upload an artwork (+) </h2>
+            <svg 
+              width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: isUploadMinimized ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.3s', color: 'rgb(161, 255, 20)' }}
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          {!isUploadMinimized && (
+          <form onSubmit={handleUploadSubmit} style={{ marginTop: "1.5rem" }}>
             <div className={styles["form-group"]}>
               <label htmlFor="workTitle">Work Title</label>
               <input type="text" id="workTitle" name="workTitle" placeholder="Enter work title" required />
@@ -326,11 +483,12 @@ const Works = () => {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div className={styles["form-group"]}>
-                <label htmlFor="workStatus">Status</label>
-                <select id="workStatus" name="workStatus" required>
+                <label>Status</label>
+                <select name="status" defaultValue="pending" required>
+                  <option value="pending">Pending</option>
                   <option value="published">Published</option>
-                  <option value="draft">Draft</option>
                   <option value="archived">Archived</option>
+                  <option value="rejected">Rejected</option>
                 </select>
               </div>
 
@@ -345,6 +503,7 @@ const Works = () => {
               <button type="submit" className={`${styles.btn} ${styles["btn-primary"]}`}>Upload Work</button>
             </div>
           </form>
+          )}
         </div>
       </main>
 
@@ -405,11 +564,6 @@ const Works = () => {
                 {/* Left Column: Image Preview */}
                 <div className={styles.modalImageCol}>
                   <img src={`http://localhost:5000${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
-                  <div className={styles["form-group"]} style={{ marginTop: '1rem' }}>
-                    <label>Update Image (Optional)</label>
-                    {/* ADDED: name="artworkImage" to match multer setup */}
-                    <input type="file" name="artworkImage" style={{ width: '100%' }} accept="image/*" />
-                  </div>
                 </div>
                 
                 {/* Right Column: Form Fields */}

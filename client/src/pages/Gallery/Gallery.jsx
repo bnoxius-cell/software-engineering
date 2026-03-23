@@ -5,6 +5,9 @@ import styles from './Gallery.module.css';
 const Gallery = () => {
     const [artworks, setArtworks] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all'); // New state for the filter
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedArtwork, setSelectedArtwork] = useState(null); // State for the popup modal
+    const ITEMS_PER_PAGE = 10;
     
     useEffect(() => {
         // Fetching only published works to keep the gallery safe
@@ -14,10 +17,22 @@ const Gallery = () => {
             .catch((err) => console.error("Could not load artworks", err));
     }, []);
 
+    // Reset page to 1 when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeFilter]);
+
     // Filter logic based on the 'medium' field from your Artwork Model
     const filteredArtworks = activeFilter === 'all' 
         ? artworks 
         : artworks.filter(art => art.medium === activeFilter);
+
+    // SORTING FIX: Ensure consistent order (newest first) before paginating
+    const sortedArtworks = [...filteredArtworks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // PAGINATION LOGIC
+    const totalPages = Math.ceil(sortedArtworks.length / ITEMS_PER_PAGE);
+    const paginatedArtworks = sortedArtworks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
         <>
@@ -86,8 +101,8 @@ const Gallery = () => {
                         </p>
                     )}
 
-                    {filteredArtworks.map((art) => (
-                        <div key={art._id} className={styles.artCard}>
+                    {paginatedArtworks.map((art) => (
+                        <div key={art._id} className={styles.artCard} onClick={() => setSelectedArtwork(art)}>
                             <img 
                                 src={`http://localhost:5000${art.image}`} 
                                 alt={art.title}
@@ -103,7 +118,68 @@ const Gallery = () => {
                         </div>
                     ))}
                 </main>
+
+                {/* ===== PAGINATION ===== */}
+                {totalPages > 1 && (
+                    <div className={styles.pagination} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', margin: '2rem 0 1rem', paddingBottom: '1rem' }}>
+                        <button
+                            className={styles["page-btn"]}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            style={{ backgroundColor: 'rgba(55, 65, 81, 0.5)', color: '#d5d9e1', padding: '0.35rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(156, 163, 175, 0.2)', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.3 : 1, fontWeight: 600 }}
+                        >
+                            Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                className={`${styles["page-dot"]} ${currentPage === page ? styles.active : ""}`}
+                                onClick={() => setCurrentPage(page)}
+                                aria-label={`Go to page ${page}`}
+                                style={{ width: '10px', height: '10px', borderRadius: '50%', padding: 0, border: 'none', cursor: 'pointer', backgroundColor: currentPage === page ? 'rgb(161, 255, 20)' : 'rgba(55, 65, 81, 1)', transform: currentPage === page ? 'scale(1.2)' : 'none', transition: 'all 0.3s ease' }}
+                            />
+                        ))}
+                        <button
+                            className={styles["page-btn"]}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            style={{ backgroundColor: 'rgba(55, 65, 81, 0.5)', color: '#d5d9e1', padding: '0.35rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(156, 163, 175, 0.2)', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.3 : 1, fontWeight: 600 }}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* ===== POKEMON CARD STYLE POPUP MODAL ===== */}
+            {selectedArtwork && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedArtwork(null)}>
+                    <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                        <button className={styles.closeBtn} onClick={() => setSelectedArtwork(null)}>
+                            &times;
+                        </button>
+                        
+                        <div className={styles.modalImageContainer}>
+                            <img 
+                                src={`http://localhost:5000${selectedArtwork.image}`} 
+                                alt={selectedArtwork.title} 
+                                className={styles.modalImage}
+                            />
+                        </div>
+
+                        <div className={styles.modalInfo}>
+                            <h2 className={styles.modalTitle}>{selectedArtwork.title}</h2>
+                            <p className={styles.modalArtist}>by {selectedArtwork.artistName}</p>
+                            
+                            <div className={styles.modalBadges}>
+                                <span className={styles.modalBadge}>{selectedArtwork.medium?.replace('_', ' ')}</span>
+                            </div>
+                            
+                            <p className={styles.modalDesc}>{selectedArtwork.description || "No description provided for this artwork."}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
