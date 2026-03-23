@@ -165,13 +165,13 @@
     position: relative;
     background-color: #0b1120;
     width: 100%;
-    max-width: 550px;
+    max-width: 1000px;
     max-height: 90vh;
     border-radius: 24px;
     border: 2px solid rgba(161, 255, 20, 0.4);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(161, 255, 20, 0.15);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
     animation: popInCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -214,26 +214,30 @@
 }
 
 .modalImageContainer {
-    width: 100%;
+    flex: 1.2;
     background: linear-gradient(135deg, rgba(17,24,39,1) 0%, rgba(0,0,0,1) 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-    border-bottom: 1px solid rgba(55, 65, 81, 1);
+    border-right: 1px solid rgba(55, 65, 81, 1);
     overflow: hidden;
     position: relative;
 }
 
 .modalImage {
     width: 100%;
-    max-height: 50vh;
+    max-height: 80vh;
     object-fit: contain;
     display: block;
 }
 
 .modalInfo {
+    flex: 1;
     padding: 2rem;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .modalTitle {
@@ -275,4 +279,186 @@
     font-size: 0.95rem;
     line-height: 1.6;
     white-space: pre-wrap;
+}
+
+/* Mobile Fallback for Side-by-Side Modal */
+@media (max-width: 800px) {
+    .modalCard {
+        flex-direction: column;
+        max-height: 95vh;
+    }
+    .modalImageContainer {
+        flex: none;
+        height: 45vh;
+        border-right: none;
+        border-bottom: 1px solid rgba(55, 65, 81, 1);
+    }
+    .modalImage {
+        max-height: 45vh;
+    }
+    .modalInfo {
+        justify-content: flex-start;
+    }
+}
+
+/* ===== USER SEARCH CAROUSEL ===== */
+.userSearchSection {
+    margin: 0 auto 3rem;
+    max-width: 1200px;
+    padding: 0 2rem;
+}
+
+.userSearchHeader {
+    color: #a1ff14;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.carouselContainer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.carouselTrack {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    flex: 1;
+    padding: 0.5rem 0;
+}
+
+/* Hide scrollbar */
+.carouselTrack::-webkit-scrollbar {
+    display: none;
+}
+.carouselTrack {
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+.userCard {
+    min-width: 130px;
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(55, 65, 81, 1);
+    border-radius: 16px;
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.userCard:hover {
+    border-color: #a1ff14;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(161, 255, 20, 0.1);
+}
+
+.userAvatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    margin-bottom: 0.75rem;
+    object-fit: cover;
+    border: 2px solid rgba(161, 255, 20, 0.4);
+}
+
+.userName {
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.carouselBtn {
+    background: rgba(55, 65, 81, 0.8);
+    border: 1px solid rgba(156, 163, 175, 0.2);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.carouselBtn:hover {
+    background: #a1ff14;
+    color: black;
+    border-color: #a1ff14;
+}
+
+/* Keep all your existing CSS above the pagination section... */
+
+/* ===== NEW PAGINATION DESIGN ===== */
+.paginationNav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 3rem 0 2rem;
+    padding-bottom: 2rem;
+    font-family: inherit;
+}
+
+.pageItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #9ca3af; /* Muted gray */
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+/* Hover effect with neon tint */
+.pageItem:hover:not(.disabled):not(.activePage):not(.ellipsis) {
+    background-color: rgba(161, 255, 20, 0.1);
+    color: #a1ff14;
+}
+
+/* Active Page Badge */
+.activePage {
+    background-color: #a1ff14;
+    color: #000;
+    box-shadow: 0 0 12px rgba(161, 255, 20, 0.3);
+}
+
+/* The ellipsis (...) */
+.ellipsis {
+    cursor: default;
+    background: transparent;
+    padding: 0 4px;
+    color: #6b7280;
+}
+
+/* Disabled arrow states */
+.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* SVG Arrows */
+.arrowIcon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
