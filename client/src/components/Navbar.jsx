@@ -103,28 +103,16 @@ const Navbar = () => {
                     {isFilterOpen && (
                         <ul className={styles.customFilterMenu}>
                             <li 
-                                className={`${styles.filterOption} ${searchType === 'all' ? styles.filterOptionActive : ''}`} 
-                                onClick={(e) => handleOptionSelect('all', e)}
-                            >
-                                All Categories
-                            </li>
-                            <li 
-                                className={`${styles.filterOption} ${searchType === 'student' ? styles.filterOptionActive : ''}`} 
-                                onClick={(e) => handleOptionSelect('student', e)}
-                            >
-                                Student Name
-                            </li>
-                            <li 
                                 className={`${styles.filterOption} ${searchType === 'artwork' ? styles.filterOptionActive : ''}`} 
                                 onClick={(e) => handleOptionSelect('artwork', e)}
                             >
                                 Artwork Name
                             </li>
                             <li 
-                                className={`${styles.filterOption} ${searchType === 'category' ? styles.filterOptionActive : ''}`} 
-                                onClick={(e) => handleOptionSelect('category', e)}
+                                className={`${styles.filterOption} ${searchType === 'user' ? styles.filterOptionActive : ''}`} 
+                                onClick={(e) => handleOptionSelect('user', e)}
                             >
-                                Medium / Tag
+                                User Name
                             </li>
                         </ul>
                     )}
