@@ -5,19 +5,26 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false); // NEW: Controls the custom filter dropdown
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState('all');
-    
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
     
     const menuRef = useRef(null);
-    const filterRef = useRef(null); // NEW: Ref for detecting outside clicks on the filter
+    const filterRef = useRef(null);
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role'); 
-    const userAvatar = localStorage.getItem('avatar') || '/assets/images/profile_icon.png';
+    const role = localStorage.getItem('role');
+
+    // Load avatar from localStorage with fallback
+    useEffect(() => {
+        const storedAvatar = localStorage.getItem('avatar');
+        if (storedAvatar) {
+            setAvatar(storedAvatar);
+        }
+    }, []);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
@@ -43,18 +50,24 @@ const Navbar = () => {
         } else {
             navigate('/gallery');
         }
+        // Close filter after search
+        setIsFilterOpen(false);
     };
 
     const handleOptionSelect = (type, e) => {
-        e.stopPropagation(); // Prevents the click from instantly closing/reopening
+        e.stopPropagation();
         setSearchType(type);
         setIsFilterOpen(false);
     };
 
     const handleLogout = () => {
         localStorage.clear();
-        window.location.href = '/login';
+        navigate('/login');
+        setIsMenuOpen(false);
     };
+
+    // Check if user is admin safely
+    const isAdmin = role && role.toLowerCase().trim() === 'admin';
 
     return (
         <nav className={styles.navbar}>
@@ -64,7 +77,7 @@ const Navbar = () => {
                 </Link>
             </div>
 
-            {/* ===== PREMIUM NEON SEARCH BAR ===== */}
+            {/* Premium Neon Search Bar */}
             <form onSubmit={handleSearch} className={styles.searchContainer}>
                 <div className={styles.searchIcon}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -81,7 +94,7 @@ const Navbar = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
-                {/* ===== CUSTOM FILTER DROPDOWN ===== */}
+                {/* Custom Filter Dropdown */}
                 <div className={styles.filterWrapper} title="Search Filter" ref={filterRef} onClick={toggleFilter}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="4.8 4.56 14.832 15.408" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z"></path>
@@ -117,7 +130,6 @@ const Navbar = () => {
                     )}
                 </div>
             </form>
-            {/* ===== END PREMIUM SEARCH BAR ===== */}
 
             <ul className={styles.navLinks}>
                 <li><Link to="/about">About</Link></li>
@@ -155,7 +167,9 @@ const Navbar = () => {
 
                 <li ref={menuRef} className={styles.menuContainer}>
                     <button type="button" className={styles.profileBtn} onClick={toggleMenu}>
-                        <img src={userAvatar} alt="Profile" className={styles.avatar} />
+                        <img src={avatar} alt="Profile" className={styles.avatar} onError={(e) => {
+                            e.target.src = '/assets/images/profile_icon.png';
+                        }} />
                     </button>
 
                     {isMenuOpen && (
@@ -167,7 +181,7 @@ const Navbar = () => {
                                         My Profile
                                     </Link>
                                     
-                                    {role && role.toLowerCase().trim() === 'admin' && (
+                                    {isAdmin && (
                                         <Link to="/dashboard" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
                                             <svg className={styles.dropdownIcon} viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                                             Admin Dashboard
@@ -201,13 +215,13 @@ const Navbar = () => {
                 </li>
             </ul>
 
-            {/* The Auth Required Modal */}
+            {/* Auth Required Modal */}
             {showAuthModal && (
                 <div className={styles.modalOverlay} onClick={() => setShowAuthModal(false)}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <h3>Authentication Required</h3>
                         <p>You need an account to upload artwork to the gallery.</p>
-                        <div className={styles.modalActions}>
+                        <div className={styles.modalButtons}>
                             <button onClick={() => setShowAuthModal(false)} className={styles.modalCancelBtn}>Cancel</button>
                             <Link to="/login" className={styles.modalLoginBtn} onClick={() => setShowAuthModal(false)}>Log In</Link>
                         </div>

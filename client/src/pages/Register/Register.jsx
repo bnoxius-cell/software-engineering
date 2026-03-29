@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './Register.module.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const Register = () => {
     const [formData, setFormData] = useState({
         name: '',
@@ -57,7 +59,7 @@ const Register = () => {
         setError('');
         
         try {
-            await axios.post('http://localhost:5000/api/auth/register', {
+            await axios.post(`${API_BASE}/api/auth/register`, {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password
@@ -81,6 +83,11 @@ const Register = () => {
         // Redirect to OAuth endpoint or open popup
     };
 
+    // Fallback for astronaut image
+    const handleAstronautError = (e) => {
+        e.target.src = '/assets/images/placeholder-astronaut.png';
+    };
+
     return (
         <div className={styles["register-wrapper"]}>
             {/* Background with space theme */}
@@ -90,7 +97,12 @@ const Register = () => {
                 <div className={styles["stars3"]}></div>
                 <div className={styles["moon"]}></div>
                 <div className={styles["astronaut-container"]}>
-                    <img src="/assets/images/icons/astronaut.png" alt="Astronaut" className={styles["astronaut"]} />
+                    <img 
+                        src="/assets/images/icons/astronaut.png" 
+                        alt="Astronaut" 
+                        className={styles["astronaut"]} 
+                        onError={handleAstronautError}
+                    />
                     <div className={styles["glow"]}></div>
                 </div>
             </div>
@@ -160,7 +172,14 @@ const Register = () => {
                     </div>
                     
                     <button className={styles["sign"]} type="submit" disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Sign up'}
+                        {loading ? (
+                            <>
+                                <span className={styles.spinner}></span>
+                                Creating Account...
+                            </>
+                        ) : (
+                            'Sign up'
+                        )}
                     </button>
                 </form>
                 

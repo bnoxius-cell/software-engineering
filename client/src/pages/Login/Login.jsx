@@ -3,6 +3,8 @@ import axios from 'axios';
 import styles from './Login.module.css';
 import { useNavigate, Link } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const Login = ({ setUser }) => {
     const [formData, setFormData] = useState({
         email: "",
@@ -14,7 +16,6 @@ const Login = ({ setUser }) => {
     
     const handleChange = (e) => {
         setFormData({...formData, [e.target.name]: e.target.value});
-        // Clear error when user starts typing
         if (error) setError('');
     };
 
@@ -43,7 +44,7 @@ const Login = ({ setUser }) => {
         setError('');
         
         try {
-            const res = await axios.post('/api/auth/login', formData);
+            const res = await axios.post(`${API_BASE}/api/auth/login`, formData);
             
             localStorage.setItem('token', res.data.token);
             
@@ -67,6 +68,11 @@ const Login = ({ setUser }) => {
         // Redirect to OAuth endpoint or open popup
     };
 
+    // Fallback for astronaut image
+    const handleAstronautError = (e) => {
+        e.target.src = '/assets/images/placeholder-astronaut.png';
+    };
+
     return (
         <div className={styles["login-wrapper"]} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', minHeight: '100vh', padding: '2rem' }}>
             {/* Background with space theme */}
@@ -76,7 +82,12 @@ const Login = ({ setUser }) => {
                 <div className={styles["stars3"]}></div>
                 <div className={styles["moon"]}></div>
                 <div className={styles["astronaut-container"]}>
-                    <img src="/assets/images/icons/astronaut.png" alt="Astronaut" className={styles["astronaut"]} />
+                    <img 
+                        src="/assets/images/icons/astronaut.png" 
+                        alt="Astronaut" 
+                        className={styles["astronaut"]} 
+                        onError={handleAstronautError}
+                    />
                     <div className={styles["glow"]}></div>
                 </div>
             </div>
@@ -120,7 +131,14 @@ const Login = ({ setUser }) => {
                     </div>
                     
                     <button className={styles["sign"]} type="submit" disabled={loading}>
-                        {loading ? 'Signing in...' : 'Sign in'}
+                        {loading ? (
+                            <>
+                                <span className={styles.spinner}></span>
+                                Signing in...
+                            </>
+                        ) : (
+                            'Sign in'
+                        )}
                     </button>
                 </form>
                 

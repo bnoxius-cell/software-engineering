@@ -241,7 +241,7 @@
     padding: 1.75rem;
     color: rgb(161, 255, 20);
     position: absolute;
-    top: calc(50% + 37.5px); /* 75px (navbar height) / 2 = 37.5px */
+    top: calc(50% + 37.5px); /* 75px navbar height / 2 = 37.5px */
     left: 50%;
     transform: translate(-50%, -50%);
 }
@@ -478,5 +478,24 @@
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+/* Spinner inside button */
+.spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }

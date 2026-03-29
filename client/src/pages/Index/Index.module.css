@@ -327,3 +327,62 @@
         height: 30px;
     }
 }
+
+/* Additional styles for better error/empty states */
+.loader {
+    color: #a1ff14;
+    text-align: center;
+    font-size: 1.2rem;
+    padding: 2rem;
+    width: 100%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.errorMessage {
+    color: #ff6b6b;
+    text-align: center;
+    font-size: 1rem;
+    padding: 2rem;
+    width: 100%;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.emptyState {
+    color: #8b949e;
+    text-align: center;
+    font-size: 1rem;
+    padding: 2rem;
+    width: 100%;
+}
+
+.cardLink {
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Add hover pause to slider */
+.slideTrack {
+    display: flex;
+    width: fit-content;
+    animation: scroll 60s linear infinite;
+    gap: 60px;
+    padding: 0 100px;
+    transition: animation-play-state 0.3s;
+}
+
+.slider:hover .slideTrack {
+    animation-play-state: paused;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}

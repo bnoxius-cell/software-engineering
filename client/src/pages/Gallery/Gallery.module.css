@@ -6,7 +6,7 @@
 
 .feedHeader {
     text-align: center;
-    margin-bottom: 2rem; /* Reduced slightly to fit filters nicely */
+    margin-bottom: 2rem;
 }
 
 .feedHeader h1 {
@@ -19,7 +19,7 @@
     color: rgba(156, 163, 175, 1);
 }
 
-/* ===== NEW FILTER PILLS ===== */
+/* ===== FILTER PILLS ===== */
 .filterContainer {
     display: flex;
     justify-content: center;
@@ -59,7 +59,7 @@
     box-shadow: 0 4px 15px rgba(161, 255, 20, 0.3);
 }
 
-/* ===== CSS-Only Masonry Grid ===== */
+/* ===== Masonry Grid ===== */
 .masonryGrid {
     column-count: 4;
     column-gap: 1.5rem;
@@ -73,17 +73,16 @@
 @media (max-width: 900px) { .masonryGrid { column-count: 2; } }
 @media (max-width: 600px) { .masonryGrid { column-count: 1; } }
 
-/* The Art Card Base */
+/* Art Card Base */
 .artCard {
-    break-inside: avoid; /* Prevents cards from splitting across columns */
+    break-inside: avoid;
     margin-bottom: 1.5rem;
     border-radius: 0.75rem;
     overflow: hidden;
     position: relative;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     background-color: rgba(17, 24, 39, 1);
-    /* Adding an animation for when items are filtered */
     animation: fadeIn 0.5s ease-out;
 }
 
@@ -99,7 +98,7 @@
     transition: all 0.4s ease;
 }
 
-/* The Overlay (Hidden by default) */
+/* Card Overlay */
 .cardOverlay {
     position: absolute;
     bottom: 0;
@@ -127,20 +126,510 @@
     margin-bottom: 0.25rem;
 }
 
-/* ===== THE MAGICAL HOVER EFFECTS ===== */
-/* 1. If the grid is being interacted with, dim the cards that are NOT hovered */
+/* Hover Effects */
 .masonryGrid:has(.artCard:hover) .artCard:not(:hover) {
     filter: brightness(0.4) grayscale(0.3);
 }
 
-/* 2. Elevate the specific card being hovered */
 .masonryGrid .artCard:hover {
     transform: scale(1.03);
     z-index: 10;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(161, 255, 20, 0.2);
 }
 
-/* 3. Show the text overlay only on the hovered card */
 .masonryGrid .artCard:hover .cardOverlay {
     opacity: 1;
 }
+
+/* Modal Overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modalContainer {
+    position: relative;
+    width: 90%;
+    max-width: 1300px;
+    height: 85vh;
+    background: linear-gradient(135deg, #0d1117 0%, #0a0c10 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(161, 255, 20, 0.2);
+    overflow: hidden;
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Close Button - Properly positioned */
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 20;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.closeBtn:hover {
+    background: rgba(161, 255, 20, 0.2);
+    color: #a1ff14;
+    border-color: #a1ff14;
+    transform: rotate(90deg);
+}
+
+.modalContent {
+    display: flex;
+    height: 100%;
+    gap: 0;
+}
+
+/* Left Side - Artwork Display */
+.modalArtwork {
+    flex: 1.5;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.modalArtImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+/* Right Side - Artwork Info */
+.modalInfo {
+    flex: 1;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(13, 17, 23, 0.95) 100%);
+    overflow-y: auto;
+    border-left: 1px solid rgba(161, 255, 20, 0.2);
+    position: relative;
+}
+
+/* Modal Header with Title and Actions - Top section */
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    padding-right: 40px; /* Add padding to prevent overlap with close button */
+}
+
+.modalHeaderActions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.modalTitle {
+    font-size: 2rem;
+    color: #a1ff14;
+    font-weight: 700;
+    margin: 0;
+    flex: 1;
+}
+
+/* Description - Below title */
+.modalDescription {
+    margin-bottom: 1.5rem;
+}
+
+.modalDescription h4 {
+    color: #a1ff14;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modalDescription p {
+    color: #c9d1d9;
+    line-height: 1.6;
+}
+
+/* Medium/Tag - Below description */
+.modalTags {
+    margin-bottom: 1.5rem;
+}
+
+.modalTags h4 {
+    color: #a1ff14;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tag {
+    display: inline-block;
+    background: rgba(161, 255, 20, 0.1);
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    color: #a1ff14;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Upload Date - Below tag */
+.modalStats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(161, 255, 20, 0.2);
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #c9d1d9;
+    font-size: 0.9rem;
+}
+
+.statItem svg {
+    width: 18px;
+    height: 18px;
+    color: #a1ff14;
+}
+
+/* Creator Profile - At the bottom */
+.modalArtist {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.artistAvatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #a1ff14;
+}
+
+.artistNameModal {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.artistRole {
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin: 0;
+}
+
+/* Heart Like Button Styles */
+.heartContainer {
+    --heart-color: rgb(255, 91, 137);
+    position: relative;
+    width: 44px;
+    height: 44px;
+    transition: .3s;
+}
+
+.heartContainer .checkbox {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 20;
+    cursor: pointer;
+}
+
+.heartContainer .svgContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.heartContainer .svgOutline,
+.heartContainer .svgFilled {
+    fill: var(--heart-color);
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.heartContainer .svgFilled {
+    animation: keyframes-svg-filled 1s;
+    display: none;
+}
+
+.heartContainer .svgCelebrate {
+    position: absolute;
+    animation: keyframes-svg-celebrate .5s;
+    animation-fill-mode: forwards;
+    display: none;
+    stroke: var(--heart-color);
+    fill: var(--heart-color);
+    stroke-width: 2px;
+    width: 26px;
+    height: 26px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.heartContainer .checkbox:checked ~ .svgContainer .svgFilled {
+    display: block;
+}
+
+.heartContainer .checkbox:checked ~ .svgContainer .svgCelebrate {
+    display: block;
+}
+
+/* Save Button Styles */
+.saveBtn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #2a4a1a;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #a1ff14;
+}
+
+.saveBtn:hover {
+    background-color: #3a6a2a;
+    transform: translateY(-2px);
+}
+
+.saveBtn:active {
+    border: 1px solid #a1ff14;
+    transform: translateY(0);
+}
+
+.saveBtn svg {
+    fill: #a1ff14;
+    stroke: #a1ff14;
+    width: 16px;
+    height: 16px;
+}
+
+.saveText {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #a1ff14;
+}
+
+.saveBtn.savedActive {
+    background-color: #a1ff14;
+    color: #000;
+}
+
+.saveBtn.savedActive svg {
+    fill: #000;
+    stroke: #000;
+}
+
+.saveBtn.savedActive .saveText {
+    color: #000;
+}
+
+/* Scrollbar Styling for Modal Info */
+.modalInfo::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modalInfo::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.modalInfo::-webkit-scrollbar-thumb {
+    background: #a1ff14;
+    border-radius: 4px;
+}
+
+.modalInfo::-webkit-scrollbar-thumb:hover {
+    background: #8cff00;
+}
+
+/* Keyframes for heart animation */
+@keyframes keyframes-svg-filled {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+    }
+    25% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: brightness(1.5);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes keyframes-svg-celebrate {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(1.5);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 0;
+        display: none;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .modalContainer {
+        width: 95%;
+        height: 90vh;
+    }
+    
+    .modalContent {
+        flex-direction: column;
+    }
+    
+    .modalArtwork {
+        flex: 1;
+        max-height: 40%;
+    }
+    
+    .modalInfo {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+    
+    .modalTitle {
+        font-size: 1.5rem;
+    }
+    
+    .modalStats {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .modalHeader {
+        padding-right: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modalContainer {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .modalTitle {
+        font-size: 1.25rem;
+    }
+    
+    .modalInfo {
+        padding: 1rem;
+    }
+    
+    .modalHeader {
+        flex-wrap: wrap;
+        padding-right: 30px;
+    }
+    
+    .modalHeaderActions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+.loadingState, .errorState, .emptyState {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #c9d1d9;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 1rem;
+    border: 3px solid rgba(161, 255, 20, 0.3);
+    border-top-color: #a1ff14;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.retryBtn {
+    background: #a1ff14;
+    color: #000;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.2s;
+}
+
+.retryBtn:hover {
+    background: #8cde11;
+    transform: translateY(-2px);
+}
+
+

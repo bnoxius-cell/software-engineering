@@ -1,31 +1,144 @@
 .footer {
     background-color: #000;
     border-top: 2px solid #a1ff14;
-    padding: 5px 0 30px 0;
+    padding: 40px 20px 30px 20px;
     text-align: center;
+    position: relative;
+    width: 100%;
+    margin-top: auto; /* For sticky footer */
+}
+
+/* Make footer stick to bottom when content is short */
+.pageWrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.pageWrapper > main {
+    flex: 1;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .footer-content h3 {
     color: #a1ff14;
     font-size: 1.6rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
 }
 
 .footer-content p {
     color: #ccc;
     max-width: 600px;
-    margin: 0 auto 20px;
+    margin: 0 auto 25px;
+    line-height: 1.6;
+    font-size: 0.95rem;
 }
 
-.footer-links a {
-    margin: 0 10px;
+.footer-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 20px 0 25px;
+}
+
+.footerLink {
     color: #fff;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 5px 0;
 }
 
-.footer-links a:hover {
+.footerLink:hover {
     color: #a1ff14;
 }
 
-.footer span {
+.footerLink::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #a1ff14;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.footerLink:hover::after {
+    width: 100%;
+}
+
+.copyright {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 10px;
+}
+
+.copyright span {
     font-size: 0.85rem;
     color: #777;
+}
+
+.separator {
+    color: #a1ff14;
+    font-size: 0.8rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .footer {
+        padding: 30px 15px 25px;
+    }
+    
+    .footer-content h3 {
+        font-size: 1.4rem;
+    }
+    
+    .footer-content p {
+        font-size: 0.85rem;
+        padding: 0 15px;
+    }
+    
+    .footer-links {
+        gap: 1rem;
+    }
+    
+    .footerLink {
+        font-size: 0.85rem;
+    }
+    
+    .copyright {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .separator {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-links {
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .footerLink {
+        font-size: 0.8rem;
+    }
+    
+    .copyright span {
+        font-size: 0.7rem;
+    }
 }

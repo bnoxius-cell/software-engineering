@@ -470,3 +470,22 @@
     background: #8cde11;
     border-color: #8cde11;
 }
+
+/* Add missing animation keyframes */
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Update modal button container to avoid conflict */
+.modalButtons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
