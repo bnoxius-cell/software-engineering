@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
@@ -113,7 +113,6 @@ const Gallery = () => {
         setSelectedArtwork(artwork);
         setIsModalOpen(true);
         document.body.style.overflow = 'hidden';
-        // Focus modal for accessibility (optional)
         setTimeout(() => modalRef.current?.focus(), 10);
     };
 
@@ -138,7 +137,6 @@ const Gallery = () => {
             });
         } catch (err) {
             console.error('Failed to update like status', err);
-            // Optionally revert UI state
             setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
         }
     };
@@ -183,38 +181,7 @@ const Gallery = () => {
             <Navbar />
 
             <div className={styles.pageContainer}>
-                {/* ===== HORIZONTAL USER SEARCH CAROUSEL ===== */}
-                {searchQuery && matchedUsers.length > 0 && (
-                    <div className={styles.userSearchSection}>
-                        <h2 className={styles.userSearchHeader}>Matching Artists</h2>
-                        <div className={styles.carouselContainer}>
-                            <button className={styles.carouselBtn} onClick={() => scrollCarousel(-1)}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <div className={styles.carouselTrack} ref={carouselRef}>
-                                {matchedUsers.map((user, idx) => (
-                                    <div 
-                                        key={idx} 
-                                        className={styles.userCard}
-                                        onClick={() => navigate(`/gallery?search=${encodeURIComponent(user.name)}&type=user`)}
-                                    >
-                                        <img src={user.avatar} alt={user.name} className={styles.userAvatar} />
-                                        <span className={styles.userName} title={user.name}>{user.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <button className={styles.carouselBtn} onClick={() => scrollCarousel(1)}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="9 18 15 12 9 6"></polyline>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* ===== HORIZONTAL USER SEARCH CAROUSEL ===== */}
+                {/* HORIZONTAL USER SEARCH CAROUSEL */}
                 {searchQuery && matchedUsers.length > 0 && (
                     <div className={styles.userSearchSection}>
                         <h2 className={styles.userSearchHeader}>Matching Artists</h2>
@@ -298,10 +265,9 @@ const Gallery = () => {
                     ))}
                 </main>
 
-                {/* ===== NEW PAGINATION DESIGN ===== */}
+                {/* Pagination */}
                 {totalPages > 1 && (
                     <nav className={styles.paginationNav} aria-label="Pagination Navigation">
-                        {/* PREVIOUS BUTTON */}
                         <button 
                             className={`${styles.pageItem} ${currentPage === 1 ? styles.disabled : ''}`}
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -313,7 +279,6 @@ const Gallery = () => {
                             </svg>
                         </button>
 
-                        {/* PAGE NUMBERS AND DOTS */}
                         {getPageNumbers().map((page, index) => {
                             if (page === '...') {
                                 return (
@@ -322,7 +287,6 @@ const Gallery = () => {
                                     </span>
                                 );
                             }
-
                             return (
                                 <button
                                     key={page}
@@ -335,58 +299,6 @@ const Gallery = () => {
                             );
                         })}
 
-                        {/* NEXT BUTTON */}
-                        <button 
-                            className={`${styles.pageItem} ${currentPage === totalPages ? styles.disabled : ''}`}
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            aria-label="Next Page"
-                        >
-                            <svg className={styles.arrowIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </nav>
-                )}
-
-                {/* ===== NEW PAGINATION DESIGN ===== */}
-                {totalPages > 1 && (
-                    <nav className={styles.paginationNav} aria-label="Pagination Navigation">
-                        {/* PREVIOUS BUTTON */}
-                        <button 
-                            className={`${styles.pageItem} ${currentPage === 1 ? styles.disabled : ''}`}
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            aria-label="Previous Page"
-                        >
-                            <svg className={styles.arrowIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-
-                        {/* PAGE NUMBERS AND DOTS */}
-                        {getPageNumbers().map((page, index) => {
-                            if (page === '...') {
-                                return (
-                                    <span key={`ellipsis-${index}`} className={`${styles.pageItem} ${styles.ellipsis}`}>
-                                        &hellip;
-                                    </span>
-                                );
-                            }
-
-                            return (
-                                <button
-                                    key={page}
-                                    className={`${styles.pageItem} ${currentPage === page ? styles.activePage : ''}`}
-                                    onClick={() => setCurrentPage(page)}
-                                    aria-current={currentPage === page ? "true" : "false"}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        })}
-
-                        {/* NEXT BUTTON */}
                         <button 
                             className={`${styles.pageItem} ${currentPage === totalPages ? styles.disabled : ''}`}
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -416,7 +328,6 @@ const Gallery = () => {
                         <button className={styles.closeBtn} onClick={closeModal} aria-label="Close">×</button>
 
                         <div className={styles.modalContent}>
-                            {/* Left Side - Artwork Display */}
                             <div className={styles.modalArtwork}>
                                 <img
                                     src={`${API_BASE}${selectedArtwork.image}`}
@@ -426,12 +337,10 @@ const Gallery = () => {
                                 />
                             </div>
 
-                            {/* Right Side - Artwork Info */}
                             <div className={styles.modalInfo}>
                                 <div className={styles.modalHeader}>
                                     <h2 className={styles.modalTitle}>{selectedArtwork.title}</h2>
                                     <div className={styles.modalHeaderActions}>
-                                        {/* Heart Like Button */}
                                         <div className={styles.heartContainer} title="Like">
                                             <input
                                                 type="checkbox"
@@ -458,7 +367,6 @@ const Gallery = () => {
                                             </div>
                                         </div>
 
-                                        {/* Save Button */}
                                         <button
                                             className={`${styles.saveBtn} ${savedStates[selectedArtwork._id] ? styles.savedActive : ''}`}
                                             onClick={() => handleSave(selectedArtwork._id)}
@@ -518,5 +426,4 @@ const Gallery = () => {
     );
 };
 
-export default Gallery;
 export default Gallery;

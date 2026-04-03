@@ -7,19 +7,16 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const Login = ({ setUser }) => {
     const [formData, setFormData] = useState({
-    const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
-    
+
     const handleChange = (e) => {
-        setFormData({...formData, [e.target.name]: e.target.value});
+        setFormData({ ...formData, [e.target.name]: e.target.value });
         if (error) setError('');
     };
 
@@ -41,38 +38,25 @@ const Login = ({ setUser }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) return;
-        
+
         setLoading(true);
         setError('');
-        
-        
-        if (!validateForm()) return;
-        
-        setLoading(true);
-        setError('');
-        
+
         try {
             const res = await axios.post(`${API_BASE}/api/auth/login`, formData);
-            
+
             localStorage.setItem('token', res.data.token);
-            
-            localStorage.setItem('token', res.data.token);
-            
-            const userRole = res.data.role; 
+
+            const userRole = res.data.role;
             if (userRole) {
                 localStorage.setItem('role', userRole);
             }
-            
-            setUser(res.data);
-            
+
             setUser(res.data);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.message || "Login failed. Please try again.");
-        } finally {
-            setLoading(false);
             setError(err.response?.data?.message || "Login failed. Please try again.");
         } finally {
             setLoading(false);
@@ -80,24 +64,34 @@ const Login = ({ setUser }) => {
     };
 
     const handleSocialLogin = (provider) => {
-        // Implement social login logic
         console.log(`Login with ${provider}`);
-        // Redirect to OAuth endpoint or open popup
     };
 
-    // Fallback for astronaut image
     const handleAstronautError = (e) => {
         e.target.src = '/assets/images/placeholder-astronaut.png';
     };
 
     return (
-        <div className={styles["login-wrapper"]} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', minHeight: '100vh', padding: '2rem' }}>
-            {/* Background with space theme */}
+        <div 
+            className={styles["login-wrapper"]} 
+            style={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                position: 'relative', 
+                minHeight: '100vh', 
+                padding: '2rem' 
+            }}
+        >
+            {/* Background */}
             <div className={styles["login-bg"]}>
                 <div className={styles["stars"]}></div>
                 <div className={styles["stars2"]}></div>
                 <div className={styles["stars3"]}></div>
                 <div className={styles["moon"]}></div>
+
                 <div className={styles["astronaut-container"]}>
                     <img 
                         src="/assets/images/icons/astronaut.png" 
@@ -108,12 +102,13 @@ const Login = ({ setUser }) => {
                     <div className={styles["glow"]}></div>
                 </div>
             </div>
-            
+
+            {/* Form */}
             <div className={styles["form-container"]}>
                 <p className={styles["title"]}>Login</p>
-                
-                {error && <p className={styles.error} role="alert">{error}</p>}
-                
+
+                {error && <p className={styles.error}>{error}</p>}
+
                 <form className={styles["form"]} onSubmit={handleSubmit} noValidate>
                     <div className={styles["input-group"]}>
                         <label htmlFor="email">E-mail</label>
@@ -124,12 +119,11 @@ const Login = ({ setUser }) => {
                             placeholder="Enter your email" 
                             value={formData.email} 
                             onChange={handleChange} 
-                            autoComplete="off"
                             disabled={loading}
                             required
                         />
                     </div>
-                    
+
                     <div className={styles["input-group"]}>
                         <label htmlFor="password">Password</label>
                         <input 
@@ -146,59 +140,35 @@ const Login = ({ setUser }) => {
                             <Link to="/forgot-password">Forgot Password?</Link>
                         </div>
                     </div>
-                    
+
                     <button className={styles["sign"]} type="submit" disabled={loading}>
-                        {loading ? (
-                            <>
-                                <span className={styles.spinner}></span>
-                                Signing in...
-                            </>
-                        ) : (
-                            'Sign in'
-                        )}
+                        {loading ? 'Signing in...' : 'Sign in'}
                     </button>
                 </form>
-                
+
                 <div className={styles["social-message"]}>
                     <div className={styles["line"]}></div>
                     <p className={styles["message"]}>Login with social accounts</p>
                     <div className={styles["line"]}></div>
                 </div>
-                
+
                 <div className={styles["social-icons"]}>
-                    <button 
-                        aria-label="Log in with Google" 
-                        className={styles["icon"]}
-                        onClick={() => handleSocialLogin('google')}
-                        disabled={loading}
-                    >
-                        <img src="/assets/images/icons/google.png" alt="Google Sign-in" />
+                    <button className={styles["icon"]} onClick={() => handleSocialLogin('google')} disabled={loading}>
+                        <img src="/assets/images/icons/google.png" alt="Google" />
                     </button>
-                    <button 
-                        aria-label="Log in with Twitter" 
-                        className={styles["icon"]}
-                        onClick={() => handleSocialLogin('twitter')}
-                        disabled={loading}
-                    >
-                        <img src="/assets/images/icons/twitter.png" alt="Twitter Sign-in" />
+                    <button className={styles["icon"]} onClick={() => handleSocialLogin('twitter')} disabled={loading}>
+                        <img src="/assets/images/icons/twitter.png" alt="Twitter" />
                     </button>
-                    <button 
-                        aria-label="Log in with GitHub" 
-                        className={styles["icon"]}
-                        onClick={() => handleSocialLogin('github')}
-                        disabled={loading}
-                    >
-                        <img src="/assets/images/icons/github.png" alt="GitHub Sign-in" />
+                    <button className={styles["icon"]} onClick={() => handleSocialLogin('github')} disabled={loading}>
+                        <img src="/assets/images/icons/github.png" alt="GitHub" />
                     </button>
                 </div>
-                
+
                 <p className={styles["signup"]}>
                     Don't have an account? <Link to="/register">Sign up</Link>
                 </p>
             </div>
         </div>
-    );
-};
     );
 };
 
