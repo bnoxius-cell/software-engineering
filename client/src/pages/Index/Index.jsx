@@ -3,6 +3,8 @@ import styles from './Index.module.css'
 import { Link } from 'react-router-dom'
 import backgroundImage from '../../assets/images/homeBackgroundImg.png'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Index = () => {
   const [recentWorks, setRecentWorks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +16,7 @@ const Index = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('http://localhost:5000/api/artworks?status=published');
+        const response = await fetch(`${API_BASE}/api/artworks?status=published`);
         if (response.ok) {
           const data = await response.json();
           
@@ -97,7 +99,7 @@ const Index = () => {
                   <Link to={`/gallery/${work._id}`} className={styles.cardLink}>
                     <div className={styles.cardFrame}>
                         <div className={styles.holographicOverlay}></div>
-                        <img src={`http://localhost:5000${work.image}`} alt={work.title} loading="lazy" />
+                        <img src={`${API_BASE}${work.image}`} alt={work.title} loading="lazy" />
                         <div className={styles.cardInfo}>
                             <h4>{work.title}</h4>
                             <span>{work.artistName}</span>

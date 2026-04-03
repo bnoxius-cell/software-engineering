@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
 
@@ -13,8 +14,30 @@ const Gallery = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [likedStates, setLikedStates] = useState({});
     const [savedStates, setSavedStates] = useState({});
+
+    // Pagination and Search State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
+    
+    const navigate = useNavigate();
+    const location = useLocation();
+    const carouselRef = useRef(null);
+
+    // Extract search query from URL
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get('search') || '';
+    const searchType = queryParams.get('type') || 'all';
+
+    // Mocking matchedUsers for the UI - in a real app, you'd fetch this
+    const [matchedUsers, setMatchedUsers] = useState([]);
     
     const modalRef = useRef(null);
+
+    const scrollCarousel = (direction) => {
+        if (carouselRef.current) {
+            carouselRef.current.scrollBy({ left: direction * 200, behavior: 'smooth' });
+        }
+    };
 
     // Fetch artworks with abort controller
     useEffect(() => {
@@ -60,9 +83,31 @@ const Gallery = () => {
         return () => document.removeEventListener('keydown', handleEscape);
     }, [isModalOpen]);
 
-    const filteredArtworks = activeFilter === 'all' 
-        ? artworks 
-        : artworks.filter(art => (art.medium || 'uncategorized') === activeFilter);
+    // Filter and Search Logic
+    const processedArtworks = artworks.filter(art => {
+        const matchesFilter = activeFilter === 'all' || (art.medium || 'uncategorized') === activeFilter;
+        const matchesSearch = !searchQuery || 
+            (searchType === 'artwork' && art.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (searchType === 'user' && art.artistName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (searchType === 'all' && (art.title.toLowerCase().includes(searchQuery.toLowerCase()) || art.artistName.toLowerCase().includes(searchQuery.toLowerCase())));
+        
+        return matchesFilter && matchesSearch;
+    });
+
+    const totalPages = Math.ceil(processedArtworks.length / itemsPerPage);
+    const filteredArtworks = processedArtworks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const getPageNumbers = () => {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                pages.push(i);
+            } else if (pages[pages.length - 1] !== '...') {
+                pages.push('...');
+            }
+        }
+        return pages;
+    };
 
     const openModal = (artwork) => {
         setSelectedArtwork(artwork);
@@ -79,13 +124,16 @@ const Gallery = () => {
     };
 
     const handleLike = async (artworkId) => {
+        const token = localStorage.getItem('token');
         const newLiked = !likedStates[artworkId];
         setLikedStates(prev => ({ ...prev, [artworkId]: newLiked }));
         try {
-            // Example API call – adjust according to your backend
             await fetch(`${API_BASE}/api/artworks/${artworkId}/like`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ liked: newLiked }),
             });
         } catch (err) {
@@ -96,12 +144,16 @@ const Gallery = () => {
     };
 
     const handleSave = async (artworkId) => {
+        const token = localStorage.getItem('token');
         const newSaved = !savedStates[artworkId];
         setSavedStates(prev => ({ ...prev, [artworkId]: newSaved }));
         try {
             await fetch(`${API_BASE}/api/users/saved`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ artworkId, saved: newSaved }),
             });
         } catch (err) {
