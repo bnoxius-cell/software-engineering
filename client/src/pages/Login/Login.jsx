@@ -7,8 +7,12 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const Login = ({ setUser }) => {
     const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
         email: "",
         password: ""
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -43,8 +47,16 @@ const Login = ({ setUser }) => {
         setLoading(true);
         setError('');
         
+        
+        if (!validateForm()) return;
+        
+        setLoading(true);
+        setError('');
+        
         try {
             const res = await axios.post(`${API_BASE}/api/auth/login`, formData);
+            
+            localStorage.setItem('token', res.data.token);
             
             localStorage.setItem('token', res.data.token);
             
@@ -54,8 +66,13 @@ const Login = ({ setUser }) => {
             }
             
             setUser(res.data);
+            
+            setUser(res.data);
             navigate('/');
         } catch (err) {
+            setError(err.response?.data?.message || "Login failed. Please try again.");
+        } finally {
+            setLoading(false);
             setError(err.response?.data?.message || "Login failed. Please try again.");
         } finally {
             setLoading(false);
@@ -180,6 +197,8 @@ const Login = ({ setUser }) => {
                 </p>
             </div>
         </div>
+    );
+};
     );
 };
 

@@ -214,6 +214,37 @@ const Gallery = () => {
                     </div>
                 )}
 
+                {/* ===== HORIZONTAL USER SEARCH CAROUSEL ===== */}
+                {searchQuery && matchedUsers.length > 0 && (
+                    <div className={styles.userSearchSection}>
+                        <h2 className={styles.userSearchHeader}>Matching Artists</h2>
+                        <div className={styles.carouselContainer}>
+                            <button className={styles.carouselBtn} onClick={() => scrollCarousel(-1)}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <div className={styles.carouselTrack} ref={carouselRef}>
+                                {matchedUsers.map((user, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className={styles.userCard}
+                                        onClick={() => navigate(`/gallery?search=${encodeURIComponent(user.name)}&type=user`)}
+                                    >
+                                        <img src={user.avatar} alt={user.name} className={styles.userAvatar} />
+                                        <span className={styles.userName} title={user.name}>{user.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className={styles.carouselBtn} onClick={() => scrollCarousel(1)}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <header className={styles.feedHeader}>
                     <h1>Discover Art</h1>
                     <p>Curated works from our top students</p>
@@ -266,6 +297,57 @@ const Gallery = () => {
                         </div>
                     ))}
                 </main>
+
+                {/* ===== NEW PAGINATION DESIGN ===== */}
+                {totalPages > 1 && (
+                    <nav className={styles.paginationNav} aria-label="Pagination Navigation">
+                        {/* PREVIOUS BUTTON */}
+                        <button 
+                            className={`${styles.pageItem} ${currentPage === 1 ? styles.disabled : ''}`}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            aria-label="Previous Page"
+                        >
+                            <svg className={styles.arrowIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+
+                        {/* PAGE NUMBERS AND DOTS */}
+                        {getPageNumbers().map((page, index) => {
+                            if (page === '...') {
+                                return (
+                                    <span key={`ellipsis-${index}`} className={`${styles.pageItem} ${styles.ellipsis}`}>
+                                        &hellip;
+                                    </span>
+                                );
+                            }
+
+                            return (
+                                <button
+                                    key={page}
+                                    className={`${styles.pageItem} ${currentPage === page ? styles.activePage : ''}`}
+                                    onClick={() => setCurrentPage(page)}
+                                    aria-current={currentPage === page ? "true" : "false"}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
+
+                        {/* NEXT BUTTON */}
+                        <button 
+                            className={`${styles.pageItem} ${currentPage === totalPages ? styles.disabled : ''}`}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            aria-label="Next Page"
+                        >
+                            <svg className={styles.arrowIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </nav>
+                )}
 
                 {/* ===== NEW PAGINATION DESIGN ===== */}
                 {totalPages > 1 && (
@@ -436,4 +518,5 @@ const Gallery = () => {
     );
 };
 
+export default Gallery;
 export default Gallery;

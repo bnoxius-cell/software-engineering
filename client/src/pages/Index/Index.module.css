@@ -1,12 +1,17 @@
 .pageWrapper {
     background-color: #000;
     overflow-x: hidden;
+.pageWrapper {
+    background-color: #000;
+    overflow-x: hidden;
 }
 
+/* ===== ENHANCED HERO SECTION - REDUCED SIZE ===== */
 /* ===== ENHANCED HERO SECTION - REDUCED SIZE ===== */
 .hero {
     display: flex;
     justify-content: center;
+    padding: 120px 20px 60px 20px; /* Reduced top padding */
     padding: 120px 20px 60px 20px; /* Reduced top padding */
 }
 
@@ -18,7 +23,16 @@
     background-color: #0d1117;
     border: 1px solid #30363d;
     border-radius: 32px;
+    width: 95%;
+    max-width: 1200px; /* Reduced from 1400px */
+    height: 500px; /* REDUCED: From 700px to 500px */
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 32px;
     overflow: hidden;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6);
     position: relative;
     z-index: 10;
     box-shadow: 0 30px 60px rgba(0,0,0,0.6);
@@ -27,10 +41,21 @@
 .hero-text {
     flex: 1.1;
     padding: 60px; /* Reduced from 80px */
+    flex: 1.1;
+    padding: 60px; /* Reduced from 80px */
     display: flex;
     flex-direction: column;
     gap: 20px; /* Reduced from 24px */
+    gap: 20px; /* Reduced from 24px */
     justify-content: center;
+}
+
+.heroSubtitle {
+    color: #a1ff14;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    font-weight: 700;
+    font-size: 0.85rem; /* Slightly reduced */
 }
 
 .heroSubtitle {
@@ -61,16 +86,43 @@
 }
 
 /* ===== UPDATED BUTTON - SCALED BACK TO REASONABLE SIZE ===== */
+.hero-text h1 {
+    font-size: 3.5rem; /* REDUCED: From 4.5rem */
+    color: #fff;
+    line-height: 1.1;
+    font-weight: 900;
+    margin: 0;
+}
+
+.hero-text h1 span {
+    color: #a1ff14;
+}
+
+.hero-text p {
+    color: #8b949e;
+    font-size: 1.1rem; /* Reduced from 1.25rem */
+    line-height: 1.5;
+    max-width: 500px; /* Reduced from 550px */
+}
+
+/* ===== UPDATED BUTTON - SCALED BACK TO REASONABLE SIZE ===== */
 .button {
+    width: 200px; /* Slightly wider to accommodate big icon */
+    height: 65px; /* Taller for the bigger icon */
     width: 200px; /* Slightly wider to accommodate big icon */
     height: 65px; /* Taller for the bigger icon */
     display: flex;
     align-items: center;
     justify-content: flex-start; /* Align items to the left */
     gap: 15px; /* Space between icon and text */
+    justify-content: flex-start; /* Align items to the left */
+    gap: 15px; /* Space between icon and text */
     background-color: rgb(161,255,20);
     border-radius: 40px;
+    border-radius: 40px;
     color: #131313;
+    font-size: 20px; /* Slightly larger text */
+    font-weight: 700;
     font-size: 20px; /* Slightly larger text */
     font-weight: 700;
     border: none;
@@ -78,10 +130,19 @@
     padding: 0 25px 0 15px; /* Left padding for icon, right padding for balance */
     transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     line-height: 1;
+    padding: 0 25px 0 15px; /* Left padding for icon, right padding for balance */
+    transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1;
 }
 
 .button-link {
+.button-link {
     text-decoration: none;
+    display: inline-block; /* Ensures it wraps tightly around the button */
+    line-height: 0; /* Removes any extra line height spacing */
+    font-size: 0; /* Removes any extra space from inline elements */
+    width: fit-content; /* Makes the link container only as wide as the button */
+    height: fit-content; /* Makes the link container only as tall as the button */
     display: inline-block; /* Ensures it wraps tightly around the button */
     line-height: 0; /* Removes any extra line height spacing */
     font-size: 0; /* Removes any extra space from inline elements */
@@ -94,15 +155,22 @@
     width: 42px;
     transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0; /* Prevents icon from shrinking */
+    height: 42px; /* BIG icon as requested */
+    width: 42px;
+    transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0; /* Prevents icon from shrinking */
 }
 
 .button:hover {
     background-color: rgb(192,255,20);
     box-shadow: 0 0 30px rgba(161, 255, 20, 0.5);
     transform: translateY(-3px);
+    box-shadow: 0 0 30px rgba(161, 255, 20, 0.5);
+    transform: translateY(-3px);
 }
 
 .button:active {
+    transform: scale(0.95);
     transform: scale(0.95);
 }
 
@@ -125,7 +193,78 @@
 
 /* ===== 3D GALLERY BACKGROUND EFFECTS ===== */
 .galleryPreviewSection {
+/* ===== HERO IMAGE SECTION ===== */
+.hero-image {
+    flex: 1.4;
     position: relative;
+}
+
+.hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mask-image: linear-gradient(to left, black 70%, transparent 100%);
+}
+
+/* ===== 3D GALLERY BACKGROUND EFFECTS ===== */
+.galleryPreviewSection {
+    position: relative;
+    padding: 100px 0; /* Reduced from 150px */
+    background-color: #000;
+    overflow: hidden;
+    perspective: 1000px;
+}
+
+.perspectiveGridFloor {
+    position: absolute;
+    bottom: -150px;
+    left: -50%;
+    width: 200%;
+    height: 600px;
+    background-image: 
+        linear-gradient(to right, rgba(161, 255, 20, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(161, 255, 20, 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(70deg);
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 20%, transparent 80%);
+    animation: gridMove 10s linear infinite;
+    z-index: 1;
+}
+
+.perspectiveGridCeiling {
+    position: absolute;
+    top: -150px;
+    left: -50%;
+    width: 200%;
+    height: 600px;
+    background-image: 
+        linear-gradient(to right, rgba(161, 255, 20, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(161, 255, 20, 0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(-70deg);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, transparent 80%);
+    animation: gridMove 10s linear infinite;
+    z-index: 1;
+}
+
+@keyframes gridMove {
+    from { background-position: 0 0; }
+    to { background-position: 0 60px; }
+}
+
+.horizonGlow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 40%;
+    background: radial-gradient(circle, rgba(161, 255, 20, 0.15) 0%, transparent 70%);
+    filter: blur(50px);
+    z-index: 2;
+}
+
+.sectionHeader {
     padding: 100px 0; /* Reduced from 150px */
     background-color: #000;
     overflow: hidden;
@@ -214,8 +353,54 @@
 .slider {
     height: 450px;
     width: 100%;
+    margin-bottom: 50px; /* Reduced from 60px */
+    position: relative;
+    z-index: 10;
+}
+
+.neonLabel {
+    color: #a1ff14;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    font-weight: 800;
+    font-size: 0.9rem; /* Added font size */
+}
+
+.sectionHeader h2 {
+    font-size: 2.5rem; /* Added heading size */
+    color: #fff;
+    margin: 10px 0 0;
+}
+
+.neonDivider {
+    width: 80px;
+    height: 4px;
+    background-color: #a1ff14;
+    margin: 15px auto 0;
+    box-shadow: 0 0 20px #a1ff14;
+}
+
+/* ===== CAROUSEL SLIDER ===== */
+.slider {
+    height: 450px;
+    width: 100%;
     display: flex;
     align-items: center;
+    position: relative;
+    z-index: 10;
+}
+
+.slideTrack {
+    display: flex;
+    width: fit-content;
+    animation: scroll 60s linear infinite;
+    gap: 60px;
+    padding: 0 100px;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
     position: relative;
     z-index: 10;
 }
@@ -237,11 +422,27 @@
     width: 320px;
     height: 420px;
     perspective: 1000px;
+.slide {
+    width: 320px;
+    height: 420px;
+    perspective: 1000px;
 }
 
 .cardFrame {
     position: relative;
+.cardFrame {
+    position: relative;
     width: 100%;
+    height: 100%;
+    background: #0d1117;
+    border-radius: 20px;
+    border: 1px solid #30363d;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.cardFrame img {
     height: 100%;
     background: #0d1117;
     border-radius: 20px;
@@ -276,8 +477,40 @@
     background-size: 200% 100%;
     z-index: 2;
     transition: 0.6s;
+    object-fit: cover;
+    filter: brightness(0.7);
+    transition: 0.4s;
 }
 
+.cardFrame:hover {
+    transform: translateY(-20px) scale(1.05);
+    border-color: #a1ff14;
+    box-shadow: 0 0 30px rgba(161, 255, 20, 0.3);
+}
+
+.cardFrame:hover img {
+    filter: brightness(1.1);
+}
+
+.holographicOverlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 55%, transparent 60%);
+    background-size: 200% 100%;
+    z-index: 2;
+    transition: 0.6s;
+}
+
+.cardFrame:hover .holographicOverlay {
+    background-position: -150% 0;
+}
+
+.cardInfo {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%;
+    padding: 25px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    z-index: 3;
 .cardFrame:hover .holographicOverlay {
     background-position: -150% 0;
 }
@@ -292,7 +525,15 @@
 
 .cardInfo h4 {
     color: #fff;
+.cardInfo h4 {
+    color: #fff;
     margin: 0;
+    font-size: 1.2rem; /* Added font size */
+}
+
+.cardInfo span {
+    color: #a1ff14;
+    font-size: 0.8rem;
     font-size: 1.2rem; /* Added font size */
 }
 

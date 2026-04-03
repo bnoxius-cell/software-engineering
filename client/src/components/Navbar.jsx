@@ -50,7 +50,6 @@ const Navbar = () => {
         } else {
             navigate('/gallery');
         }
-        // Close filter after search
         setIsFilterOpen(false);
     };
 
@@ -66,7 +65,6 @@ const Navbar = () => {
         setIsMenuOpen(false);
     };
 
-    // Check if user is admin safely
     const isAdmin = role && role.toLowerCase().trim() === 'admin';
 
     return (

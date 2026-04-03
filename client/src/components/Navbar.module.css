@@ -37,10 +37,54 @@
 }
 
 /* ===== PREMIUM NEON SEARCH BAR AREA ===== */
+/* ===== PREMIUM NEON SEARCH BAR AREA ===== */
 .searchContainer {
+    margin-left: 4rem; 
     margin-left: 4rem; 
     display: flex;
     align-items: center;
+    background-color: rgba(22, 27, 34, 0.6); 
+    border: 1px solid rgba(161, 255, 20, 0.2); 
+    border-radius: 40px; 
+    height: 44px; 
+    width: 480px; 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 0 transparent;
+    
+    /* MODIFIED: Removed overflow:hidden so the dropdown menu can be visible outside the pill */
+    overflow: visible; 
+    position: relative;
+}
+
+.searchContainer:focus-within {
+    border-color: #a1ff14;
+    box-shadow: 0 0 20px rgba(161, 255, 20, 0.2), inset 0 0 10px rgba(161, 255, 20, 0.05);
+    background-color: rgba(13, 17, 23, 0.9);
+    width: 520px; 
+}
+
+/* The Search Icon (Left) */
+.searchIcon {
+    display: grid;
+    place-items: center;
+    padding-left: 18px;
+    padding-right: 12px;
+    color: rgba(161, 255, 20, 0.5); 
+    transition: 0.3s;
+}
+
+.searchContainer:focus-within .searchIcon {
+    color: #a1ff14;
+    transform: scale(1.1);
+}
+
+.searchIcon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* The Input Field (Middle) */
     background-color: rgba(22, 27, 34, 0.6); 
     border: 1px solid rgba(161, 255, 20, 0.2); 
     border-radius: 40px; 
@@ -87,8 +131,18 @@
     flex: 1;
     height: 100%;
     background: transparent;
+    flex: 1;
+    height: 100%;
+    background: transparent;
     border: none;
     color: #ffffff;
+    font-size: 0.95rem;
+    padding: 0;
+    outline: none;
+}
+
+.searchInput::placeholder {
+    color: #8b949e;
     font-size: 0.95rem;
     padding: 0;
     outline: none;
@@ -113,7 +167,29 @@
     background-color: transparent;
     border-left: 1px solid rgba(161, 255, 20, 0.2);
     color: #8b949e;
+.searchContainer:focus-within .searchInput::placeholder {
+    opacity: 0.4;
+}
+
+/* The Filter Block (Right) */
+.filterWrapper {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 50px; 
+    height: 100%;
+    background-color: transparent;
+    border-left: 1px solid rgba(161, 255, 20, 0.2);
+    color: #8b949e;
     cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 0 40px 40px 0; 
+}
+
+.filterWrapper:hover,
+.filterWrapper:focus-within {
+    background-color: rgba(161, 255, 20, 0.15);
+    color: #a1ff14;
     transition: all 0.3s ease;
     border-radius: 0 40px 40px 0; 
 }
@@ -145,7 +221,31 @@
     border-radius: 12px;
     padding: 0.5rem 0;
     margin: 0;
+.filterWrapper svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.filterWrapper:hover svg {
+    transform: rotate(90deg) scale(1.1); 
+}
+
+/* ===== NEW: CUSTOM FILTER DROPDOWN MENU ===== */
+.customFilterMenu {
+    position: absolute;
+    top: calc(100% + 12px); /* Pops just below the search bar */
+    right: 0;
+    width: 180px;
+    background-color: #1a1a1a;
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    border-radius: 12px;
+    padding: 0.5rem 0;
+    margin: 0;
     list-style: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(161, 255, 20, 0.05);
+    animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    z-index: 100;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(161, 255, 20, 0.05);
     animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     z-index: 100;
@@ -165,12 +265,31 @@
 .filterOption:hover {
     background-color: rgba(161, 255, 20, 0.08);
     color: #ffffff;
+.filterOption {
+    padding: 0.7rem 1.25rem;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    text-align: left;
+}
+
+.filterOption:hover {
+    background-color: rgba(161, 255, 20, 0.08);
+    color: #ffffff;
 }
 
 /* The active, selected state */
 .filterOptionActive {
     background-color: rgba(161, 255, 20, 0.1);
+/* The active, selected state */
+.filterOptionActive {
+    background-color: rgba(161, 255, 20, 0.1);
     color: #a1ff14;
+    border-left: 3px solid #a1ff14;
+    font-weight: 700;
     border-left: 3px solid #a1ff14;
     font-weight: 700;
 }
@@ -180,6 +299,7 @@
     display: flex;
     align-items: center;
     list-style: none;
+    margin: 0 0 0 auto; 
     margin: 0 0 0 auto; 
     padding: 0;
     gap: 1.5rem;
@@ -204,11 +324,13 @@
     align-items: center;
     gap: 4px;
     padding: 10px 28px; 
+    padding: 10px 28px; 
     border: 4px solid transparent;
     font-size: 0.95rem;
     background-color: transparent;
     border-radius: 100px;
     font-weight: 700;
+    color: #a1ff14; 
     color: #a1ff14; 
     box-shadow: 0 0 0 2px #a1ff14;
     cursor: pointer;
@@ -216,11 +338,13 @@
     transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
     text-decoration: none;
     font-family: inherit; 
+    font-family: inherit; 
 }
 
 .animatedButton svg {
     position: absolute;
     width: 20px;
+    fill: #a1ff14; 
     fill: #a1ff14; 
     z-index: 9;
     transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
@@ -242,6 +366,7 @@
     width: 20px;
     height: 20px;
     background-color: #a1ff14; 
+    background-color: #a1ff14; 
     border-radius: 50%;
     opacity: 0;
     transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
@@ -256,6 +381,7 @@
 
 .animatedButton:hover {
     box-shadow: 0 0 0 12px transparent;
+    color: #000000; 
     color: #000000; 
     border-radius: 12px;
     fill: #000000;
@@ -279,6 +405,7 @@
 }
 
 .animatedButton:hover svg {
+    fill: #000000; 
     fill: #000000; 
 }
 
@@ -324,10 +451,12 @@
 }
 
 /* ===== PROFILE DROPDOWN MENU ===== */
+/* ===== PROFILE DROPDOWN MENU ===== */
 .dropdown {
     position: absolute;
     top: calc(100% + 15px); 
     right: 0;
+    width: 220px; 
     width: 220px; 
     background-color: #1a1a1a;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -355,9 +484,14 @@
     display: flex;           
     align-items: center;     
     gap: 12px;               
+    display: flex;           
+    align-items: center;     
+    gap: 12px;               
     width: 100%;
     text-align: left;
     background: transparent;
+    /* Added left border to match filter options design */
+    border-left: 3px solid transparent; 
     /* Added left border to match filter options design */
     border-left: 3px solid transparent; 
     border-right: none;
@@ -373,11 +507,13 @@
     background-color: #2c2c2c;
     color: #ffffff !important;
     border-left: 3px solid #a1ff14; /* Highlight accent */
+    border-left: 3px solid #a1ff14; /* Highlight accent */
 }
 
 .dropdownIcon {
     width: 20px;
     height: 20px;
+    fill: currentColor; 
     fill: currentColor; 
     flex-shrink: 0;
 }
@@ -388,6 +524,7 @@
 
 .logoutItem:hover {
     background-color: rgba(255, 76, 76, 0.1);
+    border-left-color: #ff4c4c;
     border-left-color: #ff4c4c;
 }
 
@@ -400,9 +537,11 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px); 
+    backdrop-filter: blur(8px); 
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 2000; 
     z-index: 2000; 
 }
 

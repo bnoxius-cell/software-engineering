@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './Index.module.css'
 import { Link } from 'react-router-dom'
 import backgroundImage from '../../assets/images/homeBackgroundImg.png'
@@ -49,6 +50,9 @@ const Index = () => {
     <div className={styles.pageWrapper}>
       {/* ===== ENHANCED HERO SECTION ===== */}
       <section className={styles.hero}>
+    <div className={styles.pageWrapper}>
+      {/* ===== ENHANCED HERO SECTION ===== */}
+      <section className={styles.hero}>
         <div className={styles["hero-box"]}>
           <div className={styles["hero-text"]}>
             <span className={styles.heroSubtitle}>Digital Portfolio Showcase</span>
@@ -71,6 +75,7 @@ const Index = () => {
             <img src={backgroundImage} alt="Featured Art" />
           </div>
         </div>
+      </section>
       </section>
 
       {/* ===== RECENT WORKS GALLERY (3D VAULT) ===== */}
@@ -113,7 +118,10 @@ const Index = () => {
         </div>
       </section>
     </div>
+      </section>
+    </div>
   )
 }
 
+export default Index;
 export default Index;
