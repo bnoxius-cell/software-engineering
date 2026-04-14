@@ -1,0 +1,10 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#0D1117"/>
+  <rect x="64" y="64" width="1072" height="772" rx="32" fill="#161B22" stroke="#30363D" stroke-width="8"/>
+  <circle cx="360" cy="310" r="78" fill="#A1FF14" fill-opacity="0.22"/>
+  <path d="M222 646L446 406C468 383 505 381 529 402L644 500L735 431C760 412 795 414 817 436L978 594V666H222V646Z" fill="#A1FF14" fill-opacity="0.22"/>
+  <rect x="246" y="698" width="708" height="20" rx="10" fill="#30363D"/>
+  <rect x="246" y="742" width="462" height="20" rx="10" fill="#21262D"/>
+  <text x="600" y="168" text-anchor="middle" fill="#A1FF14" font-family="Arial, sans-serif" font-size="42" font-weight="700">Artwork Unavailable</text>
+  <text x="600" y="220" text-anchor="middle" fill="#8B949E" font-family="Arial, sans-serif" font-size="24">The image file could not be found on this machine.</text>
+</svg>

@@ -1,10 +1,16 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const PLACEHOLDER_ARTWORK = '/assets/images/placeholder-artwork.svg';
 
 const Gallery = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { artworkId } = useParams();
+    const [searchParams] = useSearchParams();
     const [artworks, setArtworks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -60,14 +66,79 @@ const Gallery = () => {
         return () => document.removeEventListener('keydown', handleEscape);
     }, [isModalOpen]);
 
-    const filteredArtworks = activeFilter === 'all' 
-        ? artworks 
-        : artworks.filter(art => (art.medium || 'uncategorized') === activeFilter);
+    const searchQuery = searchParams.get('search')?.trim().toLowerCase() || '';
+    const searchType = searchParams.get('type') || 'all';
+
+    useEffect(() => {
+        if (searchType === 'category') {
+            const requestedCategory = searchQuery.replace(/\s+/g, '_');
+            const hasMatchingCategory = ['all', 'digital_2d', '3d_model', 'traditional', 'animation', 'ui_ux', 'photography']
+                .includes(requestedCategory);
+
+            if (hasMatchingCategory) {
+                setActiveFilter(requestedCategory);
+                return;
+            }
+        }
+
+        setActiveFilter('all');
+    }, [searchQuery, searchType]);
+
+    const filteredArtworks = (() => {
+        let result = activeFilter === 'all'
+            ? artworks
+            : artworks.filter(art => (art.medium || 'uncategorized') === activeFilter);
+
+        if (!searchQuery) {
+            return result;
+        }
+
+        return result.filter((art) => {
+            const title = art.title?.toLowerCase() || '';
+            const artist = art.artistName?.toLowerCase() || '';
+            const medium = art.medium?.replace(/_/g, ' ').toLowerCase() || '';
+            const tags = art.tags?.toLowerCase() || '';
+            const description = art.description?.toLowerCase() || '';
+
+            switch (searchType) {
+                case 'student':
+                    return artist.includes(searchQuery);
+                case 'artwork':
+                    return title.includes(searchQuery);
+                case 'category':
+                    return medium.includes(searchQuery) || tags.includes(searchQuery);
+                default:
+                    return [title, artist, medium, tags, description].some(value => value.includes(searchQuery));
+            }
+        });
+    })();
+
+    useEffect(() => {
+        if (!artworkId || loading) {
+            return;
+        }
+
+        const requestedArtwork = artworks.find((art) => art._id === artworkId);
+
+        if (requestedArtwork) {
+            setSelectedArtwork(requestedArtwork);
+            setIsModalOpen(true);
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => modalRef.current?.focus(), 10);
+            return;
+        }
+
+        setError('The requested artwork could not be found.');
+    }, [artworkId, artworks, loading]);
 
     const openModal = (artwork) => {
         setSelectedArtwork(artwork);
         setIsModalOpen(true);
         document.body.style.overflow = 'hidden';
+        navigate({
+            pathname: `/gallery/${artwork._id}`,
+            search: location.search,
+        });
         // Focus modal for accessibility (optional)
         setTimeout(() => modalRef.current?.focus(), 10);
     };
@@ -76,6 +147,10 @@ const Gallery = () => {
         setIsModalOpen(false);
         setSelectedArtwork(null);
         document.body.style.overflow = 'auto';
+        navigate({
+            pathname: '/gallery',
+            search: location.search,
+        });
     };
 
     const handleLike = async (artworkId) => {
@@ -122,7 +197,12 @@ const Gallery = () => {
     };
 
     const handleImageError = (e) => {
-        e.target.src = '/assets/images/placeholder-image.png';
+        if (e.target.dataset.fallbackApplied === 'true') {
+            return;
+        }
+
+        e.target.dataset.fallbackApplied = 'true';
+        e.target.src = PLACEHOLDER_ARTWORK;
     };
 
     return (
