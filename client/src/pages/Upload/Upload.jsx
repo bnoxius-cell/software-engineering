@@ -1,15 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styles from './Upload.module.css';
 import { useNavigate } from 'react-router-dom';
 
 const Upload = () => {
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [previewMediaType, setPreviewMediaType] = useState('image');
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef(null);
 
     const [isUploading, setIsUploading] = useState(false); // New loading state
     const navigate = useNavigate(); // Initialize the navigator
+
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -46,7 +55,7 @@ const Upload = () => {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log("Success:", result);
+
                 
                 // 3. Smoothly redirect the user back to the homepage
                 navigate('/'); 
@@ -85,7 +94,7 @@ const Upload = () => {
         e.preventDefault();
         setIsDragging(false);
         const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && droppedFile.type.startsWith('image/')) {
+        if (droppedFile && (droppedFile.type.startsWith('image/') || droppedFile.type.startsWith('video/'))) {
             processFile(droppedFile);
         }
     };
@@ -101,8 +110,9 @@ const Upload = () => {
     // Create a local URL to preview the image immediately
     const processFile = (file) => {
         setFile(file);
-        const imageUrl = URL.createObjectURL(file);
-        setPreviewUrl(imageUrl);
+        setPreviewMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
     };
 
     const handleInputChange = (e) => {
@@ -123,7 +133,7 @@ const Upload = () => {
                             type="file" 
                             ref={fileInputRef} 
                             onChange={handleFileSelect} 
-                            accept="image/*" 
+                            accept="image/*,video/*" 
                             style={{ display: 'none' }} 
                         />
 
@@ -136,7 +146,11 @@ const Upload = () => {
                         >
                             {previewUrl ? (
                                 <>
-                                    <img src={previewUrl} alt="Preview" className={styles.previewImage} />
+                                    {previewMediaType === 'video' ? (
+                                        <video src={previewUrl} className={styles.previewImage} controls />
+                                    ) : (
+                                        <img src={previewUrl} alt="Preview" className={styles.previewImage} />
+                                    )}
                                     <button 
                                         className={styles.changeImageBtn}
                                         onClick={(e) => {
@@ -152,8 +166,8 @@ const Upload = () => {
                                     <svg className={styles.uploadIcon} viewBox="0 0 24 24">
                                         <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.36 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
                                     </svg>
-                                    <h3>Drag & Drop your artwork</h3>
-                                    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>or click to browse files</p>
+                                    <h3>Drag & Drop your artwork or video</h3>
+                                    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>or click to browse image and video files</p>
                                 </div>
                             )}
                         </div>
@@ -163,7 +177,7 @@ const Upload = () => {
                     <form className={styles.formSection} onSubmit={handleSubmit}>
                         <div className={styles.formHeader}>
                             <h2>Publish Artwork</h2>
-                            <p>Share your creation with the world. Faculty approval required for the global feed.</p>
+                            <p>Share your creation with the world. Images and videos are supported. Faculty approval required for the global feed.</p>
                         </div>
 
                         <div className={styles.inputGroup}>

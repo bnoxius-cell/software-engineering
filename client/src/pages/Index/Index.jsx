@@ -2,14 +2,24 @@ import React, { useState, useEffect } from 'react'
 import styles from './Index.module.css'
 import { Link } from 'react-router-dom'
 import backgroundImage from '../../assets/images/homeBackgroundImg.png'
+import { isVideoArtwork } from '../../utils/artworkMedia';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const PLACEHOLDER_ARTWORK = '/assets/images/placeholder-artwork.svg';
+
+// Helper to format seconds into MM:SS (same as gallery)
+const formatDuration = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 const Index = () => {
   const [recentWorks, setRecentWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [videoDurations, setVideoDurations] = useState({});
 
   useEffect(() => {
     const fetchRecentWorks = async () => {
@@ -34,7 +44,7 @@ const Index = () => {
           setError('Failed to load artworks');
         }
       } catch (error) {
-        console.error("Failed to fetch artworks:", error);
+
         setError('Unable to connect to the gallery. Please try again later.');
       } finally {
         setLoading(false);
@@ -43,21 +53,22 @@ const Index = () => {
     fetchRecentWorks();
   }, []);
 
-  // Create duplicate array for infinite scroll effect (only if we have at least 1 artwork)
-  const duplicateWorks = recentWorks.length > 0 ? [...recentWorks, ...recentWorks] : [];
+  const handleVideoMetadataLoaded = (artworkId, duration) => {
+    setVideoDurations(prev => ({ ...prev, [artworkId]: duration }));
+  };
 
-  const handleArtworkImageError = (e) => {
-    if (e.target.dataset.fallbackApplied === 'true') {
-      return;
-    }
-
+  const handleImageError = (e) => {
+    if (e.target.dataset.fallbackApplied === 'true') return;
     e.target.dataset.fallbackApplied = 'true';
     e.target.src = PLACEHOLDER_ARTWORK;
   };
 
+  // Create duplicate array for infinite scroll effect (only if we have at least 1 artwork)
+  const duplicateWorks = recentWorks.length > 0 ? [...recentWorks, ...recentWorks] : [];
+
   return (
     <div className={styles.pageWrapper}>
-      {/* ===== ENHANCED HERO SECTION ===== */}
+      {/* ===== HERO SECTION ===== */}
       <section className={styles.hero}>
         <div className={styles["hero-box"]}>
           <div className={styles["hero-text"]}>
@@ -90,7 +101,7 @@ const Index = () => {
         <div className={styles.horizonGlow}></div>
 
         <div className={styles.sectionHeader}>
-            <span className={styles.neonLabel}>Museum Archive</span>
+            <span className={styles.neonLabel}>Artisan Archive</span>
             <h2>Recent Submissions</h2>
             <div className={styles.neonDivider}></div>
         </div>
@@ -104,25 +115,55 @@ const Index = () => {
             ) : recentWorks.length === 0 ? (
               <div className={styles.emptyState}>No artworks available yet. Check back soon!</div>
             ) : (
-              duplicateWorks.map((work, idx) => (
-                <div key={`${work._id}-${idx}`} className={styles.slide}>
-                  <Link to={`/gallery/${work._id}`} className={styles.cardLink}>
-                    <div className={styles.cardFrame}>
+              duplicateWorks.map((work, idx) => {
+                // Create a stable key: original works get a "0", duplicates get "1"
+                const duplicateFlag = idx >= recentWorks.length ? 1 : 0;
+                const uniqueKey = `${work._id}-dup${duplicateFlag}`;
+                return (
+                  <div key={uniqueKey} className={styles.slide}>
+                    <Link to={`/gallery/${work._id}`} className={styles.cardLink}>
+                      <div className={styles.cardFrame}>
                         <div className={styles.holographicOverlay}></div>
-                        <img
-                          src={`${API_BASE}${work.image}`}
-                          alt={work.title}
-                          loading="lazy"
-                          onError={handleArtworkImageError}
-                        />
+{isVideoArtwork(work) ? (
+  <>
+    <video
+      src={`${API_BASE}${work.image}`}
+      poster={work.poster ? `${API_BASE}${work.poster}` : null}
+      muted
+      loop
+      preload="metadata"
+      onLoadedMetadata={(e) => handleVideoMetadataLoaded(work._id, e.target.duration)}
+      onMouseEnter={(e) => e.target.play()}
+      onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+      aria-label={`Video preview: ${work.title}`}
+      // removed pointerEvents: 'none' – now hover works
+    />
+    <div className={styles.videoBadge}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+      <span className={styles.videoDuration}>
+        {formatDuration(videoDurations[work._id] || work.duration)}
+      </span>
+    </div>
+  </>
+) : (
+  <img
+    src={`${API_BASE}${work.image}`}
+    alt={work.title}
+    loading="lazy"
+    onError={handleImageError}
+  />
+)}
                         <div className={styles.cardInfo}>
-                            <h4>{work.title}</h4>
-                            <span>{work.artistName}</span>
+                          <h4>{work.title}</h4>
+                          <span>{work.artistName}</span>
                         </div>
-                    </div>
-                  </Link>
-                </div>
-              ))
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

@@ -6,6 +6,7 @@ import registerStyles from "../Register/Register.module.css";
 import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import Badge from "../../components/ui/Badge/Badge";
+import { isVideoArtwork } from "../../utils/artworkMedia";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -52,13 +53,16 @@ const Requests = () => {
   const [selectedArtworkIds, setSelectedArtworkIds] = useState([]);
   const [selectedAccountIds, setSelectedAccountIds] = useState([]);
   const [autoApproveArtworks, setAutoApproveArtworks] = useState(() => {
-    return localStorage.getItem(storageKeyByType.artworks) === "true";
+    const saved = localStorage.getItem(storageKeyByType.artworks);
+    return saved === null ? true : saved === "true";
   });
   const [autoApproveAccounts, setAutoApproveAccounts] = useState(() => {
-    return localStorage.getItem(storageKeyByType.accounts) === "true";
+    const saved = localStorage.getItem(storageKeyByType.accounts);
+    return saved === null ? true : saved === "true";
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [reviewError, setReviewError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewType, setReviewType] = useState(null);
@@ -120,6 +124,16 @@ const Requests = () => {
   useEffect(() => {
     localStorage.setItem(storageKeyByType.accounts, String(autoApproveAccounts));
   }, [autoApproveAccounts]);
+
+  useEffect(() => {
+    if (!successMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage("");
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [successMessage]);
 
   useEffect(() => {
     setSelectedArtworkIds((current) =>
@@ -452,6 +466,7 @@ const Requests = () => {
 
     setIsSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
     try {
       if (lastAction.type === "artworks") {
@@ -490,6 +505,7 @@ const Requests = () => {
 
     setIsSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
     try {
       if (activeView === "artworks") {
@@ -545,9 +561,15 @@ const Requests = () => {
       if (autoApproveArtworks && artworkRequests.length > 0) {
         setIsSubmitting(true);
         try {
+          const approvedCount = artworkRequests.length;
           setLastAction(buildActionSnapshot(artworkRequests, "artworks", "auto-approved artworks"));
           await processArtworkBatch(artworkRequests);
           setSelectedArtworkIds([]);
+          setSuccessMessage(
+            approvedCount === 1
+              ? "Artwork successfully added and published."
+              : `${approvedCount} artworks successfully added and published.`
+          );
           await fetchRequests();
         } catch (autoError) {
           console.error("Auto-approve artworks failed:", autoError);
@@ -627,6 +649,10 @@ const Requests = () => {
 
         <main className="main-view">
           <Topbar title="Requests" />
+
+          {successMessage && (
+            <div className={styles.successMessage}>{successMessage}</div>
+          )}
 
           <section className={styles.statsGrid}>
             <article className={styles.statCard}>
@@ -963,14 +989,24 @@ const Requests = () => {
               <div className={uploadStyles.imageSection}>
                 <div className={`${uploadStyles.dropZone} ${styles.reviewDropZone}`}>
                   {artworkForm.image ? (
-                    <img
-                      src={`${API_BASE_URL}${artworkForm.image}`}
-                      alt={artworkForm.title}
-                      className={uploadStyles.previewImage}
-                    />
+                    isVideoArtwork(selectedArtwork) ? (
+                      <video
+                        src={`${API_BASE_URL}${artworkForm.image}`}
+                        className={uploadStyles.previewImage}
+                        controls
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : (
+                      <img
+                        src={`${API_BASE_URL}${artworkForm.image}`}
+                        alt={artworkForm.title}
+                        className={uploadStyles.previewImage}
+                      />
+                    )
                   ) : (
                     <div className={uploadStyles.dropZoneContent}>
-                      <h3>No preview image available</h3>
+                      <h3>No preview media available</h3>
                     </div>
                   )}
                 </div>
@@ -1214,7 +1250,7 @@ const Requests = () => {
             </div>
             <button className={styles.confirmExitButton} onClick={closeConfirmDialog}>
               <svg height="20px" viewBox="0 0 384 512">
-                <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path>
+                <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
               </svg>
             </button>
           </div>

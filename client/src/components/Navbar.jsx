@@ -10,6 +10,7 @@ const Navbar = () => {
     const [searchType, setSearchType] = useState('all');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     
     const menuRef = useRef(null);
     const filterRef = useRef(null);
@@ -25,6 +26,46 @@ const Navbar = () => {
             setAvatar(storedAvatar);
         }
     }, []);
+
+    useEffect(() => {
+        if (!token) {
+            setUnreadNotifications(0);
+            return undefined;
+        }
+
+        let isMounted = true;
+
+        const fetchNotificationSummary = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/notifications/summary', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to fetch notification summary');
+                }
+
+                const data = await res.json();
+                if (isMounted) {
+                    setUnreadNotifications(data.unreadCount || 0);
+                }
+            } catch (error) {
+                console.error('Failed to fetch notification summary:', error);
+            }
+        };
+
+        fetchNotificationSummary();
+        window.addEventListener('focus', fetchNotificationSummary);
+
+        // Poll every 10 seconds
+        const interval = setInterval(fetchNotificationSummary, 10000);
+
+        return () => {
+            isMounted = false;
+            window.removeEventListener('focus', fetchNotificationSummary);
+            clearInterval(interval);
+        };
+    }, [token, unreadNotifications]); // Refetch if count changes
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
@@ -50,7 +91,6 @@ const Navbar = () => {
         } else {
             navigate('/gallery');
         }
-        // Close filter after search
         setIsFilterOpen(false);
     };
 
@@ -66,7 +106,6 @@ const Navbar = () => {
         setIsMenuOpen(false);
     };
 
-    // Check if user is admin safely
     const isAdmin = role && role.toLowerCase().trim() === 'admin';
 
     return (
@@ -160,6 +199,60 @@ const Navbar = () => {
                             <span className={styles.circle}></span>
                             <svg viewBox="0 0 24 24" className={styles.arr1} xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.9999 7.82843L18.364 13.1925L19.7782 11.7783L11.9999 4L4.22168 11.7783L5.63589 13.1925L10.9999 7.82843V20H12.9999V7.82843Z"></path>
+                            </svg>
+                        </button>
+                    )}
+                </li>
+
+                {/* ===== NOTIFICATION BUTTON ===== */}
+                <li>
+                    {token ? (
+                        <Link 
+                            to="/notifications" 
+                            className={styles.notificationBtn}
+                            aria-label="Notifications"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="1.5"
+                                stroke="currentColor"
+                                className={styles.bellIcon}
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                                />
+                            </svg>
+                            {/* Replace `true` with actual condition (e.g., unreadCount > 0) */}
+                            {unreadNotifications > 0 && (
+                                <span className={styles.notificationBadge}>
+                                    <span className={styles.badgePulse}></span>
+                                </span>
+                            )}
+                        </Link>
+                    ) : (
+                        <button 
+                            type="button" 
+                            className={styles.notificationBtn}
+                            onClick={() => setShowAuthModal(true)}
+                            aria-label="Notifications"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="1.5"
+                                stroke="currentColor"
+                                className={styles.bellIcon}
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                                />
                             </svg>
                         </button>
                     )}

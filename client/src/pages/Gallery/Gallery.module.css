@@ -2,6 +2,7 @@
     min-height: 100vh;
     padding-top: 140px; 
     padding-bottom: 4rem;
+    position: relative;   /* ← add this */
 }
 
 .feedHeader {
@@ -119,6 +120,22 @@
     font-size: 0.875rem;
 }
 
+.artistLink {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+.artistLink:hover,
+.artistLink:focus-visible {
+    color: #a1ff14;
+}
+
 .artTitle {
     color: rgb(161, 255, 20);
     font-size: 1.1rem;
@@ -223,6 +240,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    position: relative;
 }
 
 .modalArtImage {
@@ -249,7 +267,7 @@
     align-items: center;
     margin-bottom: 1.5rem;
     gap: 1rem;
-    padding-right: 40px; /* Add padding to prevent overlap with close button */
+    padding-right: 40px;
 }
 
 .modalHeaderActions {
@@ -337,6 +355,22 @@
     align-items: center;
     gap: 1rem;
     margin-top: 0.5rem;
+}
+
+.modalArtistLink {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.modalArtistLink:hover .artistNameModal,
+.modalArtistLink:focus-visible .artistNameModal {
+    color: #a1ff14;
 }
 
 .artistAvatar {
@@ -632,4 +666,456 @@
     transform: translateY(-2px);
 }
 
+/* ---------- Video Card Improvements ---------- */
+.videoCardWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 
+.videoBadge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  left: auto;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a1ff14;
+  border: 1px solid rgba(161, 255, 20, 0.5);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.videoBadge svg {
+  fill: #a1ff14;
+}
+
+.videoDuration {
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Seek (progress) bar */
+.videoSeek {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.videoSeek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #a1ff14;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.videoSeek::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Firefox support */
+.videoSeek::-moz-range-track {
+  background: rgba(255, 255, 255, 0.2);
+  height: 4px;
+  border-radius: 2px;
+}
+
+.videoSeek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #a1ff14;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------- Modal Video Player ---------- */
+.modalVideoWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.modalVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  aspect-ratio: 16 / 9;
+}
+
+.videoSpinnerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.videoControls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 40px;
+  padding: 6px 16px; /* reduced vertical padding to align better */
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 15;
+  border: 1px solid rgba(161, 255, 20, 0.3);
+  min-height: 44px; /* ensure consistent height */
+}
+
+.videoControlBtn {
+  background: none;
+  border: none;
+  color: #a1ff14;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.videoControlBtn:hover {
+  background: rgba(161, 255, 20, 0.2);
+  transform: scale(1.05);
+}
+
+.videoTime {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #c9d1d9;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Seek bar wrapper */
+.seekWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.videoSeek {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.videoSeek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #a1ff14;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.videoSeek::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.videoSeek::-moz-range-track {
+    background: transparent;
+    height: 4px;
+}
+
+.videoSeek::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #a1ff14;
+    border: none;
+    cursor: pointer;
+}
+
+.videoSeek::-moz-range-progress {
+    background: #a1ff14;
+    height: 4px;
+    border-radius: 2px;
+}
+
+
+/* ---------- Hacker Loader Styles ---------- */
+.hackerLoader {
+    position: relative;
+    width: 24em;
+    max-width: 90%;
+    height: auto;
+    background-color: #0a0a0a;
+    border: 0.2em solid #a1ff14;
+    border-radius: 0.5em;
+    padding: 1.5em 1em;
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 0 1em rgba(161, 255, 20, 0.3);
+}
+
+.loaderText {
+    text-align: center;
+    margin-bottom: 1.5em;
+}
+
+.textGlitch {
+    color: #a1ff14;
+    font-family: monospace;
+    font-size: 1.5em;
+    position: relative;
+    display: inline-block;
+}
+
+.textGlitch::before,
+.textGlitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0a0a0a;
+    clip: rect(0, 0, 0, 0);
+}
+
+.textGlitch::before {
+    left: -0.1em;
+    text-shadow: 0.1em 0 #ff00ff;
+    animation: glitch-effect 3s infinite linear alternate-reverse;
+}
+
+.textGlitch::after {
+    left: 0.1em;
+    text-shadow: -0.1em 0 #00ffff;
+    animation: glitch-effect 2s infinite linear alternate-reverse;
+}
+
+.loaderBar {
+    width: 100%;
+    height: 0.5em;
+    background-color: #1a3a1a;
+    border-radius: 0.25em;
+    position: relative;
+    overflow: hidden;
+}
+
+.barFill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background-color: #a1ff14;
+    animation: bar-fill-animation 2s infinite ease-in-out;
+}
+
+.barGlitch {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(161, 255, 20, 0.3), transparent);
+    background-size: 200% 200%;
+    animation: bar-glitch-animation 2s infinite linear;
+}
+
+.particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    width: 0.2em;
+    height: 0.2em;
+    background-color: #a1ff14;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particle-animation 2s infinite linear;
+}
+
+.particle:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.particle:nth-child(2) { top: 30%; left: 60%; animation-delay: 0.5s; }
+.particle:nth-child(3) { top: 70%; left: 30%; animation-delay: 1s; }
+.particle:nth-child(4) { top: 90%; left: 90%; animation-delay: 1.5s; }
+.particle:nth-child(5) { top: 50%; left: 50%; animation-delay: 2s; }
+
+@keyframes glitch-effect {
+    0% { clip: rect(42px, 9999px, 44px, 0); }
+    5% { clip: rect(12px, 9999px, 59px, 0); }
+    10% { clip: rect(48px, 9999px, 29px, 0); }
+    15% { clip: rect(42px, 9999px, 73px, 0); }
+    20% { clip: rect(63px, 9999px, 27px, 0); }
+    25% { clip: rect(34px, 9999px, 55px, 0); }
+    30% { clip: rect(86px, 9999px, 73px, 0); }
+    35% { clip: rect(20px, 9999px, 20px, 0); }
+    40% { clip: rect(26px, 9999px, 60px, 0); }
+    45% { clip: rect(25px, 9999px, 66px, 0); }
+    50% { clip: rect(57px, 9999px, 98px, 0); }
+    55% { clip: rect(5px, 9999px, 46px, 0); }
+    60% { clip: rect(82px, 9999px, 31px, 0); }
+    65% { clip: rect(54px, 9999px, 27px, 0); }
+    70% { clip: rect(28px, 9999px, 99px, 0); }
+    75% { clip: rect(45px, 9999px, 69px, 0); }
+    80% { clip: rect(23px, 9999px, 85px, 0); }
+    85% { clip: rect(54px, 9999px, 84px, 0); }
+    90% { clip: rect(45px, 9999px, 47px, 0); }
+    95% { clip: rect(37px, 9999px, 20px, 0); }
+    100% { clip: rect(4px, 9999px, 91px, 0); }
+}
+
+@keyframes bar-fill-animation {
+    0%, 100% { width: 0; }
+    50% { width: 100%; }
+}
+
+@keyframes bar-glitch-animation {
+    0% { background-position: 0 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes particle-animation {
+    0% { opacity: 0; transform: translate(0, 0); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translate(2em, 2em); }
+}
+
+/* Error state with glitch effect */
+.errorState {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 1rem;
+    margin: 2rem auto;
+    max-width: 600px;
+}
+
+.errorGlitch {
+    margin-bottom: 1.5rem;
+}
+
+.errorText {
+    color: #ff4444;
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+    animation: textPulse 1.5s infinite;
+}
+
+@keyframes textPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 10px #ff4444; }
+}
+
+/* Retry button remains with neon styling */
+.retryBtn {
+    background: #a1ff14;
+    color: #000;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 1px;
+}
+
+.retryBtn:hover {
+    background: #8cde11;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(161, 255, 20, 0.5);
+}
+
+/* Centered overlay for loading and error states */
+.fullscreenOverlay {
+    position: absolute;
+    top: 140px;          /* matches pageContainer padding-top */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 5;
+    backdrop-filter: blur(4px);
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 768px) {
+    .fullscreenOverlay {
+        top: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .fullscreenOverlay {
+        top: 100px;
+    }
+}
+
+/* Ensure the hacker loader and error state are properly centered */
+.hackerLoader {
+    margin: 0 auto;
+    width: 24em;
+    max-width: 90%;
+}
+
+.errorState {
+    margin: 0 auto;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+}

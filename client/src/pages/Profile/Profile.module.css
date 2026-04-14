@@ -9,36 +9,72 @@
 }
 
 /* ===== ANIMATED NEON RAIN BACKGROUND ===== */
+/* ===== SUBTLE BACKGROUND (Reduced neon rain) ===== */
 .neonRainBg {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #000000;
-    /* Creates vertical columns for the rain to fall down */
-    background-image: linear-gradient(to right, rgba(161, 255, 20, 0.05) 1px, transparent 1px);
-    background-size: 100px 100%;
     z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 20% 30%, #0a2e0b 0%, #000000 90%);
+    background-attachment: fixed;
+    overflow: hidden;
+}
+
+/* Optional: a few very faint, static “stars” for depth, no animation */
+.neonRainBg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(1px 1px at 5% 10%, rgba(161, 255, 20, 0.2), transparent),
+        radial-gradient(1px 1px at 15% 25%, rgba(161, 255, 20, 0.15), transparent),
+        radial-gradient(2px 2px at 25% 45%, rgba(161, 255, 20, 0.1), transparent),
+        radial-gradient(1px 1px at 35% 15%, rgba(161, 255, 20, 0.2), transparent),
+        radial-gradient(2px 2px at 45% 60%, rgba(161, 255, 20, 0.15), transparent),
+        radial-gradient(1px 1px at 55% 30%, rgba(161, 255, 20, 0.1), transparent),
+        radial-gradient(2px 2px at 65% 70%, rgba(161, 255, 20, 0.2), transparent),
+        radial-gradient(1px 1px at 75% 20%, rgba(161, 255, 20, 0.15), transparent),
+        radial-gradient(2px 2px at 85% 50%, rgba(161, 255, 20, 0.1), transparent),
+        radial-gradient(1px 1px at 95% 80%, rgba(161, 255, 20, 0.2), transparent);
+    background-size: 200px 200px;
     pointer-events: none;
 }
 
-.neonRainBg::after {
-    content: '';
-    position: absolute;
-    top: -100%;
-    left: 0;
-    width: 100%;
-    height: 200%;
-    /* Creates the "falling light" gradient */
-    background-image: linear-gradient(to bottom, transparent 30%, rgba(161, 255, 20, 0.15) 50%, transparent 70%);
-    background-size: 100% 250px;
-    animation: rainFall 5s linear infinite;
-}
+@keyframes diagonalRain {
+    0% {
+        background-position:
+            0px 220px, 3px 220px, 151.5px 337.5px,
+            25px 24px, 28px 24px, 176.5px 150px,
+            50px 16px, 53px 16px, 201.5px 91px,
+            75px 224px, 78px 224px, 226.5px 350.5px,
+            100px 19px, 103px 19px, 251.5px 121px,
+            125px 120px, 128px 120px, 276.5px 187px,
+            150px 31px, 153px 31px, 301.5px 120.5px,
+            175px 235px, 178px 235px, 326.5px 384.5px,
+            200px 121px, 203px 121px, 351.5px 228.5px,
+            225px 224px, 228px 224px, 376.5px 364.5px,
+            250px 26px, 253px 26px, 401.5px 105px,
+            275px 75px, 278px 75px, 426.5px 180px;
+    }
 
-@keyframes rainFall {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(50%); }
+    100% {
+        background-position:
+            0px 6800px, 3px 6800px, 151.5px 6917.5px,
+            25px 13632px, 28px 13632px, 176.5px 13758px,
+            50px 5416px, 53px 5416px, 201.5px 5491px,
+            75px 17175px, 78px 17175px, 226.5px 17301.5px,
+            100px 5119px, 103px 5119px, 251.5px 5221px,
+            125px 8428px, 128px 8428px, 276.5px 8495px,
+            150px 9876px, 153px 9876px, 301.5px 9965.5px,
+            175px 13391px, 178px 13391px, 326.5px 13540.5px,
+            200px 14741px, 203px 14741px, 351.5px 14848.5px,
+            225px 18770px, 228px 18770px, 376.5px 18910.5px,
+            250px 5082px, 253px 5082px, 401.5px 5161px,
+            275px 6375px, 278px 6375px, 426.5px 6480px;
+    }
 }
 
 /* ===== MAIN CONTAINER ===== */

@@ -5,6 +5,7 @@ const cors = require("cors");
 require("dotenv").config();
 const authRoutes = require("./server/routes/auth");
 const uploadRoutes = require("./server/routes/artwork");
+const notificationRoutes = require("./server/routes/notifications");
 const connectDB = require("./server/config/db");
 
 const app = express();
@@ -19,6 +20,7 @@ console.log("Express is serving images from:", artworksPath);
 // 3. Serve it
 app.use("/Artworks", express.static(artworksPath));
 app.use("/api/artworks", uploadRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Login and register
 app.use("/api/auth", authRoutes);

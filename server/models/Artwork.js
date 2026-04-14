@@ -21,9 +21,23 @@ const artworkSchema = new mongoose.Schema(
     type: String,
     default: ""
   },
+  mediaType: {
+    type: String,
+    enum: ["image", "video"],
+    default: "image"
+  },
   image: {
     type: String, // path to uploaded file or Cloudinary URL
     required: true
+  },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  likedBy: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+    default: []
   },
   // We make this optional for now just so you can test the upload without auth blocking you
   artistName: {

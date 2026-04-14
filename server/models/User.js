@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["Faculty", "Student", "Admin"],
-      default: "student",
+      default: "Student",
       required: true
     },
 
@@ -30,7 +30,34 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: undefined
     },
-      status: {
+    avatar: {
+      type: String,
+      default: ""
+    },
+    bio: {
+      type: String,
+      default: ""
+    },
+    socials: {
+      twitter: { type: String, default: "" },
+      instagram: { type: String, default: "" },
+      website: { type: String, default: "" }
+    },
+    savedArtworks: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Artwork",
+      default: []
+    },
+    likedArtworks: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Artwork",
+      default: []
+    },
+    autoApproveUploads: {
+      type: Boolean,
+      default: false
+    },
+    status: {
       type: String,
       enum: ['pending', 'active', 'suspended'],
       default: 'pending'

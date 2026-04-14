@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import styles from "./Works.module.css";
 import Topbar from "../../components/Topbar";
 import Sidebar from "../../components/Sidebar";
+import { isVideoArtwork } from "../../utils/artworkMedia";
+import ArtworkVideoPlayer from "../../components/media/ArtworkVideoPlayer";
 
 const Works = () => {
   const [works, setWorks] = useState([]);
@@ -318,9 +320,9 @@ const Works = () => {
               <div className={styles["file-upload"]}>
                 <label className={styles["file-upload-label"]} htmlFor="workFiles">
                   <span style={{ fontSize: "1rem", fontWeight: "bold", color: "#a1ff14" }}>Click to browse or drag files here</span>
-                  <span style={{ fontSize: "0.85rem", color: "gray" }}>(Images, PDF, DOC, ZIP)</span>
+                  <span style={{ fontSize: "0.85rem", color: "gray" }}>(Images and videos)</span>
                 </label>
-                <input type="file" id="workFiles" name="workFiles" multiple accept="image/*,.pdf,.doc,.zip" />
+                <input type="file" id="workFiles" name="workFiles" multiple accept="image/*,video/*" />
               </div>
             </div>
 
@@ -360,7 +362,15 @@ const Works = () => {
             <div className={styles.modalGrid}>
               {/* Left Column: Image Preview */}
               <div className={styles.modalImageCol}>
-                <img src={`http://localhost:5000${viewingWork.image}`} alt={viewingWork.title} className={styles.previewImage} />
+                {isVideoArtwork(viewingWork) ? (
+                  <ArtworkVideoPlayer
+                    src={`http://localhost:5000${viewingWork.image}`}
+                    poster={viewingWork.poster ? `http://localhost:5000${viewingWork.poster}` : null}
+                    alt={viewingWork.title}
+                  />
+                ) : (
+                  <img src={`http://localhost:5000${viewingWork.image}`} alt={viewingWork.title} className={styles.previewImage} />
+                )}
               </div>
               
               {/* Right Column: Details */}
@@ -404,11 +414,19 @@ const Works = () => {
               <div className={styles.modalGrid}>
                 {/* Left Column: Image Preview */}
                 <div className={styles.modalImageCol}>
-                  <img src={`http://localhost:5000${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
+                  {isVideoArtwork(editingWork) ? (
+                    <ArtworkVideoPlayer
+                      src={`http://localhost:5000${editingWork.image}`}
+                      poster={editingWork.poster ? `http://localhost:5000${editingWork.poster}` : null}
+                      alt={editingWork.title}
+                    />
+                  ) : (
+                    <img src={`http://localhost:5000${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
+                  )}
                   <div className={styles["form-group"]} style={{ marginTop: '1rem' }}>
-                    <label>Update Image (Optional)</label>
+                    <label>Update Media (Optional)</label>
                     {/* ADDED: name="artworkImage" to match multer setup */}
-                    <input type="file" name="artworkImage" style={{ width: '100%' }} accept="image/*" />
+                    <input type="file" name="artworkImage" style={{ width: '100%' }} accept="image/*,video/*" />
                   </div>
                 </div>
                 

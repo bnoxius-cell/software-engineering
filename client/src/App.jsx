@@ -9,6 +9,7 @@ import Index from './pages/Index/Index'
 import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Gallery from './pages/Gallery/Gallery'
+import Notifications from './pages/Notifications/Notifications'
 import Settings from './pages/Settings/Settings'
 import Profile from './pages/Profile/Profile'
 import Upload from './pages/Upload/Upload'
@@ -36,7 +37,7 @@ function App() {
                     })
                     setUser(res.data);
                 } catch (err) {
-                    console.error("Failed to fetch user:", err);
+
                     setError("Failed to fetch user data");
                     localStorage.removeItem('token');
                 }  
@@ -57,6 +58,7 @@ function App() {
                     <Route path="/upload" element={<Upload />} />
                     <Route path="/login" element={<Login setUser={setUser}  />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/notifications" element={<Notifications />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/profile" element={<Profile currentUser={user} />} />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />

@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import styles from './Profile.module.css';
+import { isVideoArtwork } from '../../utils/artworkMedia';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Profile = ({ currentUser }) => {
     const { userId } = useParams();
@@ -11,6 +14,7 @@ const Profile = ({ currentUser }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
     const [profileUser, setProfileUser] = useState(null);
     const [artworks, setArtworks] = useState([]);
+    const [savedArtworks, setSavedArtworks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -33,12 +37,34 @@ const Profile = ({ currentUser }) => {
 
             try {
                 setLoading(true);
-                const res = await axios.get(`http://localhost:5000/api/artworks/profile/${targetId}`);
+                const res = await axios.get(`${API_BASE}/api/artworks/profile/${targetId}`);
                 setProfileUser(res.data.user);
                 setArtworks(res.data.artworks);
+
+                const currentUserId = currentUser?._id || currentUser?.id;
+                if (currentUserId && currentUserId === targetId) {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        try {
+                            const savedRes = await axios.get(`${API_BASE}/api/auth/saved`, {
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            setSavedArtworks(savedRes.data.savedArtworks || []);
+                        } catch (savedError) {
+
+                            setSavedArtworks([]);
+                        }
+                    } else {
+                        setSavedArtworks([]);
+                    }
+                } else {
+                    setSavedArtworks([]);
+                    setActiveTab('portfolio');
+                }
+
                 setError('');
             } catch (err) {
-                console.error("Failed to load profile", err);
+
                 setError("Profile not found.");
             } finally {
                 setLoading(false);
@@ -55,12 +81,16 @@ const Profile = ({ currentUser }) => {
     const displayAvatar = profileUser.avatar || "/assets/images/profile_icon.png";
     const displayName = profileUser.name || profileUser.username || "Unknown Artist";
     const displayBio = profileUser.bio || "No bio available.";
+    const currentUserId = currentUser?._id || currentUser?.id;
+    const profileUserId = profileUser._id || userId;
+    const isOwnProfile = !!currentUserId && !!profileUserId && currentUserId === profileUserId;
+    const visibleWorks = activeTab === 'bookmarks' ? savedArtworks : artworks;
 
     return (
         <div className={styles.pageWrapper}>
             
             {/* ===== UIVERSE NEON RAIN BACKGROUND ===== */}
-            <div className={styles.rainContainer}></div>
+            <div className={styles.neonRainBg}></div>
 
             <Navbar />
 
@@ -124,12 +154,14 @@ const Profile = ({ currentUser }) => {
                     >
                         Collections
                     </button>
-                    <button 
-                        className={`${styles.tab} ${activeTab === 'bookmarks' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('bookmarks')}
-                    >
-                        Bookmarks
-                    </button>
+                    {isOwnProfile && (
+                        <button 
+                            className={`${styles.tab} ${activeTab === 'bookmarks' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('bookmarks')}
+                        >
+                            Bookmarks
+                        </button>
+                    )}
                 </div>
 
                 {/* ===== PORTFOLIO GRID ===== */}
@@ -145,10 +177,26 @@ const Profile = ({ currentUser }) => {
                             </div>
                         )}
 
-                        {activeTab === 'portfolio' && artworks.map((work) => (
+                        {activeTab === 'bookmarks' && savedArtworks.length === 0 && (
+                            <div className={styles.emptyState}>
+                                <p>Private vault of saved inspirations.</p>
+                            </div>
+                        )}
+
+                        {(activeTab === 'portfolio' || activeTab === 'bookmarks') && visibleWorks.map((work) => (
                             <div key={work._id} className={styles.artCard}>
                                 <div className={styles.imageWrapper}>
-                                    <img src={`http://localhost:5000${work.image}`} alt={work.title} className={styles.artImage} />
+                                    {isVideoArtwork(work) ? (
+                                        <video
+                                            src={`${API_BASE}${work.image}`}
+                                            className={styles.artImage}
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                        />
+                                    ) : (
+                                        <img src={`${API_BASE}${work.image}`} alt={work.title} className={styles.artImage} />
+                                    )}
                                     <div className={styles.likeOverlay}>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                                         <span>{work.likes || 0}</span>
@@ -161,12 +209,6 @@ const Profile = ({ currentUser }) => {
                         {activeTab === 'collections' && (
                             <div className={styles.emptyState}>
                                 <p>No collections created yet.</p>
-                            </div>
-                        )}
-
-                        {activeTab === 'bookmarks' && (
-                            <div className={styles.emptyState}>
-                                <p>Private vault of saved inspirations.</p>
                             </div>
                         )}
                     </div>

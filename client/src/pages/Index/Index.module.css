@@ -251,7 +251,8 @@
     cursor: pointer;
 }
 
-.cardFrame img {
+.cardFrame img,
+.cardFrame video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -265,7 +266,8 @@
     box-shadow: 0 0 30px rgba(161, 255, 20, 0.3);
 }
 
-.cardFrame:hover img {
+.cardFrame:hover img,
+.cardFrame:hover video {
     filter: brightness(1.1);
 }
 
@@ -385,4 +387,77 @@
     50% {
         opacity: 1;
     }
+}
+
+
+/* ===== VIDEO BADGE (same as gallery) ===== */
+.videoBadge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #a1ff14;
+    border: 1px solid rgba(161, 255, 20, 0.5);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.videoBadge svg {
+    fill: #a1ff14;
+    width: 12px;
+    height: 12px;
+}
+
+.videoDuration {
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    font-size: 0.7rem;
+}
+
+/* Fix slider z-index and positioning */
+.slider {
+    position: relative; /* ensures child absolute positioning is contained */
+    height: 450px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+/* Ensure cardFrame has proper stacking context */
+.cardFrame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #0d1117;
+    border-radius: 20px;
+    border: 1px solid #30363d;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+/* Make video fill the frame and not block interactions */
+.cardFrame video,
+.cardFrame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+    transition: 0.4s;
+    pointer-events: none; /* prevents video from interfering with link click */
+}
+
+/* Hover effects already defined – keep them */
+.cardFrame:hover video,
+.cardFrame:hover img {
+    filter: brightness(1.1);
 }
