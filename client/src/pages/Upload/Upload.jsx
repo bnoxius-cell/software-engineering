@@ -9,8 +9,26 @@ const Upload = () => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef(null);
 
-    const [isUploading, setIsUploading] = useState(false); // New loading state
-    const navigate = useNavigate(); // Initialize the navigator
+    const [isUploading, setIsUploading] = useState(false);
+    const navigate = useNavigate();
+
+    // Form State
+    const [formData, setFormData] = useState({
+        title: '',
+        medium: 'digital_2d',
+        description: '',
+        tags: ''
+    });
+
+    // Validation helper: returns true if all required fields are filled
+    const isFormValid = () => {
+        return (
+            file !== null &&
+            formData.title.trim() !== '' &&
+            formData.description.trim() !== '' &&
+            formData.tags.trim() !== ''
+        );
+    };
 
     useEffect(() => {
         return () => {
@@ -22,43 +40,47 @@ const Upload = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file) return alert("Please upload an artwork first!");
+
+        // Additional client-side validation (beyond the disabled button)
+        if (!file) {
+            alert("Please upload an artwork file.");
+            return;
+        }
+        if (!formData.title.trim()) {
+            alert("Title is required.");
+            return;
+        }
+        if (!formData.description.trim()) {
+            alert("Description is required.");
+            return;
+        }
+        if (!formData.tags.trim()) {
+            alert("Tags are required.");
+            return;
+        }
 
         setIsUploading(true);
 
-        // 1. Create a FormData object to handle the file + text
         const submitData = new FormData();
-        
-        // Make sure 'artworkImage' matches the name your backend expects (e.g., in multer)
-        submitData.append('artworkImage', file); 
-        submitData.append('title', formData.title);
+        submitData.append('artworkImage', file);
+        submitData.append('title', formData.title.trim());
         submitData.append('medium', formData.medium);
-        submitData.append('description', formData.description);
-        submitData.append('tags', formData.tags);
+        submitData.append('description', formData.description.trim());
+        submitData.append('tags', formData.tags.trim());
 
-        // Optional: Grab the token if your backend requires authentication to upload
-        const token = localStorage.getItem('token'); 
+        const token = localStorage.getItem('token');
 
         try {
-            // 2. Send the POST request to your backend
-            // Adjust the URL if your backend is running on a different port (e.g., http://localhost:5000/api...)
             const response = await fetch('http://localhost:5000/api/artworks/', {
                 method: 'POST',
                 headers: {
-                    // Include the auth token if needed
-                    'Authorization': `Bearer ${token}` 
-                    // CRITICAL: Do NOT set 'Content-Type': 'multipart/form-data'. 
-                    // The browser does this automatically when it sees a FormData object!
+                    'Authorization': `Bearer ${token}`
                 },
                 body: submitData
             });
 
             if (response.ok) {
-                const result = await response.json();
-
-                
-                // 3. Smoothly redirect the user back to the homepage
-                navigate('/'); 
+                navigate('/');
             } else {
                 const errorData = await response.json();
                 alert(`Upload failed: ${errorData.message}`);
@@ -67,19 +89,11 @@ const Upload = () => {
             console.error("Upload error:", error);
             alert("Server error. Is your backend running?");
         } finally {
-            setIsUploading(false); // Re-enable the button
+            setIsUploading(false);
         }
-    }
+    };
 
-    // Form State
-    const [formData, setFormData] = useState({
-        title: '',
-        medium: 'digital_2d',
-        description: '',
-        tags: ''
-    });
-
-    // Handle Drag & Drop Events
+    // Drag & Drop Handlers
     const handleDragOver = (e) => {
         e.preventDefault();
         setIsDragging(true);
@@ -99,7 +113,6 @@ const Upload = () => {
         }
     };
 
-    // Handle Click Upload
     const handleFileSelect = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
@@ -107,7 +120,6 @@ const Upload = () => {
         }
     };
 
-    // Create a local URL to preview the image immediately
     const processFile = (file) => {
         setFile(file);
         setPreviewMediaType(file.type.startsWith('video/') ? 'video' : 'image');
@@ -135,6 +147,7 @@ const Upload = () => {
                             onChange={handleFileSelect} 
                             accept="image/*,video/*" 
                             style={{ display: 'none' }} 
+                            required
                         />
 
                         <div 
@@ -154,7 +167,7 @@ const Upload = () => {
                                     <button 
                                         className={styles.changeImageBtn}
                                         onClick={(e) => {
-                                            e.stopPropagation(); // Prevents triggering the dropZone click
+                                            e.stopPropagation();
                                             fileInputRef.current.click();
                                         }}
                                     >
@@ -174,14 +187,14 @@ const Upload = () => {
                     </div>
 
                     {/* RIGHT SIDE: Details Form */}
-                    <form className={styles.formSection} onSubmit={handleSubmit}>
+                    <form className={styles.formSection} onSubmit={handleSubmit} noValidate>
                         <div className={styles.formHeader}>
                             <h2>Publish Artwork</h2>
                             <p>Share your creation with the world. Images and videos are supported. Faculty approval required for the global feed.</p>
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label>Title</label>
+                            <label>Title *</label>
                             <input 
                                 type="text" 
                                 name="title"
@@ -194,12 +207,13 @@ const Upload = () => {
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label>Medium / Category</label>
+                            <label>Medium / Category *</label>
                             <select 
                                 name="medium" 
                                 className={styles.select}
                                 value={formData.medium}
                                 onChange={handleInputChange}
+                                required
                             >
                                 <option value="digital_2d">Digital 2D Illustration</option>
                                 <option value="3d_model">3D Modeling & Render</option>
@@ -211,18 +225,19 @@ const Upload = () => {
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label>Description & Tools Used</label>
+                            <label>Description & Tools Used *</label>
                             <textarea 
                                 name="description"
                                 className={styles.textarea} 
                                 placeholder="Tell us about the process, inspiration, or software used (e.g. Blender, Photoshop)..."
                                 value={formData.description}
                                 onChange={handleInputChange}
+                                required
                             />
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label>Tags (Comma separated)</label>
+                            <label>Tags (Comma separated) *</label>
                             <input 
                                 type="text" 
                                 name="tags"
@@ -230,13 +245,14 @@ const Upload = () => {
                                 placeholder="cyberpunk, neon, concept art" 
                                 value={formData.tags}
                                 onChange={handleInputChange}
+                                required
                             />
                         </div>
 
                         <button 
                             type="submit" 
                             className={styles.submitBtn}
-                            disabled={!file || isUploading} 
+                            disabled={!isFormValid() || isUploading} 
                         >
                             {isUploading ? 'Publishing...' : 'Publish to Portfolio'}
                         </button>

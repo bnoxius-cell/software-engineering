@@ -373,9 +373,13 @@ const Gallery = () => {
                 </nav>
 
                 <main className={styles.masonryGrid}>
-                    {!loading && !error && filteredArtworks.length === 0 && (
-                        <p className={styles.emptyState}>No artworks found in this category.</p>
-                    )}
+{!loading && !error && filteredArtworks.length === 0 && (
+    <div className={styles.emptyStateLoader}>
+        <div className={styles.emptyStateMessage}>
+            ⟡ No artworks found in this category ⟡
+        </div>
+    </div>
+)}
                     {!loading && !error && filteredArtworks.map((art) => (
                         <div key={art._id} className={styles.artCard} onClick={() => openModal(art)}>
                             {renderCardMedia(art)}

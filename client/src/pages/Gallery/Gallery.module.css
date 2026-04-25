@@ -1119,3 +1119,28 @@
     width: 90%;
     text-align: center;
 }
+
+/* ===== NEON RADAR LOADER (Empty State) ===== */
+.emptyStateLoader {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    width: 100%;
+    padding: 2rem;
+}
+
+.emptyStateMessage {
+    color: #a1ff14;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-shadow: 0 0 12px rgba(161, 255, 20, 0.5);
+    letter-spacing: 1px;
+    text-align: center;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
