@@ -2,14 +2,13 @@
     position: relative;
     background-color: #000000;
     min-height: 100vh;
-    padding-top: 110px; /* Accounts for fixed navbar */
+    padding-top: 110px;
     padding-bottom: 80px;
     color: #c9d1d9;
     overflow-x: hidden;
 }
 
-/* ===== ANIMATED NEON RAIN BACKGROUND ===== */
-/* ===== SUBTLE BACKGROUND (Reduced neon rain) ===== */
+/* ===== SUBTLE BACKGROUND ===== */
 .neonRainBg {
     position: fixed;
     top: 0;
@@ -23,7 +22,6 @@
     overflow: hidden;
 }
 
-/* Optional: a few very faint, static “stars” for depth, no animation */
 .neonRainBg::before {
     content: '';
     position: absolute;
@@ -43,44 +41,10 @@
     pointer-events: none;
 }
 
-@keyframes diagonalRain {
-    0% {
-        background-position:
-            0px 220px, 3px 220px, 151.5px 337.5px,
-            25px 24px, 28px 24px, 176.5px 150px,
-            50px 16px, 53px 16px, 201.5px 91px,
-            75px 224px, 78px 224px, 226.5px 350.5px,
-            100px 19px, 103px 19px, 251.5px 121px,
-            125px 120px, 128px 120px, 276.5px 187px,
-            150px 31px, 153px 31px, 301.5px 120.5px,
-            175px 235px, 178px 235px, 326.5px 384.5px,
-            200px 121px, 203px 121px, 351.5px 228.5px,
-            225px 224px, 228px 224px, 376.5px 364.5px,
-            250px 26px, 253px 26px, 401.5px 105px,
-            275px 75px, 278px 75px, 426.5px 180px;
-    }
-
-    100% {
-        background-position:
-            0px 6800px, 3px 6800px, 151.5px 6917.5px,
-            25px 13632px, 28px 13632px, 176.5px 13758px,
-            50px 5416px, 53px 5416px, 201.5px 5491px,
-            75px 17175px, 78px 17175px, 226.5px 17301.5px,
-            100px 5119px, 103px 5119px, 251.5px 5221px,
-            125px 8428px, 128px 8428px, 276.5px 8495px,
-            150px 9876px, 153px 9876px, 301.5px 9965.5px,
-            175px 13391px, 178px 13391px, 326.5px 13540.5px,
-            200px 14741px, 203px 14741px, 351.5px 14848.5px,
-            225px 18770px, 228px 18770px, 376.5px 18910.5px,
-            250px 5082px, 253px 5082px, 401.5px 5161px,
-            275px 6375px, 278px 6375px, 426.5px 6480px;
-    }
-}
-
 /* ===== MAIN CONTAINER ===== */
 .profileContainer {
     position: relative;
-    z-index: 10; /* Keeps content above the rain */
+    z-index: 10;
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -88,7 +52,7 @@
 
 /* ===== PROFILE CARD ===== */
 .profileCard {
-    background-color: rgba(13, 17, 23, 0.85); /* Frosted dark glass */
+    background-color: rgba(13, 17, 23, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(48, 54, 61, 0.8);
@@ -119,13 +83,78 @@
     gap: 1.5rem;
 }
 
+.avatarWrapper {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
 .avatar {
     width: 90px;
     height: 90px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #a1ff14; /* Neon green ring */
+    border: 2px solid #a1ff14;
     box-shadow: 0 0 15px rgba(161, 255, 20, 0.2);
+}
+
+.avatarClickable {
+    cursor: pointer;
+}
+
+.avatarClickable:hover .avatar {
+    filter: brightness(0.6);
+}
+
+.avatarClickable:hover .avatarOverlay {
+    opacity: 1;
+}
+
+.avatarOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.avatarOverlay svg {
+    width: 28px;
+    height: 28px;
+    color: #ffffff;
+}
+
+.avatarUploading .avatar {
+    filter: brightness(0.6);
+}
+
+.avatarUploading .avatarOverlay {
+    opacity: 1;
+}
+
+.avatarSpinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #a1ff14;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .nameBlock h1 {
@@ -223,6 +252,58 @@
     background: rgba(161, 255, 20, 0.1);
 }
 
+.socialEditContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.socialInput {
+    padding: 8px 12px;
+    background-color: rgba(22, 27, 34, 0.8);
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #c9d1d9;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.socialInput:focus {
+    outline: none;
+    border-color: #a1ff14;
+}
+
+.socialActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.addSocialBtn {
+    background: none;
+    border: 1px solid #30363d;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9d1d9;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.addSocialBtn:hover {
+    border-color: #a1ff14;
+    color: #a1ff14;
+}
+
+.addSocialBtn svg {
+    width: 16px;
+    height: 16px;
+}
+
 .bioBlock {
     max-width: 800px;
 }
@@ -232,7 +313,60 @@
     font-size: 1rem;
     line-height: 1.7;
     margin: 0;
-    white-space: pre-line; 
+    white-space: pre-line;
+}
+
+/* Bio editing */
+.bioTextarea {
+    width: 100%;
+    min-height: 80px;
+    background-color: rgba(22, 27, 34, 0.8);
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #c9d1d9;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.bioTextarea:focus {
+    outline: none;
+    border-color: #a1ff14;
+    box-shadow: 0 0 0 2px rgba(161, 255, 20, 0.2);
+}
+
+.bioActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.saveBtn, .cancelBtn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.saveBtn {
+    background-color: #a1ff14;
+    color: #000;
+}
+
+.saveBtn:hover {
+    background-color: #8ce600;
+}
+
+.cancelBtn {
+    background-color: #30363d;
+    color: #c9d1d9;
+}
+
+.cancelBtn:hover {
+    background-color: #484f58;
 }
 
 /* ===== TABS ===== */
@@ -284,6 +418,11 @@
 .sectionHeader {
     margin-bottom: 1.5rem;
     padding-left: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .sectionHeader h3 {
@@ -293,12 +432,28 @@
     margin: 0;
 }
 
+.createBtn {
+    background-color: #a1ff14;
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.createBtn:hover {
+    background-color: #8ce600;
+}
+
 .portfolioGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 24px;
 }
 
+/* Art cards */
 .artCard {
     display: flex;
     flex-direction: column;
@@ -310,7 +465,7 @@
     position: relative;
     border-radius: 16px;
     overflow: hidden;
-    aspect-ratio: 1 / 1; 
+    aspect-ratio: 1 / 1;
     background-color: #161b22;
     border: 1px solid #30363d;
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
@@ -363,7 +518,7 @@
     padding-left: 4px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; 
+    text-overflow: ellipsis;
     transition: 0.2s;
 }
 
@@ -371,6 +526,192 @@
     color: #a1ff14;
 }
 
+/* Collection and user cards */
+.collectionCard, .userCard {
+    background-color: rgba(22, 27, 34, 0.8);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 16px;
+    transition: 0.2s;
+}
+
+.collectionCard:hover, .userCard:hover {
+    border-color: #a1ff14;
+    transform: translateY(-2px);
+}
+
+.collectionCard h4, .userCard h4 {
+    margin: 0 0 8px 0;
+    color: #c9d1d9;
+    font-size: 1.1rem;
+}
+
+.collectionCard p, .userCard p {
+    margin: 0 0 8px 0;
+    color: #8b949e;
+    font-size: 0.9rem;
+}
+
+.collectionCard span {
+    color: #a1ff14;
+    font-size: 0.85rem;
+}
+
+.userCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.userAvatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.userInfo {
+    flex: 1;
+}
+
+/* Collection actions */
+.collectionActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+.iconBtnSmall {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iconBtnSmall:hover {
+    border-color: #a1ff14;
+    color: #a1ff14;
+    background: rgba(161, 255, 20, 0.1);
+}
+
+.iconBtnSmall svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Artwork list for add-to-collection modal */
+.artworkList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 16px 0;
+}
+
+.artworkItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid transparent;
+}
+
+.artworkItem:hover {
+    background: rgba(161, 255, 20, 0.1);
+    border-color: #a1ff14;
+}
+
+.artworkThumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.artworkInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.artworkInfo strong {
+    color: #c9d1d9;
+    font-size: 0.9rem;
+}
+
+.artworkInfo span {
+    color: #8b949e;
+    font-size: 0.75rem;
+}
+
+/* Modals */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modalContent h4 {
+    margin: 0 0 16px 0;
+    color: #c9d1d9;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.collectionInput, .collectionTextarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: rgba(22, 27, 34, 0.8);
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #c9d1d9;
+    font-family: inherit;
+}
+
+.collectionInput:focus, .collectionTextarea:focus {
+    outline: none;
+    border-color: #a1ff14;
+}
+
+.collectionTextarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Empty state */
 .emptyState {
     grid-column: 1 / -1;
     text-align: center;
@@ -380,4 +721,38 @@
     backdrop-filter: blur(8px);
     border: 1px dashed #30363d;
     border-radius: 16px;
+}
+
+/* More menu */
+.moreMenuContainer {
+    position: relative;
+}
+
+.moreMenu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px 0;
+    min-width: 160px;
+    z-index: 200;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.moreMenu button {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    color: #c9d1d9;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.moreMenu button:hover {
+    background-color: #30363d;
 }

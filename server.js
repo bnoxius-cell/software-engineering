@@ -6,6 +6,7 @@ require("dotenv").config();
 const authRoutes = require("./server/routes/auth");
 const uploadRoutes = require("./server/routes/artwork");
 const notificationRoutes = require("./server/routes/notifications");
+const collectionRoutes = require("./server/routes/collections");
 const connectDB = require("./server/config/db");
 
 const app = express();
@@ -19,8 +20,15 @@ const artworksPath = path.join(__dirname, "public", "Artworks");
 console.log("Express is serving images from:", artworksPath);
 // 3. Serve it
 app.use("/Artworks", express.static(artworksPath));
+
+// Serve avatars
+const avatarsPath = path.join(__dirname, "public", "avatars");
+console.log("Express is serving avatars from:", avatarsPath);
+app.use("/avatars", express.static(avatarsPath));
+
 app.use("/api/artworks", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/collections", collectionRoutes);
 
 // Login and register
 app.use("/api/auth", authRoutes);

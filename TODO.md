@@ -1,9 +1,7 @@
-# TODO: Add Welcome Messages
+# TODO: Fix Profile & Avatar Upload
 
-- [x] 1. Update `Login.jsx` — store `name` in localStorage on successful login
-- [x] 2. Update `App.jsx` — pass `user` prop to `<Dashboard />`
-- [x] 3. Update `Dashboard.jsx` — add personalized welcome banner for admin/faculty
-- [x] 4. Update `Dashboard.module.css` — add welcome banner styles
-- [x] 5. Update `Index.jsx` — add personalized welcome banner for logged-in users
-- [x] 6. Update `Index.module.css` — add welcome banner styles
+- [x] 1. Fix Profile.jsx — add defensive `targetId` validation to prevent "Profile not found"
+- [x] 2. Fix Profile.jsx — add avatar upload UI and API integration
+- [x] 3. Update Profile.module.css — add avatar upload hover styles
+- [x] 4. Test — ensure profile loads correctly and avatar upload works
 

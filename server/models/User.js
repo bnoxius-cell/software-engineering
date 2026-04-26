@@ -48,6 +48,16 @@ const userSchema = new mongoose.Schema(
       ref: "Artwork",
       default: []
     },
+    following: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: []
+    },
+    followers: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: []
+    },
     likedArtworks: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "Artwork",
@@ -61,6 +71,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'active', 'suspended'],
       default: 'pending'
+    },
+    privacy: {
+      hideFollowers: { type: Boolean, default: false },
+      hideFollowing: { type: Boolean, default: false }
+    },
+    notifications: {
+      artworkAdded: { type: Boolean, default: true }
     }
   },
   { timestamps: true }

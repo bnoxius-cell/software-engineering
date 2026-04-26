@@ -180,11 +180,15 @@ router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
     );
 
     if (status === 'published' && updatedArtwork) {
-      await Notification.create({
-        recipient: updatedArtwork.uploadedBy,
-        type: 'artwork_approved',
-        message: `Your artwork "${updatedArtwork.title}" has been approved and published!`,
-      });
+      // Check user's notification preferences
+      const user = await User.findById(updatedArtwork.uploadedBy);
+      if (user.notifications?.artworkAdded !== false) { // Default to true if not set
+        await Notification.create({
+          recipient: updatedArtwork.uploadedBy,
+          type: 'artwork_approved',
+          message: `Your artwork "${updatedArtwork.title}" has been approved and published!`,
+        });
+      }
     }
 
     res.status(200).json(updatedArtwork);
@@ -262,7 +266,12 @@ router.get("/profile/:userId", async (req, res) => {
       uploadedBy: req.params.userId, 
       status: "published" 
     }).populate("uploadedBy", "name username avatar");
-    res.status(200).json({ user, artworks: artworks.map(serializeArtwork) });
+    const userWithCounts = {
+      ...user.toObject(),
+      followingCount: user.following.length,
+      followerCount: user.followers.length
+    };
+    res.status(200).json({ user: userWithCounts, artworks: artworks.map(serializeArtwork) });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch profile artworks" });
   }
@@ -338,7 +347,7 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
       status: artworkStatus
     });
 
-    if (autoApprove) {
+    if (autoApprove && currentUser.notifications?.artworkAdded !== false) {
       await Notification.create({
         recipient: currentUser._id,
         type: 'artwork_approved',
@@ -366,6 +375,17 @@ router.use((error, req, res, next) => {
   }
 
   next();
+});
+
+// Get user's own artworks
+router.get("/user/me", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const artworks = await Artwork.find({ uploadedBy: userId }).sort({ createdAt: -1 });
+    res.status(200).json(artworks.map(serializeArtwork));
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch artworks" });
+  }
 });
 
 module.exports = router;

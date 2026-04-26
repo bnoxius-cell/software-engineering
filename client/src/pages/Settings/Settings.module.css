@@ -144,3 +144,100 @@
     background-color: #8cde11;
     transform: translateY(-2px);
 }
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== AVATAR SECTION ===== */
+.avatarSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.currentAvatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #30363d;
+}
+
+.uploadBtn {
+    background-color: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.uploadBtn:hover {
+    background-color: #30363d;
+    border-color: #a1ff14;
+}
+
+/* ===== MESSAGE STYLES ===== */
+.message {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.message.success {
+    background-color: rgba(46, 160, 67, 0.1);
+    border: 1px solid #238636;
+    color: #56d364;
+}
+
+.message.error {
+    background-color: rgba(248, 81, 73, 0.1);
+    border: 1px solid #da3633;
+    color: #f85149;
+}
+
+/* ===== CHECKBOX STYLES ===== */
+.checkboxLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 16px;
+    height: 16px;
+    accent-color: #a1ff14;
+}
+
+.checkboxText {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.checkboxDescription {
+    color: #8b949e;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    margin-left: 1.75rem;
+}
+
+/* ===== LOADING ===== */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    color: #c9d1d9;
+    font-size: 1.1rem;
+}
