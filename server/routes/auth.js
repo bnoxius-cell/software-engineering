@@ -7,9 +7,18 @@ const Settings = require("../models/Settings");
 
 const router = express.Router();
 
+const normalizeRole = (role) => (typeof role === "string" ? role.trim().toLowerCase() : "");
+
 const requireAdmin = (req, res, next) => {
     if (!req.user || req.user.role !== "Admin") {
         return res.status(403).json({ message: "Admin access required." });
+    }
+    next();
+};
+
+const requireStaff = (req, res, next) => {
+    if (!req.user || !["Admin", "Faculty"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Admin or faculty access required." });
     }
     next();
 };
@@ -36,7 +45,17 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        const userRole = role || 'Student';
+        const requestedRole = normalizeRole(role);
+        if (requestedRole === "admin") {
+            return res.status(403).json({ message: "Only admins can create admin accounts." });
+        }
+
+        const userRole =
+            requestedRole === "faculty"
+                ? "Faculty"
+                : requestedRole === "student"
+                    ? "Student"
+                    : "Student";
         const userStatus = status || 'pending';
         const user = await User.create({ name, email, password, role: userRole, status: userStatus });
 
@@ -59,6 +78,45 @@ router.post("/register", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 })
+
+router.post("/register/admin", protect, requireAdmin, async (req, res) => {
+    const { name, email, password, status } = req.body;
+
+    try {
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role: "Admin",
+            status: status || "active",
+        });
+
+        await Notification.create({
+            recipient: user._id,
+            type: "account_created",
+            message: "An administrator account has been created for you.",
+        });
+
+        res.status(201).json({
+            message: "Admin account created successfully",
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
 
 // Login
 router.post("/login", async (req, res) => {
@@ -140,7 +198,7 @@ router.post("/saved", protect, async (req, res) => {
 });
 
 // GET all users
-router.get("/", protect, async (req, res) => {
+router.get("/", protect, requireStaff, async (req, res) => {
     try {
         const users = await User.find({}); // get all users
         const count = await User.countDocuments({}); // count total
@@ -150,13 +208,17 @@ router.get("/", protect, async (req, res) => {
     }
 });
 
-router.put("/:id", protect, requireAdmin, async (req, res) => {
+router.put("/:id", protect, requireStaff, async (req, res) => {
     try {
         const { name, email, role, password } = req.body;
         const user = await User.findById(req.params.id);
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.role === "Admin" && req.user.role !== "Admin") {
+            return res.status(403).json({ message: "Only admins can edit admin accounts." });
         }
 
         if (email && email !== user.email) {
@@ -183,13 +245,32 @@ router.put("/:id", protect, requireAdmin, async (req, res) => {
         }
 
         if (typeof role === "string" && role.trim()) {
-            if (user.role !== role.trim()) {
-                changedFields.push({ field: "role", label: prettifyFieldName("role"), newValue: role.trim() });
+            const normalizedRequestedRole = normalizeRole(role);
+            const nextRole =
+                normalizedRequestedRole === "admin"
+                    ? "Admin"
+                    : normalizedRequestedRole === "faculty"
+                        ? "Faculty"
+                        : "Student";
+
+            if (nextRole === "Admin" && req.user.role !== "Admin") {
+                return res.status(403).json({ message: "Only admins can assign the admin role." });
             }
-            user.role = role.trim();
+
+            if (user.role === "Admin" && req.user.role !== "Admin") {
+                return res.status(403).json({ message: "Only admins can edit admin accounts." });
+            }
+
+            if (user.role !== nextRole) {
+                changedFields.push({ field: "role", label: prettifyFieldName("role"), newValue: nextRole });
+            }
+            user.role = nextRole;
         }
 
         if (typeof password === "string" && password.trim()) {
+            if (user.role === "Admin" && req.user.role !== "Admin") {
+                return res.status(403).json({ message: "Only admins can edit admin accounts." });
+            }
             changedFields.push({ field: "password", label: prettifyFieldName("password"), newValue: "Updated" });
             user.password = password.trim();
         }
@@ -215,7 +296,7 @@ router.put("/:id", protect, requireAdmin, async (req, res) => {
 });
 
 // PUT route to update a user's status
-router.put('/:id/status', protect, requireAdmin, async (req, res) => {
+router.put('/:id/status', protect, requireStaff, async (req, res) => {
     try {
         const status = req.body.status.toLowerCase(); 
         
@@ -229,8 +310,8 @@ router.put('/:id/status', protect, requireAdmin, async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (user.role === 'Admin' && status === 'suspended') {
-            return res.status(403).json({ message: "Cannot suspend an Admin account" });
+        if (user.role === 'Admin') {
+            return res.status(403).json({ message: "Only admins can update admin account status." });
         }
 
         user.status = status;

@@ -15,6 +15,11 @@ const UserManager = () => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const [error, setError] = useState('');
+    const [adminError, setAdminError] = useState('');
+    const role = localStorage.getItem("role");
+    const normalizedRole = role ? role.toLowerCase().trim() : "";
+    const isAdmin = normalizedRole === "admin";
+    const isFaculty = normalizedRole === "faculty";
 
     // ===== THE RESTORED WORKING FETCH LOGIC =====
     const fetchUsers = async () => {
@@ -45,13 +50,26 @@ const UserManager = () => {
     const [formData, setFormData] = useState({
         name: "", email: "", password: "", role: ""
     });
+    const [adminFormData, setAdminFormData] = useState({
+        name: "", email: "", password: ""
+    });
     
     const handleChange = (e) => {
         setFormData({...formData, [e.target.name]: e.target.value});
+        if (error) setError('');
+    };
+
+    const handleAdminChange = (e) => {
+        setAdminFormData({ ...adminFormData, [e.target.name]: e.target.value });
+        if (adminError) setAdminError('');
     };
 
     const resetForm = () => {
         setFormData({ name: "", email: "", password: "", role: "" });
+    };
+
+    const resetAdminForm = () => {
+        setAdminFormData({ name: "", email: "", password: "" });
     };
 
     const handleSubmit = async (e) => {
@@ -66,6 +84,26 @@ const UserManager = () => {
             fetchUsers();
         } catch (err) {
             setError(err.response?.data?.message || "Register failed.");
+        }
+    };
+
+    const handleAdminSubmit = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+
+        try {
+            await axios.post(
+                'http://localhost:5000/api/auth/register/admin',
+                { ...adminFormData, status: 'active' },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            resetAdminForm();
+            fetchUsers();
+        } catch (err) {
+            setAdminError(err.response?.data?.message || "Admin account creation failed.");
         }
     };
 
@@ -110,12 +148,18 @@ const UserManager = () => {
                                 </svg>
                                 Create New User
                             </a>
-                            <a href="#create-admin-form" className={`${styles.btn} ${styles.btnSecondary}`}>
-                                <svg className={styles.icon} viewBox="0 0 24 24">
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                </svg>
-                                Create Admin User
-                            </a>
+                            {isAdmin ? (
+                                <a href="#create-admin-form" className={`${styles.btn} ${styles.btnSecondary}`}>
+                                    <svg className={styles.icon} viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                    Create Admin User
+                                </a>
+                            ) : (
+                                <div className={styles.permissionNote}>
+                                    <strong>Admin accounts:</strong> Only admins can create admin accounts.
+                                </div>
+                            )}
                             <button className={`${styles.btn} ${styles.btnSecondary}`} disabled title="Bulk Actions (Disabled for UI)">
                                 <svg className={styles.icon} viewBox="0 0 24 24">
                                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -190,6 +234,68 @@ const UserManager = () => {
                         </form>
                     </section>
 
+                    <section id="create-admin-form" className={styles.panel}>
+                        <h2 className={styles.panelTitle}>Admin Account Access</h2>
+
+                        {isAdmin ? (
+                            <>
+                                {adminError && <p style={{color: '#f85149', marginBottom: '1rem'}}>{adminError}</p>}
+                                <form onSubmit={handleAdminSubmit}>
+                                    <fieldset className={styles.fieldGroup}>
+                                        <label htmlFor="admin-name">Full Name</label>
+                                        <input
+                                            type="text"
+                                            id="admin-name"
+                                            name="name"
+                                            className={styles.inputField}
+                                            placeholder="Enter admin's full name"
+                                            value={adminFormData.name}
+                                            onChange={handleAdminChange}
+                                            required
+                                        />
+                                    </fieldset>
+
+                                    <fieldset className={styles.fieldGroup}>
+                                        <label htmlFor="admin-email">Email Address</label>
+                                        <input
+                                            type="email"
+                                            id="admin-email"
+                                            name="email"
+                                            className={styles.inputField}
+                                            placeholder="Enter admin's email"
+                                            value={adminFormData.email}
+                                            onChange={handleAdminChange}
+                                            required
+                                        />
+                                    </fieldset>
+
+                                    <fieldset className={styles.fieldGroup}>
+                                        <label htmlFor="admin-password">Initial Password</label>
+                                        <input
+                                            type="password"
+                                            id="admin-password"
+                                            name="password"
+                                            className={styles.inputField}
+                                            placeholder="Enter initial password"
+                                            value={adminFormData.password}
+                                            onChange={handleAdminChange}
+                                            required
+                                        />
+                                    </fieldset>
+
+                                    <div className={styles.formActions}>
+                                        <button type="button" onClick={resetAdminForm} className={`${styles.btn} ${styles.btnSecondary}`}>Clear Form</button>
+                                        <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create Admin</button>
+                                    </div>
+                                </form>
+                            </>
+                        ) : (
+                            <p className={styles.panelMessage}>
+                                Only admins can create admin accounts. Faculty can still manage student and faculty users from this dashboard.
+                            </p>
+                        )}
+                    </section>
+
                     {/* Current Users Table */}
                     <section className={styles.panel}>
                         <header className={styles.panelHeader}>
@@ -242,7 +348,7 @@ const UserManager = () => {
                                             <td style={{ padding: "1rem" }}>
                                                 <div className={styles.rowActions}>
                                                     
-                                                    {currentStatus === 'pending' && (
+                                                    {currentStatus === 'pending' && user.role !== 'Admin' && (
                                                         <button 
                                                             className={`${styles.btnLink} ${styles.btnApprove}`}
                                                             onClick={() => handleStatusChange(user._id, 'Active')}
@@ -260,7 +366,7 @@ const UserManager = () => {
                                                         </button>
                                                     )}
 
-                                                    {currentStatus === 'suspended' && (
+                                                    {currentStatus === 'suspended' && user.role !== 'Admin' && (
                                                         <button 
                                                             className={`${styles.btnLink} ${styles.btnRestore}`}
                                                             onClick={() => handleStatusChange(user._id, 'Active')}
@@ -269,8 +375,8 @@ const UserManager = () => {
                                                         </button>
                                                     )}
 
-                                                    <button className={styles.btnLink}>Edit</button>
-                                                    <button className={`${styles.btnLink} ${styles.btnDelete}`}>Delete</button>
+                                                    <button className={styles.btnLink} disabled={isFaculty && user.role === 'Admin'}>Edit</button>
+                                                    <button className={`${styles.btnLink} ${styles.btnDelete}`} disabled={isFaculty && user.role === 'Admin'}>Delete</button>
                                                 </div>
                                             </td>
                                         </tr>

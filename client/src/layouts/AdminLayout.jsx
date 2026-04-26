@@ -4,13 +4,14 @@ import '../styles/Admin.css';
 
 const AdminLayout = () => {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role'); 
+    const role = localStorage.getItem('role');
+    const normalizedRole = role ? role.toLowerCase().trim() : "";
 
     if (!token) {
         return <Navigate to="/login" replace />;
     }
 
-    if (!role || role.toLowerCase().trim() !== "admin") {
+    if (!["admin", "faculty"].includes(normalizedRole)) {
         return <Navigate to="/" replace />;
     }
 

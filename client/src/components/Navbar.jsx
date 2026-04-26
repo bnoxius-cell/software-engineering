@@ -106,7 +106,10 @@ const Navbar = () => {
         setIsMenuOpen(false);
     };
 
-    const isAdmin = role && role.toLowerCase().trim() === 'admin';
+    const normalizedRole = role ? role.toLowerCase().trim() : '';
+    const isAdmin = normalizedRole === 'admin';
+    const isFaculty = normalizedRole === 'faculty';
+    const canAccessDashboard = isAdmin || isFaculty;
 
     return (
         <nav className={styles.navbar}>
@@ -274,10 +277,10 @@ const Navbar = () => {
                                         My Profile
                                     </Link>
                                     
-                                    {isAdmin && (
+                                    {canAccessDashboard && (
                                         <Link to="/dashboard" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
                                             <svg className={styles.dropdownIcon} viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-                                            Admin Dashboard
+                                            {isAdmin ? 'Admin Dashboard' : 'Faculty Dashboard'}
                                         </Link>
                                     )}
                                     

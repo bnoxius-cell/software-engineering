@@ -9,6 +9,8 @@ import Badge from '../../components/ui/Badge/Badge';
 const Dashboard = () => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
+    const role = localStorage.getItem('role');
+    const isFaculty = role && role.toLowerCase().trim() === 'faculty';
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -39,7 +41,7 @@ const Dashboard = () => {
 
                 <main className="main-view">
                     {/* Topbar automatically handles the sticky header and search/actions */}
-                    <Topbar title="Dashboard Overview" />
+                    <Topbar title={isFaculty ? "Faculty Dashboard Overview" : "Dashboard Overview"} />
 
                     {/* Stats Cards Section */}
                     <section className={styles.statsGrid}>

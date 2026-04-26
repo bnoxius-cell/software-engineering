@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Sidebar = ({ activePage = "dashboard" }) => {
     const navigate = useNavigate();
+    const role = localStorage.getItem("role");
+    const isFaculty = role && role.toLowerCase().trim() === "faculty";
     
     const handleLogout = (e) => {
         e.preventDefault();
@@ -13,7 +15,7 @@ const Sidebar = ({ activePage = "dashboard" }) => {
 
     return (
         <aside className={styles.sidebar}>
-            <h2 className={styles.brand}>Admin Panel</h2>
+            <h2 className={styles.brand}>{isFaculty ? "Faculty Panel" : "Admin Panel"}</h2>
             
             <nav className={styles.sidebarNav}>
                 <ul className={styles.navList}>
