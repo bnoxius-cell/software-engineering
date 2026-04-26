@@ -1,3 +1,26 @@
+/* Welcome Banner */
+.welcomeBanner {
+    background: linear-gradient(90deg, rgba(17, 24, 39, 1) 0%, rgba(31, 41, 55, 1) 100%);
+    border: 1px solid rgba(55, 65, 81, 1);
+    border-left: 4px solid rgb(161, 255, 20);
+    border-radius: 0.75rem;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.welcomeBanner h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgb(161, 255, 20);
+    margin-bottom: 0.5rem;
+}
+
+.welcomeBanner p {
+    font-size: 0.95rem;
+    color: rgba(156, 163, 175, 1);
+    margin: 0;
+}
+
 /* Panels */
 .panel {
     background-color: rgba(17, 24, 39, 1);

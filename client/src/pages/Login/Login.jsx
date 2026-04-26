@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import styles from './Login.module.css';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const Login = ({ setUser }) => {
     const [formData, setFormData] = useState({
@@ -50,11 +52,17 @@ const Login = ({ setUser }) => {
             
             localStorage.setItem('token', res.data.token);
             
-            const userRole = res.data.role; 
+            const userRole = res.data.role;
             if (userRole) {
                 localStorage.setItem('role', userRole);
             }
-            
+            if (res.data.name) {
+                localStorage.setItem('name', res.data.name);
+            }
+
+            // Set flag for welcome toast (shown once after login)
+            sessionStorage.setItem('justLoggedIn', 'true');
+
             setUser(res.data);
             navigate('/');
         } catch (err) {
@@ -66,6 +74,41 @@ const Login = ({ setUser }) => {
 
     const handleSocialLogin = (provider) => {
         console.log(`Login with ${provider}`);
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            setLoading(true);
+            setError('');
+
+            const res = await axios.post(`${API_BASE}/api/auth/google-login`, {
+                token: credentialResponse.credential,
+            });
+
+            localStorage.setItem('token', res.data.token);
+
+            const userRole = res.data.role;
+            if (userRole) {
+                localStorage.setItem('role', userRole);
+            }
+            if (res.data.name) {
+                localStorage.setItem('name', res.data.name);
+            }
+
+            // Set flag for welcome toast (shown once after login)
+            sessionStorage.setItem('justLoggedIn', 'true');
+
+            setUser(res.data);
+            navigate('/');
+        } catch (err) {
+            setError(err.response?.data?.message || "Google login failed. Please try again.");
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleError = () => {
+        setError('Google login failed. Please try again.');
+        setLoading(false);
     };
 
     const handleAstronautError = (e) => {
@@ -153,15 +196,23 @@ const Login = ({ setUser }) => {
                 </div>
                 
                 <div className={styles["social-icons"]}>
-                    {/* Only Google remains */}
-                    <button 
-                        aria-label="Log in with Google" 
-                        className={styles["icon"]}
-                        onClick={() => handleSocialLogin('google')}
-                        disabled={loading}
-                    >
-                        <img src="/assets/images/icons/google.png" alt="Google Sign-in" />
-                    </button>
+                    {GOOGLE_CLIENT_ID ? (
+                        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                            />
+                        </GoogleOAuthProvider>
+                    ) : (
+                        <button 
+                            aria-label="Log in with Google" 
+                            className={styles["icon"]}
+                            onClick={() => handleSocialLogin('google')}
+                            disabled={loading}
+                        >
+                            <img src="/assets/images/icons/google.png" alt="Google Sign-in" />
+                        </button>
+                    )}
                 </div>
                 
                 <p className={styles["signup"]}>

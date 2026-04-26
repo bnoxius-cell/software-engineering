@@ -66,7 +66,7 @@ function App() {
 
                 <Route element={<AdminLayout />}>
                     <Route path="/user" element={ <UserManager setUser={setUser} />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard user={user} />} />
                     <Route path="/works" element={<Works />} />
                     <Route path="/requests" element={<Requests />} />
                 </Route>

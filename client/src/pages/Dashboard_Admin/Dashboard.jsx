@@ -6,11 +6,12 @@ import Sidebar from '../../components/Sidebar';
 import Topbar from '../../components/Topbar';
 import Badge from '../../components/ui/Badge/Badge';
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const role = localStorage.getItem('role');
     const isFaculty = role && role.toLowerCase().trim() === 'faculty';
+    const userName = user?.name || localStorage.getItem('name') || 'User';
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -42,6 +43,16 @@ const Dashboard = () => {
                 <main className="main-view">
                     {/* Topbar automatically handles the sticky header and search/actions */}
                     <Topbar title={isFaculty ? "Faculty Dashboard Overview" : "Dashboard Overview"} />
+
+                    {/* Welcome Banner */}
+                    <section className={styles.welcomeBanner}>
+                        <h2>Welcome, {userName}!</h2>
+                        <p>
+                            {isFaculty
+                                ? "Here's an overview of student activity and platform metrics."
+                                : "Here's your admin overview. Manage users, artworks, and requests from the sidebar."}
+                        </p>
+                    </section>
 
                     {/* Stats Cards Section */}
                     <section className={styles.statsGrid}>
