@@ -531,3 +531,28 @@
         transform: translateY(0);
     }
 }
+
+/* Custom scrollbar for modal body – neon green theme */
+.modalBody::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+    background: rgba(17, 24, 39, 0.8);
+    border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+    background: #a1ff14;
+    border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+    background: #8cff00;
+}
+
+/* Firefox scrollbar – uses thin style and green thumb */
+.modalBody {
+    scrollbar-width: thin;
+    scrollbar-color: #a1ff14 rgba(17, 24, 39, 0.8);
+}
