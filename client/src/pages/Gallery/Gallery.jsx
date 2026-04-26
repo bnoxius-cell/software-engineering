@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -49,6 +49,12 @@ const Gallery = () => {
     const [savedStates, setSavedStates] = useState({});
     const [videoDurations, setVideoDurations] = useState({});
     
+    // Comment-related state
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [submittingComment, setSubmittingComment] = useState(false);
+    const [commentLikeStates, setCommentLikeStates] = useState({});
+    
     const modalRef = useRef(null);
     const videoRefs = useRef({});
 
@@ -68,7 +74,6 @@ const Gallery = () => {
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     setError('Unable to load artworks. Please try again later.');
-
                 }
             } finally {
                 setLoading(false);
@@ -78,6 +83,7 @@ const Gallery = () => {
         return () => abortController.abort();
     }, []);
 
+    // Fetch user interactions (likes/saves)
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -91,9 +97,7 @@ const Gallery = () => {
                     signal: abortController.signal,
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch interactions');
-                }
+                if (!response.ok) throw new Error('Failed to fetch interactions');
 
                 const data = await response.json();
                 setLikedStates(
@@ -104,7 +108,7 @@ const Gallery = () => {
                 );
             } catch (err) {
                 if (err.name !== 'AbortError') {
-
+                    console.error(err);
                 }
             }
         };
@@ -170,25 +174,100 @@ const Gallery = () => {
     // URL direct artwork opening
     useEffect(() => {
         if (!artworkId || loading) return;
-        // Clear error first on load attempt
         setError('');
         const requestedArtwork = artworks.find((art) => art._id === artworkId);
         if (requestedArtwork) {
             setSelectedArtwork(requestedArtwork);
             setIsModalOpen(true);
             document.body.style.overflow = 'hidden';
+            fetchComments(requestedArtwork._id);
             setTimeout(() => modalRef.current?.focus(), 10);
         } else if (!loading) {
-            // Only error if not loading and truly missing
             setError('The requested artwork could not be found.');
         }
     }, [artworkId, artworks, loading]);
+
+    // --- Comment functions ---
+    const fetchComments = useCallback(async (artworkId) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const likeRes = await fetch(`${API_BASE}/api/comments/likes`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (likeRes.ok) {
+                        const likedIds = await likeRes.json();
+                        const newLikes = {};
+                        likedIds.forEach(id => { newLikes[id] = true; });
+                        setCommentLikeStates(newLikes);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch comments', err);
+        }
+    }, []);
+
+    const handleAddComment = async () => {
+        if (!newComment.trim()) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        setSubmittingComment(true);
+        try {
+            const res = await fetch(`${API_BASE}/api/artworks/${selectedArtwork._id}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: newComment })
+            });
+            if (res.ok) {
+                const addedComment = await res.json();
+                setComments(prev => [addedComment, ...prev]);
+                setNewComment('');
+            } else {
+                console.error('Failed to post comment');
+            }
+        } catch (err) {
+            console.error('Error posting comment', err);
+        } finally {
+            setSubmittingComment(false);
+        }
+    };
+
+    const handleLikeComment = async (commentId) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        const isLiked = commentLikeStates[commentId];
+        setCommentLikeStates(prev => ({ ...prev, [commentId]: !isLiked }));
+        try {
+            await fetch(`${API_BASE}/api/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (err) {
+            setCommentLikeStates(prev => ({ ...prev, [commentId]: isLiked }));
+            console.error('Failed to like comment', err);
+        }
+    };
 
     const openModal = (artwork) => {
         setSelectedArtwork(artwork);
         setIsModalOpen(true);
         document.body.style.overflow = 'hidden';
         navigate({ pathname: `/gallery/${artwork._id}`, search: location.search });
+        fetchComments(artwork._id);
         setTimeout(() => modalRef.current?.focus(), 10);
     };
 
@@ -228,7 +307,6 @@ const Gallery = () => {
                 body: JSON.stringify({ liked: newLiked }),
             });
         } catch (err) {
-
             setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
             setArtworks(prev => prev.map((art) => (
                 art._id === artworkId
@@ -262,7 +340,6 @@ const Gallery = () => {
                 body: JSON.stringify({ artworkId, saved: newSaved }),
             });
         } catch (err) {
-
             setSavedStates(prev => ({ ...prev, [artworkId]: !newSaved }));
         }
     };
@@ -290,17 +367,13 @@ const Gallery = () => {
 
     const goToArtistProfile = (artwork, event) => {
         event?.stopPropagation();
-
-        if (!artwork?.uploadedBy) {
-            return;
-        }
-
+        if (!artwork?.uploadedBy) return;
         const artistId = typeof artwork.uploadedBy === 'object' ? artwork.uploadedBy._id : artwork.uploadedBy;
         closeModal();
         navigate(`/profile/${artistId}`);
     };
 
-    // --- VIDEO CARD RENDERING (with poster, autoplay on hover) ---
+    // --- VIDEO CARD RENDERING ---
     const renderCardMedia = (artwork) => {
         if (!isVideoArtwork(artwork)) {
             return (
@@ -373,13 +446,13 @@ const Gallery = () => {
                 </nav>
 
                 <main className={styles.masonryGrid}>
-{!loading && !error && filteredArtworks.length === 0 && (
-    <div className={styles.emptyStateLoader}>
-        <div className={styles.emptyStateMessage}>
-            ⟡ No artworks found in this category ⟡
-        </div>
-    </div>
-)}
+                    {!loading && !error && filteredArtworks.length === 0 && (
+                        <div className={styles.emptyStateLoader}>
+                            <div className={styles.emptyStateMessage}>
+                                ⟡ No artworks found in this category ⟡
+                            </div>
+                        </div>
+                    )}
                     {!loading && !error && filteredArtworks.map((art) => (
                         <div key={art._id} className={styles.artCard} onClick={() => openModal(art)}>
                             {renderCardMedia(art)}
@@ -395,7 +468,7 @@ const Gallery = () => {
                     ))}
                 </main>
 
-                {/* Loading and error states placed outside the grid for proper centering */}
+                {/* Loading and error states */}
                 {loading && (
                     <div className={styles.fullscreenOverlay}>
                         <div className={styles.hackerLoader}>
@@ -544,20 +617,78 @@ const Gallery = () => {
                                     role="button"
                                     tabIndex={0}
                                 >
-                                <div className={styles.modalArtist}>
-                                    <img
-                                        src={selectedArtwork.artistAvatar || PROFILE_PLACEHOLDER}
-                                        alt={`${selectedArtwork.artistName}'s avatar`}
-                                        className={styles.artistAvatar}
-                                        onError={(event) => {
-                                            event.target.src = PROFILE_PLACEHOLDER;
-                                        }}
-                                    />
-                                    <div>
-                                        <p className={styles.artistNameModal}>{selectedArtwork.artistName}</p>
-                                        <p className={styles.artistRole}>Artist</p>
+                                    <div className={styles.modalArtist}>
+                                        <img
+                                            src={selectedArtwork.artistAvatar || PROFILE_PLACEHOLDER}
+                                            alt={`${selectedArtwork.artistName}'s avatar`}
+                                            className={styles.artistAvatar}
+                                            onError={(event) => {
+                                                event.target.src = PROFILE_PLACEHOLDER;
+                                            }}
+                                        />
+                                        <div>
+                                            <p className={styles.artistNameModal}>{selectedArtwork.artistName}</p>
+                                            <p className={styles.artistRole}>Artist</p>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* ===== COMMENTS SECTION ===== */}
+                                <div className={styles.commentsSection}>
+                                    <div className={styles.commentsHeader}>
+                                        <h4>Comments</h4>
+                                        <span className={styles.commentCount}>{comments.length}</span>
+                                    </div>
+
+                                    <div className={styles.commentsList}>
+                                        {comments.length === 0 && (
+                                            <div className={styles.noComments}>No comments yet. Be the first to share your thoughts!</div>
+                                        )}
+                                        {comments.map(comment => (
+                                            <div key={comment._id} className={styles.commentItem}>
+                                                <div className={styles.commentAvatar}>
+                                                    <img src={comment.user?.avatar || PROFILE_PLACEHOLDER} alt="" />
+                                                </div>
+                                                <div className={styles.commentContent}>
+                                                    <div className={styles.commentMeta}>
+                                                        <strong>{comment.user?.name || 'Anonymous'}</strong>
+                                                        <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className={styles.commentText}>{comment.content}</p>
+                                                    <div className={styles.commentActions}>
+                                                        <button 
+                                                            className={`${styles.commentLikeBtn} ${commentLikeStates[comment._id] ? styles.liked : ''}`}
+                                                            onClick={() => handleLikeComment(comment._id)}
+                                                        >
+                                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                                            </svg>
+                                                            <span>{comment.likes || 0}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className={styles.addCommentBox}>
+                                        <textarea
+                                            placeholder="Share your thoughts..."
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            rows={2}
+                                            className={styles.commentTextarea}
+                                        />
+                                        <div className={styles.commentActionsBar}>
+                                            <button 
+                                                className={styles.submitCommentBtn}
+                                                onClick={handleAddComment}
+                                                disabled={submittingComment || !newComment.trim()}
+                                            >
+                                                {submittingComment ? 'Posting...' : 'Post Comment'}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
