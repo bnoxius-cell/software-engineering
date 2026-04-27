@@ -4,9 +4,17 @@ import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import styles from './Profile.module.css';
 import { isVideoArtwork } from '../../utils/artworkMedia';
+import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
 import { getAvatarUrl } from '../../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const formatDuration = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 const Profile = ({ currentUser }) => {
     const { userId } = useParams();
@@ -45,11 +53,37 @@ const Profile = ({ currentUser }) => {
     const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
     const [availableArtworks, setAvailableArtworks] = useState([]);
+    const [selectedArtworkIds, setSelectedArtworkIds] = useState([]);
+    const [addingArtworks, setAddingArtworks] = useState(false);
+    const [showViewCollectionModal, setShowViewCollectionModal] = useState(false);
+    const [activeArtworkIndex, setActiveArtworkIndex] = useState(null);
+    const [selectedArtworkIdsToRemove, setSelectedArtworkIdsToRemove] = useState([]);
+    const [removingArtworks, setRemovingArtworks] = useState(false);
 
     // Avatar upload
     const fileInputRef = useRef(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [avatarSuccess, setAvatarSuccess] = useState('');
+
+    // Video player state
+    const videoRefs = useRef({});
+    const [videoDurations, setVideoDurations] = useState({});
+
+    const handleVideoMetadataLoaded = (artworkId, duration) => {
+        setVideoDurations(prev => ({ ...prev, [artworkId]: duration }));
+    };
+
+    // Lock background scrolling when any modal popup is open
+    useEffect(() => {
+        if (showCreateCollection || showEditModal || showDeleteConfirm || showAddArtworkModal || showViewCollectionModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [showCreateCollection, showEditModal, showDeleteConfirm, showAddArtworkModal, showViewCollectionModal]);
 
     // Close more menu when clicking outside
     useEffect(() => {
@@ -156,24 +190,29 @@ const Profile = ({ currentUser }) => {
 
     // Pre-fetch available artworks for the "add to collection" modal (only user's own artworks)
     useEffect(() => {
-        if (showAddArtworkModal && selectedCollection && currentUser?._id === profileUser?._id) {
+        const currentUserId = currentUser?._id || currentUser?.id;
+        
+        if (showAddArtworkModal && selectedCollection && currentUserId === profileUser?._id) {
             const fetchAvailableArtworks = async () => {
                 try {
                     const token = localStorage.getItem('token');
                     const res = await axios.get(`${API_BASE}/api/artworks/user/me`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id);
-                    const available = res.data.filter(aw => !alreadyInCollection.includes(aw._id));
+                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id || aw);
+                    const available = res.data.filter(aw => !alreadyInCollection.includes(aw._id) && aw.status === 'published');
                     setAvailableArtworks(available);
                 } catch (err) {
                     console.error('Failed to fetch artworks', err);
-                    setAvailableArtworks([]);
+                    // Fallback to already loaded artworks if the user/me endpoint fails
+                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id || aw);
+                    const available = artworks.filter(aw => !alreadyInCollection.includes(aw._id) && aw.status === 'published');
+                    setAvailableArtworks(available);
                 }
             };
             fetchAvailableArtworks();
         }
-    }, [showAddArtworkModal, selectedCollection, currentUser, profileUser]);
+    }, [showAddArtworkModal, selectedCollection, currentUser, profileUser, artworks]);
 
     // Collection CRUD handlers
     const handleCreateCollection = async () => {
@@ -233,17 +272,82 @@ const Profile = ({ currentUser }) => {
         }
     };
 
-    const handleAddArtworkToCollection = async (artworkId) => {
+    const toggleArtworkSelection = (id) => {
+        setSelectedArtworkIds(prev => 
+            prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAllAvailableArtworks = (e) => {
+        if (e.target.checked) {
+            setSelectedArtworkIds(availableArtworks.map(aw => aw._id));
+        } else {
+            setSelectedArtworkIds([]);
+        }
+    };
+
+    const handleAddSelectedArtworksToCollection = async () => {
+        if (selectedArtworkIds.length === 0) return;
+        setAddingArtworks(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_BASE}/api/collections/${selectedCollection._id}/add`, { artworkId }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setCollections(prev => prev.map(c => c._id === selectedCollection._id ? res.data : c));
+            let latestCollectionData;
+            for (const artworkId of selectedArtworkIds) {
+                const res = await axios.post(`${API_BASE}/api/collections/${selectedCollection._id}/add`, { artworkId }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                latestCollectionData = res.data;
+            }
+            if (latestCollectionData) {
+                setCollections(prev => prev.map(c => c._id === selectedCollection._id ? latestCollectionData : c));
+            }
             setShowAddArtworkModal(false);
             setSelectedCollection(null);
+            setSelectedArtworkIds([]);
         } catch (error) {
-            console.error('Add artwork error:', error);
+            console.error('Add artworks error:', error);
+            alert('Failed to add some artworks. Please try again.');
+        } finally {
+            setAddingArtworks(false);
+        }
+    };
+
+    const toggleArtworkToRemoveSelection = (id) => {
+        setSelectedArtworkIdsToRemove(prev => 
+            prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAllToRemove = (e) => {
+        if (e.target.checked && selectedCollection) {
+            setSelectedArtworkIdsToRemove(selectedCollection.artworks.map(aw => aw._id));
+        } else {
+            setSelectedArtworkIdsToRemove([]);
+        }
+    };
+
+    const handleRemoveSelectedArtworksFromCollection = async () => {
+        if (selectedArtworkIdsToRemove.length === 0) return;
+        setRemovingArtworks(true);
+        try {
+            const token = localStorage.getItem('token');
+            let latestCollectionData;
+            for (const artworkId of selectedArtworkIdsToRemove) {
+                const res = await axios.post(`${API_BASE}/api/collections/${selectedCollection._id}/remove`, { artworkId }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                latestCollectionData = res.data;
+            }
+            if (latestCollectionData) {
+                setCollections(prev => prev.map(c => c._id === selectedCollection._id ? latestCollectionData : c));
+                setSelectedCollection(latestCollectionData);
+            }
+            setSelectedArtworkIdsToRemove([]);
+        } catch (error) {
+            console.error('Remove artworks error:', error);
+            alert('Failed to remove some artworks. Please try again.');
+        } finally {
+            setRemovingArtworks(false);
         }
     };
 
@@ -381,7 +485,7 @@ const Profile = ({ currentUser }) => {
             fetchFollowingFollowers(activeTab);
         }
     }, [activeTab, profileUser]);
-
+    
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
@@ -649,26 +753,296 @@ const Profile = ({ currentUser }) => {
 
                     {/* Add Artwork to Collection Modal */}
                     {showAddArtworkModal && selectedCollection && (
-                        <div className={styles.modalOverlay} onClick={() => setShowAddArtworkModal(false)}>
+                        <div className={styles.modalOverlay} onClick={() => { setShowAddArtworkModal(false); setSelectedArtworkIds([]); }}>
                             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                                 <h4>Add Artwork to "{selectedCollection.name}"</h4>
                                 {availableArtworks.length === 0 ? (
                                     <p>No artworks available to add.</p>
                                 ) : (
-                                    <div className={styles.artworkList}>
-                                        {availableArtworks.map(aw => (
-                                            <div key={aw._id} className={styles.artworkItem} onClick={() => handleAddArtworkToCollection(aw._id)}>
-                                                <img src={`${API_BASE}${aw.image}`} alt={aw.title} className={styles.artworkThumb} />
-                                                <div className={styles.artworkInfo}>
-                                                    <strong>{aw.title}</strong>
-                                                    <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
+                                    <>
+                                        <div className={styles.selectAllContainer}>
+                                            <label className={styles.selectAllLabel}>
+                                                <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0 ? styles.customCheckboxActive : ''}`}>
+                                                    {(selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0) && (
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0}
+                                                    onChange={handleSelectAllAvailableArtworks}
+                                                    className={styles.hiddenCheckbox}
+                                                /> 
+                                                Select All
+                                            </label>
+                                            <span className={styles.selectedCount}>
+                                                {selectedArtworkIds.length} selected
+                                            </span>
+                                        </div>
+                                        <div className={styles.artworkList}>
+                                            {availableArtworks.map(aw => {
+                                                const isSelected = selectedArtworkIds.includes(aw._id);
+                                                return (
+                                                <div 
+                                                    key={aw._id} 
+                                                    className={`${styles.artworkItem} ${isSelected ? styles.artworkItemSelected : ''}`} 
+                                                    onClick={() => toggleArtworkSelection(aw._id)}
+                                                >
+                                                    <div className={`${styles.customCheckbox} ${styles.customCheckboxCircle} ${isSelected ? styles.customCheckboxActive : ''}`}>
+                                                        {isSelected && (
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                        )}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isSelected} 
+                                                        readOnly 
+                                                        className={styles.hiddenCheckbox}
+                                                    />
+                                                    {isVideoArtwork(aw) ? (
+                                                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '4px', overflow: 'hidden' }}>
+                                                            <video 
+                                                                ref={el => videoRefs.current[`addModal_${aw._id}`] = el}
+                                                                src={`${API_BASE}${aw.image}${!aw.thumbnail ? '#t=0.05' : ''}`} 
+                                                                poster={aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : undefined}
+                                                                className={styles.artworkThumb} 
+                                                                style={{ width: '100%', height: '100%', margin: 0 }}
+                                                                muted loop playsInline preload="metadata"
+                                                                onMouseEnter={() => videoRefs.current[`addModal_${aw._id}`]?.play()}
+                                                                onMouseLeave={() => {
+                                                                    const vid = videoRefs.current[`addModal_${aw._id}`];
+                                                                    if (vid) {
+                                                                        vid.pause();
+                                                                        vid.currentTime = 0;
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <img 
+                                                            src={`${API_BASE}${aw.image}`} 
+                                                            alt={aw.title} 
+                                                            className={styles.artworkThumb} 
+                                                        />
+                                                    )}
+                                                    <div className={styles.artworkInfo}>
+                                                        <strong>{aw.title}</strong>
+                                                        <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
+                                                    </div>
+                                                </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                                 <div className={styles.modalActions}>
-                                    <button onClick={() => setShowAddArtworkModal(false)} className={styles.cancelBtn}>Close</button>
+                                    {availableArtworks.length > 0 && (
+                                        <button 
+                                            onClick={handleAddSelectedArtworksToCollection} 
+                                            className={styles.saveBtn} 
+                                            disabled={selectedArtworkIds.length === 0 || addingArtworks}
+                                        >
+                                            {addingArtworks ? 'Adding...' : `Add Selected (${selectedArtworkIds.length})`}
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setShowAddArtworkModal(false); setSelectedArtworkIds([]); }} className={styles.cancelBtn}>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal A: View Collection Grid */}
+                    {showViewCollectionModal && selectedCollection && activeArtworkIndex === null && (
+                        <div className={styles.modalOverlay} onClick={() => { setShowViewCollectionModal(false); setSelectedArtworkIdsToRemove([]); }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '900px', width: '90vw' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                    <div>
+                                        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.5rem' }}>{selectedCollection.name}</h3>
+                                        {selectedCollection.description && <p style={{ color: '#8b949e', margin: '0.5rem 0 0 0' }}>{selectedCollection.description}</p>}
+                                    </div>
+                                    <button className={styles.carouselClose} onClick={() => { setShowViewCollectionModal(false); setSelectedArtworkIdsToRemove([]); }}>&times;</button>
+                                </div>
+
+                                {isOwnProfile && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(55, 65, 81, 0.5)', flexWrap: 'wrap', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button onClick={() => { setShowViewCollectionModal(false); handleEditCollection(selectedCollection); }} className={styles.cancelBtn}>Edit Details</button>
+                                            <button onClick={() => { setShowViewCollectionModal(false); setShowAddArtworkModal(true); }} className={styles.saveBtn}>Add Artwork</button>
+                                        </div>
+                                        
+                                        {selectedCollection.artworks && selectedCollection.artworks.length > 0 && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <label className={styles.selectAllLabel}>
+                                                    <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIdsToRemove.length === selectedCollection.artworks.length ? styles.customCheckboxActive : ''}`}>
+                                                        {selectedArtworkIdsToRemove.length === selectedCollection.artworks.length && (
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                        )}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={selectedArtworkIdsToRemove.length === selectedCollection.artworks.length}
+                                                        onChange={handleSelectAllToRemove}
+                                                        className={styles.hiddenCheckbox}
+                                                    /> 
+                                                    Select All
+                                                </label>
+                                                {selectedArtworkIdsToRemove.length > 0 && (
+                                                    <button 
+                                                        onClick={handleRemoveSelectedArtworksFromCollection} 
+                                                        className={styles.cancelBtn} 
+                                                        disabled={removingArtworks}
+                                                        style={{ color: '#ff6b6b', borderColor: '#ff6b6b', background: 'rgba(255, 107, 107, 0.1)' }}
+                                                    >
+                                                        {removingArtworks ? 'Removing...' : `Remove (${selectedArtworkIdsToRemove.length})`}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {(!selectedCollection.artworks || selectedCollection.artworks.length === 0) ? (
+                                    <p style={{ color: '#8b949e', textAlign: 'center', padding: '3rem 0' }}>This collection is empty.</p>
+                                ) : (
+                                    <div className={styles.collectionGrid}>
+                                        {selectedCollection.artworks.map((aw, index) => {
+                                            const isSelected = selectedArtworkIdsToRemove.includes(aw._id);
+                                            return (
+                                            <div key={aw._id || index} className={`${styles.compactCard} ${isSelected ? styles.artworkItemSelected : ''}`} onClick={() => setActiveArtworkIndex(index)} style={{ position: 'relative' }}>
+                                                {isOwnProfile && (
+                                                    <div 
+                                                        style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2, padding: '4px' }}
+                                                        onClick={(e) => { e.stopPropagation(); toggleArtworkToRemoveSelection(aw._id); }}
+                                                    >
+                                                        <div className={`${styles.customCheckbox} ${styles.customCheckboxCircle} ${isSelected ? styles.customCheckboxActive : ''}`} style={{ background: isSelected ? '#a1ff14' : 'rgba(0,0,0,0.6)', borderColor: isSelected ? '#a1ff14' : 'rgba(255,255,255,0.7)' }}>
+                                                            {isSelected && (
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isVideoArtwork(aw) ? (
+                                                    <div className={styles.videoCardWrapper}>
+                                                        <video 
+                                                            ref={el => videoRefs.current[`modalA_${aw._id || index}`] = el}
+                                                            src={`${API_BASE}${aw.image}${!aw.thumbnail ? '#t=0.05' : ''}`} 
+                                                            poster={aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : undefined}
+                                                            className={styles.compactThumb} 
+                                                            muted loop playsInline preload="metadata"
+                                                            onLoadedMetadata={(e) => handleVideoMetadataLoaded(`modalA_${aw._id || index}`, e.target.duration)}
+                                                            onMouseEnter={() => videoRefs.current[`modalA_${aw._id || index}`]?.play()}
+                                                            onMouseLeave={() => {
+                                                                const vid = videoRefs.current[`modalA_${aw._id || index}`];
+                                                                if (vid) {
+                                                                    vid.pause();
+                                                                    vid.currentTime = 0;
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div className={styles.videoBadge} style={{ bottom: '4px', right: '4px', padding: '2px 4px', fontSize: '0.65rem' }}>
+                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                                                <polygon points="5 3 19 12 5 21 5 3" />
+                                                            </svg>
+                                                            <span className={styles.videoDuration}>
+                                                                {formatDuration(videoDurations[`modalA_${aw._id || index}`] || aw.duration)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <img src={`${API_BASE}${aw.image}`} alt={aw.title} className={styles.compactThumb} />
+                                                )}
+                                                <div className={styles.compactInfo}>
+                                                    <div className={styles.compactTitle}>{aw.title}</div>
+                                                    <span className={styles.compactBadge}>{aw.medium?.replace('_', ' ').toUpperCase() || 'ARTWORK'}</span>
+                                                </div>
+                                            </div>
+                                        )})}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal B: Detailed Carousel Modal */}
+                    {showViewCollectionModal && selectedCollection && activeArtworkIndex !== null && (
+                        <div className={styles.carouselOverlay} onClick={() => setActiveArtworkIndex(null)}>
+                            <div className={styles.carouselModal} onClick={e => e.stopPropagation()}>
+                                <div className={styles.carouselImageWrapper}>
+                                    <button 
+                                        className={`${styles.carouselArrow} ${styles.arrowLeft}`}
+                                        disabled={activeArtworkIndex === 0}
+                                        onClick={() => setActiveArtworkIndex(i => i - 1)}
+                                    >
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                    </button>
+                                    
+                                    {isVideoArtwork(selectedCollection.artworks[activeArtworkIndex]) ? (
+                                        <ArtworkVideoPlayer
+                                            src={`${API_BASE}${selectedCollection.artworks[activeArtworkIndex].image}${!selectedCollection.artworks[activeArtworkIndex].thumbnail ? '#t=0.05' : ''}`}
+                                            poster={selectedCollection.artworks[activeArtworkIndex].thumbnail ? `${API_BASE}${selectedCollection.artworks[activeArtworkIndex].thumbnail}` : undefined}
+                                            alt={selectedCollection.artworks[activeArtworkIndex].title}
+                                            keyboardActive={showViewCollectionModal && activeArtworkIndex !== null}
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={`${API_BASE}${selectedCollection.artworks[activeArtworkIndex].image}`} 
+                                            alt={selectedCollection.artworks[activeArtworkIndex].title} 
+                                            className={styles.carouselImage} 
+                                        />
+                                    )}
+
+                                    <button 
+                                        className={`${styles.carouselArrow} ${styles.arrowRight}`}
+                                        disabled={activeArtworkIndex === selectedCollection.artworks.length - 1}
+                                        onClick={() => setActiveArtworkIndex(i => i + 1)}
+                                    >
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                                
+                                <div className={styles.carouselDetails}>
+                                    <div className={styles.carouselHeader}>
+                                        <div>
+                                            <h2 className={styles.carouselTitle}>{selectedCollection.artworks[activeArtworkIndex].title}</h2>
+                                            <p className={styles.carouselArtist}>by {selectedCollection.artworks[activeArtworkIndex].artistName || 'Unknown Artist'}</p>
+                                        </div>
+                                        <button className={styles.carouselClose} onClick={() => setActiveArtworkIndex(null)}>&times;</button>
+                                    </div>
+                                    <div className={styles.carouselScrollArea}>
+                                        <div className={styles.carouselMeta}>
+                                            <span className={styles.compactBadge}>{selectedCollection.artworks[activeArtworkIndex].medium?.replace('_', ' ').toUpperCase() || 'ARTWORK'}</span>
+                                            <div className={styles.carouselMetaItem}>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                                {new Date(selectedCollection.artworks[activeArtworkIndex].createdAt).toLocaleDateString()}
+                                            </div>
+                                            <div className={styles.carouselMetaItem}>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                                {selectedCollection.artworks[activeArtworkIndex].likes || 0}
+                                            </div>
+                                        </div>
+                                        
+                                        {selectedCollection.artworks[activeArtworkIndex].description && (
+                                            <p style={{ color: '#c9d1d9', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.5rem', whiteSpace: 'pre-line' }}>
+                                                {selectedCollection.artworks[activeArtworkIndex].description}
+                                            </p>
+                                        )}
+
+                                        <div className={styles.carouselComments}>
+                                            <h4>Comments ({selectedCollection.artworks[activeArtworkIndex].comments?.length || 0})</h4>
+                                            <div className={styles.carouselCommentList}>
+                                                {!selectedCollection.artworks[activeArtworkIndex].comments || selectedCollection.artworks[activeArtworkIndex].comments.length === 0 ? (
+                                                    <p style={{ color: '#8b949e', fontSize: '0.85rem' }}>No comments yet.</p>
+                                                ) : (
+                                                    selectedCollection.artworks[activeArtworkIndex].comments.map((comment, idx) => (
+                                                        <div key={comment._id || idx} className={styles.carouselComment}>
+                                                            <div className={styles.carouselCommentUser}>{comment.user?.name || comment.user?.username || 'User'}</div>
+                                                            <p className={styles.carouselCommentText}>{comment.content}</p>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -680,7 +1054,32 @@ const Profile = ({ currentUser }) => {
                             <div key={work._id} className={styles.artCard} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>
                                 <div className={styles.imageWrapper}>
                                     {isVideoArtwork(work) ? (
-                                        <video src={`${API_BASE}${work.image}`} className={styles.artImage} muted playsInline preload="metadata" />
+                                        <div className={styles.videoCardWrapper}>
+                                            <video 
+                                                ref={el => videoRefs.current[work._id] = el}
+                                                src={`${API_BASE}${work.image}${!work.thumbnail ? '#t=0.05' : ''}`} 
+                                                poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
+                                                className={styles.artImage} 
+                                                muted loop playsInline preload="metadata"
+                                                onLoadedMetadata={(e) => handleVideoMetadataLoaded(work._id, e.target.duration)}
+                                                onMouseEnter={() => videoRefs.current[work._id]?.play()}
+                                                onMouseLeave={() => {
+                                                    const vid = videoRefs.current[work._id];
+                                                    if (vid) {
+                                                        vid.pause();
+                                                        vid.currentTime = 0;
+                                                    }
+                                                }}
+                                            />
+                                            <div className={styles.videoBadge}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                                </svg>
+                                                <span className={styles.videoDuration}>
+                                                    {formatDuration(videoDurations[work._id] || work.duration)}
+                                                </span>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <img src={`${API_BASE}${work.image}`} alt={work.title} className={styles.artImage} />
                                     )}
@@ -695,23 +1094,13 @@ const Profile = ({ currentUser }) => {
 
                         {/* Collections Tab */}
                         {activeTab === 'collections' && collections.map((collection) => (
-                            <div key={collection._id} className={styles.collectionCard}>
+                            <div key={collection._id} className={styles.collectionCard} onClick={() => { setSelectedCollection(collection); setShowViewCollectionModal(true); setActiveArtworkIndex(null); }} style={{ cursor: 'pointer' }}>
                                 <h4>{collection.name}</h4>
                                 <p>{collection.description || 'No description'}</p>
                                 <span className={styles.artworkCount}>{collection.artworks.length} artworks</span>
                                 {isOwnProfile && (
                                     <div className={styles.collectionActions}>
-                                        <button onClick={() => handleEditCollection(collection)} className={styles.iconBtnSmall} title="Edit">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                            </svg>
-                                        </button>
-                                        <button onClick={() => { setSelectedCollection(collection); setShowAddArtworkModal(true); }} className={styles.iconBtnSmall} title="Add Artwork">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M12 5v14M5 12h14" />
-                                            </svg>
-                                        </button>
-                                        <button onClick={() => setShowDeleteConfirm(collection._id)} className={styles.iconBtnSmall} title="Delete">
+                                        <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(collection._id); }} className={styles.iconBtnSmall} title="Delete">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                 <path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M9 3h6" />
                                             </svg>

@@ -7,6 +7,8 @@ const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
+const { protect } = require("../middleware/auth");
+const ffmpeg = require('fluent-ffmpeg');
 const { protect, requireAdmin } = require("../middleware/auth");
 
 // Set up the upload directory
@@ -57,6 +59,26 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024,
   },
 });
+
+const artworkAndThumbnailUpload = upload.fields([
+  { name: 'artworkImage', maxCount: 1 },
+  { name: 'thumbnailImage', maxCount: 1 }
+]);
+
+const requireAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const currentUser = await User.findById(userId);
+
+    if (!currentUser || currentUser.role !== "Admin") {
+      return res.status(403).json({ message: "Admin access required." });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to verify admin access" });
+  }
+};
 
 const prettifyFieldName = (field) =>
   field
@@ -179,7 +201,7 @@ router.get("/all", protect, async (req, res) => {
 });
 
 // Update artwork
-router.put("/:id", protect, requireAdmin, upload.single("artworkImage"), async (req, res) => {
+router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req, res) => {
   try {
     const existingArtwork = await Artwork.findById(req.params.id);
 
@@ -196,9 +218,13 @@ router.put("/:id", protect, requireAdmin, upload.single("artworkImage"), async (
       description: req.body.description
     };
 
-    if (req.file) {
-      updateData.image = `/Artworks/${req.file.filename}`;
-      updateData.mediaType = inferMediaType(req.file);
+    if (req.files && req.files.artworkImage) {
+      updateData.image = `/Artworks/${req.files.artworkImage[0].filename}`;
+      updateData.mediaType = inferMediaType(req.files.artworkImage[0]);
+    }
+
+    if (req.files && req.files.thumbnailImage) {
+      updateData.thumbnail = `/Artworks/${req.files.thumbnailImage[0].filename}`;
     }
 
     const changedFields = collectChangedFields(existingArtwork, updateData);
@@ -284,13 +310,16 @@ router.post("/:id/like", protect, async (req, res) => {
 });
 
 // POST upload
-router.post("/", protect, upload.single("artworkImage"), async (req, res) => {
+router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files.artworkImage) {
       return res.status(400).json({ message: "No media file uploaded." });
     }
+    
+    const artworkFile = req.files.artworkImage[0];
+    const thumbnailFile = req.files.thumbnailImage ? req.files.thumbnailImage[0] : null;
 
-    const userId = req.user.id || req.user._id; 
+    const userId = req.user.id || req.user._id;
     const currentUser = await User.findById(userId);
 
     if (!currentUser) {
@@ -317,12 +346,48 @@ router.post("/", protect, upload.single("artworkImage"), async (req, res) => {
       medium: req.body.medium,
       description: req.body.description,
       tags: req.body.tags,
-      mediaType: inferMediaType(req.file),
-      image: `/Artworks/${req.file.filename}`, 
-      artistName: artistName,  
+      mediaType: inferMediaType(artworkFile),
+      image: `/Artworks/${artworkFile.filename}`,
+      artistName: artistName,
       uploadedBy: currentUser._id ,
       status: artworkStatus
-    });
+    };
+
+    if (newArtworkData.mediaType === 'video') {
+      if (thumbnailFile) {
+        // Use user-provided thumbnail
+        newArtworkData.thumbnail = `/Artworks/${thumbnailFile.filename}`;
+      } else {
+        // Auto-generate thumbnail if none is provided
+        const thumbnailFilename = `${path.parse(artworkFile.filename).name}.png`;
+        const thumbnailPath = path.join(uploadDir, thumbnailFilename);
+
+        try {
+          await new Promise((resolve, reject) => {
+            ffmpeg(artworkFile.path)
+              .on('end', resolve)
+              .on('error', (err) => {
+                console.error('FFMPEG thumbnail generation error:', err.message);
+                resolve(); // Continue without a thumbnail if generation fails
+              })
+              .screenshots({
+                timestamps: ['00:00:01.000'],
+                filename: thumbnailFilename,
+                folder: uploadDir,
+                size: '640x?'
+              });
+          });
+
+          if (fs.existsSync(thumbnailPath)) {
+            newArtworkData.thumbnail = `/Artworks/${thumbnailFilename}`;
+          }
+        } catch (ffmpegError) {
+            console.error("An unexpected error occurred during thumbnail generation:", ffmpegError);
+        }
+      }
+    }
+
+    const newArtwork = await Artwork.create(newArtworkData);
 
     if (autoApprove && currentUser.notifications?.artworkAdded !== false) {
       await Notification.create({
@@ -334,7 +399,8 @@ router.post("/", protect, upload.single("artworkImage"), async (req, res) => {
 
     res.status(201).json(newArtwork);
   } catch (error) {
-    res.status(500).json({ message: "Failed to upload artwork" });
+    console.error("Artwork upload failed:", error);
+    res.status(500).json({ message: "Failed to upload artwork", error: error.message });
   }
 });
 

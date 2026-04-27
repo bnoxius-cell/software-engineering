@@ -30,6 +30,10 @@ const artworkSchema = new mongoose.Schema(
     type: String, // path to uploaded file or Cloudinary URL
     required: true
   },
+  thumbnail: {
+    type: String, // path to thumbnail for video
+    default: ""
+  },
   likes: {
     type: Number,
     default: 0
