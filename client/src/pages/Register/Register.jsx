@@ -80,11 +80,6 @@ const Register = () => {
         }
     };
 
-    const handleSocialLogin = (provider) => {
-        console.log(`Sign up with ${provider}`);
-        // Redirect to OAuth endpoint or open popup
-    };
-
     const handleAstronautError = (e) => {
         e.target.src = '/assets/images/placeholder-astronaut.png';
     };
@@ -188,24 +183,6 @@ const Register = () => {
                         )}
                     </button>
                 </form>
-                
-                <div className={styles["social-message"]}>
-                    <div className={styles["line"]}></div>
-                    <p className={styles["message"]}>Sign up with social accounts</p>
-                    <div className={styles["line"]}></div>
-                </div>
-                
-                <div className={styles["social-icons"]}>
-                    {/* Only Google left */}
-                    <button 
-                        aria-label="Sign up with Google" 
-                        className={styles["icon"]}
-                        onClick={() => handleSocialLogin('google')}
-                        disabled={loading}
-                    >
-                        <img src="/assets/images/icons/google.png" alt="Google Sign-up" />
-                    </button>
-                </div>
                 
                 <p className={styles["signup"]}>
                     Already have an account? <Link to="/login">Log in</Link>

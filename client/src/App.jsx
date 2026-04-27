@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 
@@ -60,7 +60,7 @@ function App() {
                     <Route path="/register" element={<Register />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile" element={<Profile currentUser={user} />} />
+                    <Route path="/profile" element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />} />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
                 </Route>
 
