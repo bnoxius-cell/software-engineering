@@ -3,6 +3,8 @@ import styles from './Navbar.module.css';
 import artisanLogo from '../assets/images/artisanLogo.png';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -10,6 +12,7 @@ const Navbar = () => {
     const [searchType, setSearchType] = useState('all');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [currentUser, setCurrentUser] = useState(null);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     
     const menuRef = useRef(null);
@@ -19,13 +22,34 @@ const Navbar = () => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
-    // Load avatar from localStorage with fallback
+    // Fetch current user's data
     useEffect(() => {
-        const storedAvatar = localStorage.getItem('avatar');
-        if (storedAvatar) {
-            setAvatar(storedAvatar);
-        }
-    }, []);
+        if (!token) return;
+
+        let isMounted = true;
+        const fetchUserAvatar = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (isMounted) {
+                        setCurrentUser(data);
+                        if (data.avatar) {
+                            const avatarUrl = data.avatar.startsWith('/avatars/') ? `${API_BASE}${data.avatar}` : data.avatar;
+                            setAvatar(avatarUrl);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch user avatar:', err);
+            }
+        };
+
+        fetchUserAvatar();
+        return () => { isMounted = false; };
+    }, [token]);
 
     useEffect(() => {
         if (!token) {
@@ -37,7 +61,7 @@ const Navbar = () => {
 
         const fetchNotificationSummary = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/notifications/summary', {
+                const res = await fetch(`${API_BASE}/api/notifications/summary`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -272,6 +296,16 @@ const Navbar = () => {
                         <div className={styles.dropdown}>
                             {token ? (
                                 <>
+                                    <div className={styles.dropdownHeader}>
+                                        <img src={avatar} alt="Profile" className={styles.dropdownHeaderAvatar} onError={(e) => {
+                                            e.target.src = '/assets/images/profile_icon.png';
+                                        }} />
+                                        <div className={styles.dropdownUserInfo}>
+                                            <span className={styles.dropdownUserName}>{currentUser?.name || currentUser?.username || localStorage.getItem('name') || 'User'}</span>
+                                            <span className={styles.dropdownUserEmail}>{currentUser?.email || ''}</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.dropdownDivider}></div>
                                     <Link to="/profile" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
                                         <svg className={styles.dropdownIcon} viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                                         My Profile
