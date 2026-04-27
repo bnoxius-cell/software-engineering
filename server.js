@@ -7,7 +7,7 @@ const authRoutes = require("./server/routes/auth");
 const uploadRoutes = require("./server/routes/artwork");
 const notificationRoutes = require("./server/routes/notifications");
 const collectionRoutes = require("./server/routes/collections");
-const commentRoutes = require("./server/routes/comments");
+const adminRoutes = require("./server/routes/admin");
 const connectDB = require("./server/config/db");
 
 const app = express();
@@ -30,7 +30,7 @@ app.use("/avatars", express.static(avatarsPath));
 app.use("/api/artworks", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/collections", collectionRoutes);
-app.use("/api", commentRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Login and register
 app.use("/api/auth", authRoutes);
