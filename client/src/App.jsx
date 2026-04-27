@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
-import AdminLayout from './layouts/Adminlayout'
+import AdminLayout from './layouts/AdminLayout'
 
 import Index from './pages/Index/Index'
 import About from './pages/About/About'

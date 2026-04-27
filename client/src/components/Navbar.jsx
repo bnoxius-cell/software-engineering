@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.css';
 import artisanLogo from '../assets/images/artisanLogo.png';
 import { Link, useNavigate } from 'react-router-dom';
+import { getAvatarUrl } from '../utils/avatar';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,12 +22,48 @@ const Navbar = () => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
-    // Load avatar from localStorage with fallback
+    // Load avatar from localStorage + fetch from API for accuracy
     useEffect(() => {
         const storedAvatar = localStorage.getItem('avatar');
         if (storedAvatar) {
-            setAvatar(storedAvatar);
+            setAvatar(getAvatarUrl(storedAvatar));
         }
+
+        // Fetch fresh user data if logged in
+        if (token) {
+            fetch(`${API_BASE}/api/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((res) => res.ok ? res.json() : null)
+                .then((data) => {
+                    if (data?.avatar) {
+                        const resolved = getAvatarUrl(data.avatar);
+                        setAvatar(resolved);
+                        localStorage.setItem('avatar', data.avatar);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [token]);
+
+    // Listen for avatar changes from other tabs/components
+    useEffect(() => {
+        const handleStorage = (e) => {
+            if (e.key === 'avatar') {
+                setAvatar(getAvatarUrl(e.newValue));
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
+    // Listen for custom avatar update event from same-tab uploads
+    useEffect(() => {
+        const handleAvatarUpdate = (e) => {
+            setAvatar(getAvatarUrl(e.detail));
+        };
+        window.addEventListener('avatarUpdated', handleAvatarUpdate);
+        return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
     }, []);
 
     useEffect(() => {
@@ -331,3 +370,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

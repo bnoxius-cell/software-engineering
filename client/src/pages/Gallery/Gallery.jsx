@@ -4,6 +4,7 @@ import styles from './Gallery.module.css';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
+import { getAvatarUrl } from '../../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const PLACEHOLDER_ARTWORK = '/assets/images/placeholder-artwork.svg';
@@ -619,7 +620,7 @@ const Gallery = () => {
                                 >
                                     <div className={styles.modalArtist}>
                                         <img
-                                            src={selectedArtwork.artistAvatar || PROFILE_PLACEHOLDER}
+                                            src={getAvatarUrl(selectedArtwork.artistAvatar)}
                                             alt={`${selectedArtwork.artistName}'s avatar`}
                                             className={styles.artistAvatar}
                                             onError={(event) => {
@@ -647,7 +648,7 @@ const Gallery = () => {
                                         {comments.map(comment => (
                                             <div key={comment._id} className={styles.commentItem}>
                                                 <div className={styles.commentAvatar}>
-                                                    <img src={comment.user?.avatar ? (comment.user.avatar.startsWith('/avatars/') ? `${API_BASE}${comment.user.avatar}` : comment.user.avatar) : PROFILE_PLACEHOLDER} alt="" />
+                                                    <img src={getAvatarUrl(comment.user?.avatar)} alt="" />
                                                 </div>
                                                 <div className={styles.commentContent}>
                                                     <div className={styles.commentMeta}>

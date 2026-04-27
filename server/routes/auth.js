@@ -166,6 +166,7 @@ router.post("/login", async (req, res) => {
             name: userExists.name, 
             email: userExists.email, 
             role: userExists.role,
+            avatar: userExists.avatar || "",
             token,
         });
 

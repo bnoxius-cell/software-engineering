@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './Settings.module.css';
+import { getAvatarUrl } from '../../utils/avatar';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -9,21 +12,18 @@ const Settings = () => {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
 
-    // Profile form state
     const [profileForm, setProfileForm] = useState({
         name: '',
         bio: '',
         socialLink: ''
     });
 
-    // Password form state
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
-    // Notification preferences
     const [notifications, setNotifications] = useState({
         artworkAdded: true
     });
@@ -71,7 +71,7 @@ const Settings = () => {
             });
 
             setMessage('Profile updated successfully!');
-            fetchUserData(); // Refresh user data
+            fetchUserData();
         } catch (error) {
             setMessage('Error updating profile. Please try again.');
             console.error('Error updating profile:', error);
@@ -129,7 +129,9 @@ const Settings = () => {
             });
 
             setMessage('Profile picture updated successfully!');
-            fetchUserData(); // Refresh user data
+            localStorage.setItem('avatar', response.data.avatar);
+            window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: response.data.avatar }));
+            fetchUserData();
         } catch (error) {
             setMessage('Error uploading profile picture.');
             console.error('Error uploading avatar:', error);
@@ -170,12 +172,11 @@ const Settings = () => {
                         <h2>Public Profile</h2>
                         <p className={styles.subtext}>Manage how you appear to other artists and visitors.</p>
 
-                        {/* Profile Picture */}
                         <div className={styles.formGroup}>
                             <label>Profile Picture</label>
                             <div className={styles.avatarSection}>
                                 <img
-                                    src={user?.avatar || '/assets/images/profile_icon.png'}
+                                    src={getAvatarUrl(user?.avatar) || '/assets/images/profile_icon.png'}
                                     alt="Profile"
                                     className={styles.currentAvatar}
                                 />
@@ -327,7 +328,6 @@ const Settings = () => {
 
     return (
         <div className={styles.settingsLayout}>
-            {/* LEFT SIDEBAR */}
             <aside className={styles.sidebar}>
                 <h3 className={styles.sidebarTitle}>Settings</h3>
                 <nav className={styles.navMenu}>
@@ -365,7 +365,6 @@ const Settings = () => {
                 </nav>
             </aside>
 
-            {/* RIGHT CONTENT AREA */}
             <main className={styles.contentArea}>
                 {message && (
                     <div className={`${styles.message} ${message.includes('Error') || message.includes('incorrect') ? styles.error : styles.success}`}>
