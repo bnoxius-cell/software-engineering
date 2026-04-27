@@ -3,11 +3,12 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const jwt = require("jsonwebtoken"); 
 const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
+const { protect } = require("../middleware/auth");
+const ffmpeg = require('fluent-ffmpeg');
 
 // Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -58,21 +59,10 @@ const upload = multer({
   },
 });
 
-// JWT Authentication Middleware
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader) {
-    const token = authHeader.split(" ")[1]; 
-    
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: "Token is invalid or expired!" });
-      req.user = user; 
-      next();
-    });
-  } else {
-    return res.status(401).json({ message: "You are not authenticated!" });
-  }
-};
+const artworkAndThumbnailUpload = upload.fields([
+  { name: 'artworkImage', maxCount: 1 },
+  { name: 'thumbnailImage', maxCount: 1 }
+]);
 
 const requireAdmin = async (req, res, next) => {
   try {
@@ -141,7 +131,7 @@ router.get("/", async (req, res) => {
 });
 
 // ADMIN pending artworks
-router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
+router.get("/admin/pending", protect, requireAdmin, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" })
       .populate("uploadedBy", "name username avatar");
@@ -151,7 +141,7 @@ router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-router.get("/interactions", verifyToken, async (req, res) => {
+router.get("/interactions", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const currentUser = await User.findById(userId).select("likedArtworks savedArtworks");
@@ -170,7 +160,7 @@ router.get("/interactions", verifyToken, async (req, res) => {
 });
 
 // Update artwork status
-router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
+router.put("/:id/status", protect, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const updatedArtwork = await Artwork.findByIdAndUpdate(
@@ -198,7 +188,7 @@ router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
 });
 
 // All artworks for admin
-router.get("/all", verifyToken, async (req, res) => {
+router.get("/all", protect, async (req, res) => {
   try {
     const artworks = await Artwork.find({})
       .sort({ createdAt: -1 })
@@ -210,7 +200,7 @@ router.get("/all", verifyToken, async (req, res) => {
 });
 
 // Update artwork
-router.put("/:id", verifyToken, requireAdmin, upload.single("artworkImage"), async (req, res) => {
+router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req, res) => {
   try {
     const existingArtwork = await Artwork.findById(req.params.id);
 
@@ -227,9 +217,13 @@ router.put("/:id", verifyToken, requireAdmin, upload.single("artworkImage"), asy
       description: req.body.description
     };
 
-    if (req.file) {
-      updateData.image = `/Artworks/${req.file.filename}`;
-      updateData.mediaType = inferMediaType(req.file);
+    if (req.files && req.files.artworkImage) {
+      updateData.image = `/Artworks/${req.files.artworkImage[0].filename}`;
+      updateData.mediaType = inferMediaType(req.files.artworkImage[0]);
+    }
+
+    if (req.files && req.files.thumbnailImage) {
+      updateData.thumbnail = `/Artworks/${req.files.thumbnailImage[0].filename}`;
     }
 
     const changedFields = collectChangedFields(existingArtwork, updateData);
@@ -277,7 +271,7 @@ router.get("/profile/:userId", async (req, res) => {
   }
 });
 
-router.post("/:id/like", verifyToken, async (req, res) => {
+router.post("/:id/like", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const { liked } = req.body;
@@ -315,13 +309,16 @@ router.post("/:id/like", verifyToken, async (req, res) => {
 });
 
 // POST upload
-router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) => {
+router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files.artworkImage) {
       return res.status(400).json({ message: "No media file uploaded." });
     }
+    
+    const artworkFile = req.files.artworkImage[0];
+    const thumbnailFile = req.files.thumbnailImage ? req.files.thumbnailImage[0] : null;
 
-    const userId = req.user.id || req.user._id; 
+    const userId = req.user.id || req.user._id;
     const currentUser = await User.findById(userId);
 
     if (!currentUser) {
@@ -335,17 +332,53 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
     const autoApprove = currentUser.role.toLowerCase() !== 'student' || globalAutoApproveStudents;
     const artworkStatus = autoApprove ? 'published' : 'pending';
 
-    const newArtwork = await Artwork.create({
+    const newArtworkData = {
       title: req.body.title,
       medium: req.body.medium,
       description: req.body.description,
       tags: req.body.tags,
-      mediaType: inferMediaType(req.file),
-      image: `/Artworks/${req.file.filename}`, 
-      artistName: artistName,  
+      mediaType: inferMediaType(artworkFile),
+      image: `/Artworks/${artworkFile.filename}`,
+      artistName: artistName,
       uploadedBy: currentUser._id ,
       status: artworkStatus
-    });
+    };
+
+    if (newArtworkData.mediaType === 'video') {
+      if (thumbnailFile) {
+        // Use user-provided thumbnail
+        newArtworkData.thumbnail = `/Artworks/${thumbnailFile.filename}`;
+      } else {
+        // Auto-generate thumbnail if none is provided
+        const thumbnailFilename = `${path.parse(artworkFile.filename).name}.png`;
+        const thumbnailPath = path.join(uploadDir, thumbnailFilename);
+
+        try {
+          await new Promise((resolve, reject) => {
+            ffmpeg(artworkFile.path)
+              .on('end', resolve)
+              .on('error', (err) => {
+                console.error('FFMPEG thumbnail generation error:', err.message);
+                resolve(); // Continue without a thumbnail if generation fails
+              })
+              .screenshots({
+                timestamps: ['00:00:01.000'],
+                filename: thumbnailFilename,
+                folder: uploadDir,
+                size: '640x?'
+              });
+          });
+
+          if (fs.existsSync(thumbnailPath)) {
+            newArtworkData.thumbnail = `/Artworks/${thumbnailFilename}`;
+          }
+        } catch (ffmpegError) {
+            console.error("An unexpected error occurred during thumbnail generation:", ffmpegError);
+        }
+      }
+    }
+
+    const newArtwork = await Artwork.create(newArtworkData);
 
     if (autoApprove && currentUser.notifications?.artworkAdded !== false) {
       await Notification.create({
@@ -357,7 +390,8 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
 
     res.status(201).json(newArtwork);
   } catch (error) {
-    res.status(500).json({ message: "Failed to upload artwork" });
+    console.error("Artwork upload failed:", error);
+    res.status(500).json({ message: "Failed to upload artwork", error: error.message });
   }
 });
 
@@ -378,7 +412,7 @@ router.use((error, req, res, next) => {
 });
 
 // Get user's own artworks
-router.get("/user/me", verifyToken, async (req, res) => {
+router.get("/user/me", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const artworks = await Artwork.find({ uploadedBy: userId }).sort({ createdAt: -1 });

@@ -9,6 +9,11 @@ const Upload = () => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef(null);
 
+    // Thumbnail state
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState(null);
+    const thumbnailInputRef = useRef(null);
+
     const [isUploading, setIsUploading] = useState(false);
     const navigate = useNavigate();
 
@@ -35,8 +40,11 @@ const Upload = () => {
             if (previewUrl) {
                 URL.revokeObjectURL(previewUrl);
             }
+            if (thumbnailPreviewUrl) {
+                URL.revokeObjectURL(thumbnailPreviewUrl);
+            }
         };
-    }, [previewUrl]);
+    }, [previewUrl, thumbnailPreviewUrl]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -63,6 +71,9 @@ const Upload = () => {
 
         const submitData = new FormData();
         submitData.append('artworkImage', file);
+        if (thumbnailFile) {
+            submitData.append('thumbnailImage', thumbnailFile);
+        }
         submitData.append('title', formData.title.trim());
         submitData.append('medium', formData.medium);
         submitData.append('description', formData.description.trim());
@@ -122,9 +133,31 @@ const Upload = () => {
 
     const processFile = (file) => {
         setFile(file);
-        setPreviewMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+        const isVideo = file.type.startsWith('video/');
+        setPreviewMediaType(isVideo ? 'video' : 'image');
         const objectUrl = URL.createObjectURL(file);
         setPreviewUrl(objectUrl);
+
+        if (!isVideo) {
+            setThumbnailFile(null);
+            if (thumbnailPreviewUrl) {
+                URL.revokeObjectURL(thumbnailPreviewUrl);
+                setThumbnailPreviewUrl(null);
+            }
+        }
+    };
+
+    const processThumbnailFile = (file) => {
+        setThumbnailFile(file);
+        const objectUrl = URL.createObjectURL(file);
+        setThumbnailPreviewUrl(objectUrl);
+    };
+
+    const handleThumbnailSelect = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile && selectedFile.type.startsWith('image/')) {
+            processThumbnailFile(selectedFile);
+        }
     };
 
     const handleInputChange = (e) => {
@@ -205,6 +238,39 @@ const Upload = () => {
                                 required
                             />
                         </div>
+
+                        {previewMediaType === 'video' && (
+                            <div className={styles.inputGroup}>
+                                <label>Video Thumbnail (Optional)</label>
+                                <p className={styles.fieldDescription}>Upload a custom image to be shown before the video plays.</p>
+                                <input 
+                                    type="file" 
+                                    ref={thumbnailInputRef} 
+                                    onChange={handleThumbnailSelect} 
+                                    accept="image/*" 
+                                    style={{ display: 'none' }} 
+                                />
+                                <div 
+                                    className={`${styles.dropZone} ${styles.thumbnailDropZone}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => { e.preventDefault(); processThumbnailFile(e.dataTransfer.files[0]); }}
+                                    onClick={() => thumbnailInputRef.current.click()}
+                                >
+                                    {thumbnailPreviewUrl ? (
+                                        <img src={thumbnailPreviewUrl} alt="Thumbnail Preview" className={styles.previewImage} />
+                                    ) : (
+                                        <div className={styles.dropZoneContent}>
+                                            <svg className={styles.uploadIcon} viewBox="0 0 24 24">
+                                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.36 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                                            </svg>
+                                            <h3>Drag & Drop or Click to add a thumbnail</h3>
+                                            <p>Recommended: 16:9 aspect ratio</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <div className={styles.inputGroup}>
                             <label>Medium / Category *</label>

@@ -756,3 +756,296 @@
 .moreMenu button:hover {
     background-color: #30363d;
 }
+
+/* ===== SELECTION UI (ADD ARTWORK MODAL) ===== */
+.selectAllContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.selectAllLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+.selectedCount {
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.hiddenCheckbox {
+    display: none;
+}
+
+.customCheckbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+    border: 2px solid #4b5563;
+    background-color: transparent;
+    flex-shrink: 0;
+}
+
+.customCheckboxSquare {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.customCheckboxCircle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+}
+
+.customCheckboxActive {
+    border-color: #a1ff14;
+    background-color: #a1ff14;
+}
+
+.customCheckboxActive svg {
+    stroke: #000;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.artworkItemSelected {
+    background-color: rgba(161, 255, 20, 0.1) !important;
+    border-color: #a1ff14 !important;
+}
+
+/* ===== MODAL A: COLLECTION GRID ===== */
+.collectionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.compactCard {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.compactCard:hover {
+    transform: translateY(-4px);
+    border-color: #a1ff14;
+}
+
+.compactThumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+}
+
+.compactInfo {
+    padding: 10px;
+}
+
+.compactTitle {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 6px;
+}
+
+.compactBadge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(161, 255, 20, 0.1);
+    color: #a1ff14;
+    border: 1px solid rgba(161, 255, 20, 0.3);
+}
+
+/* ===== MODAL B: DETAILED CAROUSEL ===== */
+.carouselOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.carouselModal {
+    width: 90vw;
+    max-width: 1200px;
+    height: 80vh;
+    min-height: 600px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    display: flex;
+    overflow: hidden;
+}
+
+.carouselImageWrapper {
+    flex: 1 1 65%;
+    background-color: #000;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #30363d;
+}
+
+.carouselImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.carouselArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.carouselArrow:hover:not(:disabled) {
+    background: #a1ff14;
+    color: #000;
+    border-color: #a1ff14;
+}
+
+.carouselArrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.arrowLeft { left: 16px; }
+.arrowRight { right: 16px; }
+
+.carouselDetails {
+    flex: 0 0 35%;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: #0d1117;
+    height: 100%;
+}
+
+.carouselHeader {
+    padding: 20px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.carouselTitle {
+    color: #fff;
+    font-size: 1.35rem;
+    margin: 0 0 6px 0;
+}
+
+.carouselArtist {
+    color: #a1ff14;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.carouselClose {
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 1.75rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.carouselClose:hover {
+    color: #fff;
+}
+
+.carouselScrollArea {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.carouselMeta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    color: #8b949e;
+    font-size: 0.85rem;
+}
+
+.carouselMetaItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.carouselComments {
+    border-top: 1px solid #30363d;
+    padding-top: 20px;
+}
+
+.carouselComments h4 {
+    color: #c9d1d9;
+    margin: 0 0 16px 0;
+}
+
+.carouselCommentList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.carouselComment {
+    background: #161b22;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+}
+
+.carouselCommentUser {
+    font-weight: 600;
+    color: #c9d1d9;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.carouselCommentText {
+    color: #8b949e;
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.5;
+}

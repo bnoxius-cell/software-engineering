@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function (next) {
   // this prevents multiple hashing 
   if (!this.isModified("password")) { 
-    return
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -96,6 +96,7 @@ userSchema.pre("save", async function (next) {
     // else if (this.role === "faculty") this.permissions = ["course_access"];
     // Admin permissions will come from form
   }
+  next();
 })
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

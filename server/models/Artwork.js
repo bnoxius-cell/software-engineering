@@ -30,6 +30,10 @@ const artworkSchema = new mongoose.Schema(
     type: String, // path to uploaded file or Cloudinary URL
     required: true
   },
+  thumbnail: {
+    type: String, // path to thumbnail for video
+    default: ""
+  },
   likes: {
     type: Number,
     default: 0
@@ -53,7 +57,16 @@ const artworkSchema = new mongoose.Schema(
     type: String, 
     enum: ['pending', 'published', 'rejected', 'archived'], 
     default: 'pending' // <--- THIS IS THE MAGIC KEY
-  }
+  },
+  comments: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+      content: { type: String, required: true },
+      likes: { type: Number, default: 0 },
+      likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      createdAt: { type: Date, default: Date.now }
+    }
+  ]
 },
 { timestamps: true }
 );

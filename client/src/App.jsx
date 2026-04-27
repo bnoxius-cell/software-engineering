@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 
@@ -22,6 +22,8 @@ import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import Works from './pages/Works_Admin/Works'
 import Requests from './pages/Requests_Admin/Requests'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function App() {
     const [ user, setUser ] = useState(null);
     const [ error, setError] = useState('');
@@ -32,7 +34,7 @@ function App() {
 
             if (token) {
                 try {
-                    const res = await axios.get('/api/auth/me', {
+                    const res = await axios.get(`${API_BASE}/api/auth/me`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                     setUser(res.data);
@@ -60,7 +62,7 @@ function App() {
                     <Route path="/register" element={<Register />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile" element={<Profile currentUser={user} />} />
+                    <Route path="/profile" element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />} />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
                 </Route>
 
