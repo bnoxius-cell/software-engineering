@@ -91,7 +91,18 @@ const Navbar = () => {
         };
     }, [token, unreadNotifications]); // Refetch if count changes
 
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const toggleMenu = () => {
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+            if (token) {
+                navigate('/profile');
+            } else {
+                navigate('/login');
+            }
+        } else {
+            setIsMenuOpen(true);
+        }
+    };
     const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 
     // Handle clicks outside of dropdowns to close them
