@@ -248,7 +248,6 @@ const Profile = ({ currentUser }) => {
             setIsFollowing(res.data.following);
             setProfileUser(prev => ({
                 ...prev,
-                followingCount: res.data.followingCount,
                 followerCount: res.data.followerCount
             }));
             if (activeTab === 'following' || activeTab === 'followers') {
