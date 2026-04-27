@@ -44,6 +44,8 @@ const Profile = ({ currentUser }) => {
     const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
     const [availableArtworks, setAvailableArtworks] = useState([]);
+    const [selectedArtworkIds, setSelectedArtworkIds] = useState([]);
+    const [addingArtworks, setAddingArtworks] = useState(false);
 
     // Avatar upload
     const fileInputRef = useRef(null);
@@ -229,17 +231,43 @@ const Profile = ({ currentUser }) => {
         }
     };
 
-    const handleAddArtworkToCollection = async (artworkId) => {
+    const toggleArtworkSelection = (id) => {
+        setSelectedArtworkIds(prev => 
+            prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAllAvailableArtworks = (e) => {
+        if (e.target.checked) {
+            setSelectedArtworkIds(availableArtworks.map(aw => aw._id));
+        } else {
+            setSelectedArtworkIds([]);
+        }
+    };
+
+    const handleAddSelectedArtworksToCollection = async () => {
+        if (selectedArtworkIds.length === 0) return;
+        setAddingArtworks(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_BASE}/api/collections/${selectedCollection._id}/add`, { artworkId }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setCollections(prev => prev.map(c => c._id === selectedCollection._id ? res.data : c));
+            let latestCollectionData;
+            for (const artworkId of selectedArtworkIds) {
+                const res = await axios.post(`${API_BASE}/api/collections/${selectedCollection._id}/add`, { artworkId }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                latestCollectionData = res.data;
+            }
+            if (latestCollectionData) {
+                setCollections(prev => prev.map(c => c._id === selectedCollection._id ? latestCollectionData : c));
+            }
             setShowAddArtworkModal(false);
             setSelectedCollection(null);
+            setSelectedArtworkIds([]);
         } catch (error) {
-            console.error('Add artwork error:', error);
+            console.error('Add artworks error:', error);
+            alert('Failed to add some artworks. Please try again.');
+        } finally {
+            setAddingArtworks(false);
         }
     };
 
@@ -641,30 +669,78 @@ const Profile = ({ currentUser }) => {
 
                     {/* Add Artwork to Collection Modal */}
                     {showAddArtworkModal && selectedCollection && (
-                        <div className={styles.modalOverlay} onClick={() => setShowAddArtworkModal(false)}>
+                        <div className={styles.modalOverlay} onClick={() => { setShowAddArtworkModal(false); setSelectedArtworkIds([]); }}>
                             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                                 <h4>Add Artwork to "{selectedCollection.name}"</h4>
                                 {availableArtworks.length === 0 ? (
                                     <p>No artworks available to add.</p>
                                 ) : (
-                                    <div className={styles.artworkList}>
-                                        {availableArtworks.map(aw => (
-                                            <div key={aw._id} className={styles.artworkItem} onClick={() => handleAddArtworkToCollection(aw._id)}>
-                                                <img 
-                                                    src={isVideoArtwork(aw) && aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : `${API_BASE}${aw.image}`} 
-                                                    alt={aw.title} 
-                                                    className={styles.artworkThumb} 
-                                                />
-                                                <div className={styles.artworkInfo}>
-                                                    <strong>{aw.title}</strong>
-                                                    <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
+                                    <>
+                                        <div className={styles.selectAllContainer}>
+                                            <label className={styles.selectAllLabel}>
+                                                <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0 ? styles.customCheckboxActive : ''}`}>
+                                                    {(selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0) && (
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0}
+                                                    onChange={handleSelectAllAvailableArtworks}
+                                                    className={styles.hiddenCheckbox}
+                                                /> 
+                                                Select All
+                                            </label>
+                                            <span className={styles.selectedCount}>
+                                                {selectedArtworkIds.length} selected
+                                            </span>
+                                        </div>
+                                        <div className={styles.artworkList}>
+                                            {availableArtworks.map(aw => {
+                                                const isSelected = selectedArtworkIds.includes(aw._id);
+                                                return (
+                                                <div 
+                                                    key={aw._id} 
+                                                    className={`${styles.artworkItem} ${isSelected ? styles.artworkItemSelected : ''}`} 
+                                                    onClick={() => toggleArtworkSelection(aw._id)}
+                                                >
+                                                    <div className={`${styles.customCheckbox} ${styles.customCheckboxCircle} ${isSelected ? styles.customCheckboxActive : ''}`}>
+                                                        {isSelected && (
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                        )}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isSelected} 
+                                                        readOnly 
+                                                        className={styles.hiddenCheckbox}
+                                                    />
+                                                    <img 
+                                                        src={isVideoArtwork(aw) && aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : `${API_BASE}${aw.image}`} 
+                                                        alt={aw.title} 
+                                                        className={styles.artworkThumb} 
+                                                    />
+                                                    <div className={styles.artworkInfo}>
+                                                        <strong>{aw.title}</strong>
+                                                        <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
+                                                    </div>
+                                                </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                                 <div className={styles.modalActions}>
-                                    <button onClick={() => setShowAddArtworkModal(false)} className={styles.cancelBtn}>Close</button>
+                                    {availableArtworks.length > 0 && (
+                                        <button 
+                                            onClick={handleAddSelectedArtworksToCollection} 
+                                            className={styles.saveBtn} 
+                                            disabled={selectedArtworkIds.length === 0 || addingArtworks}
+                                        >
+                                            {addingArtworks ? 'Adding...' : `Add Selected (${selectedArtworkIds.length})`}
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setShowAddArtworkModal(false); setSelectedArtworkIds([]); }} className={styles.cancelBtn}>Close</button>
                                 </div>
                             </div>
                         </div>

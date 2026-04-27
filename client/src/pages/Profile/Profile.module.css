@@ -756,3 +756,70 @@
 .moreMenu button:hover {
     background-color: #30363d;
 }
+
+/* ===== SELECTION UI (ADD ARTWORK MODAL) ===== */
+.selectAllContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.selectAllLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+.selectedCount {
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.hiddenCheckbox {
+    display: none;
+}
+
+.customCheckbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+    border: 2px solid #4b5563;
+    background-color: transparent;
+    flex-shrink: 0;
+}
+
+.customCheckboxSquare {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.customCheckboxCircle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+}
+
+.customCheckboxActive {
+    border-color: #a1ff14;
+    background-color: #a1ff14;
+}
+
+.customCheckboxActive svg {
+    stroke: #000;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.artworkItemSelected {
+    background-color: rgba(161, 255, 20, 0.1) !important;
+    border-color: #a1ff14 !important;
+}
