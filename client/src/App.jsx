@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 
 import MainLayout from './layouts/MainLayout'
-import AdminLayout from './layouts/Adminlayout'
+import AdminLayout from './layouts/AdminLayout'
 
 import Index from './pages/Index/Index'
 import About from './pages/About/About'
@@ -21,12 +21,15 @@ import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import Works from './pages/Works_Admin/Works'
 import Requests from './pages/Requests_Admin/Requests'
+import AdminSettings from './pages/Settings_Admin/AdminSettings'
+import Maintenance from './pages/Maintenance/Maintenance'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
     const [ user, setUser ] = useState(null);
     const [ error, setError] = useState('');
+    const [ settings, setSettings ] = useState(null);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -47,6 +50,42 @@ function App() {
         }
         fetchUser();
     }, [])
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await axios.get('/api/admin/settings/public');
+                if (res.data) {
+                    setSettings(res.data);
+                }
+            } catch (err) {
+                // Silently fail — public endpoint may not exist yet
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // Apply siteName to document title
+    useEffect(() => {
+        if (settings?.siteName) {
+            document.title = settings.siteName;
+        }
+    }, [settings]);
+
+    // Determine if maintenance mode should be shown
+    const isAdmin = user?.role === 'Admin';
+    const inMaintenance = settings?.maintenanceMode && !isAdmin;
+
+    if (inMaintenance) {
+        return (
+            <Router>
+                <Routes>
+                    <Route path="/login" element={<Login setUser={setUser} />} />
+                    <Route path="*" element={<Maintenance />} />
+                </Routes>
+            </Router>
+        );
+    }
 
     return (
         <Router>
@@ -71,10 +110,11 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard user={user} />} />
                     <Route path="/works" element={<Works />} />
                     <Route path="/requests" element={<Requests />} />
+                    <Route path="/admin/settings" element={<AdminSettings />} />
                 </Route>
             </Routes>
         </Router>
-    )
+    );
 }
 
-export default App
+export default App;

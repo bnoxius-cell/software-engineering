@@ -9,6 +9,7 @@ const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
 const { protect } = require("../middleware/auth");
 const ffmpeg = require('fluent-ffmpeg');
+const { protect, requireAdmin } = require("../middleware/auth");
 
 // Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -332,7 +333,15 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
     const autoApprove = currentUser.role.toLowerCase() !== 'student' || globalAutoApproveStudents;
     const artworkStatus = autoApprove ? 'published' : 'pending';
 
-    const newArtworkData = {
+    // Enforce maxUploadSize from settings
+    const maxSizeMB = settings ? settings.maxUploadSize : 10;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (req.file.size > maxSizeBytes) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: `File exceeds maximum upload size of ${maxSizeMB}MB.` });
+    }
+
+    const newArtwork = await Artwork.create({
       title: req.body.title,
       medium: req.body.medium,
       description: req.body.description,

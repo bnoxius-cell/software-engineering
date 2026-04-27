@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar';
 import styles from './Profile.module.css';
 import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
+import { getAvatarUrl } from '../../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -62,6 +63,7 @@ const Profile = ({ currentUser }) => {
     // Avatar upload
     const fileInputRef = useRef(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [avatarSuccess, setAvatarSuccess] = useState('');
 
     // Video player state
     const videoRefs = useRef({});
@@ -93,6 +95,13 @@ const Profile = ({ currentUser }) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Auto-dismiss avatar success message after 3 seconds
+    useEffect(() => {
+        if (!avatarSuccess) return;
+        const timer = setTimeout(() => setAvatarSuccess(''), 3000);
+        return () => clearTimeout(timer);
+    }, [avatarSuccess]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -412,6 +421,7 @@ const Profile = ({ currentUser }) => {
 
         try {
             setUploadingAvatar(true);
+            setAvatarSuccess('');
             const token = localStorage.getItem('token');
             const formData = new FormData();
             formData.append('avatar', file);
@@ -424,6 +434,9 @@ const Profile = ({ currentUser }) => {
             });
 
             setProfileUser(prev => ({ ...prev, avatar: res.data.avatar }));
+            setAvatarSuccess('Profile picture successfully updated!');
+            localStorage.setItem('avatar', res.data.avatar);
+            window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: res.data.avatar }));
         } catch (error) {
             console.error('Avatar upload error:', error);
             alert('Failed to upload avatar. Please try again.');
@@ -476,12 +489,6 @@ const Profile = ({ currentUser }) => {
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
-
-    const getAvatarUrl = (avatarPath) => {
-        if (!avatarPath) return "/assets/images/profile_icon.png";
-        if (avatarPath.startsWith('/avatars/')) return `${API_BASE}${avatarPath}`;
-        return avatarPath;
-    };
 
     const displayAvatar = getAvatarUrl(profileUser.avatar);
     const displayName = profileUser.name || profileUser.username || "Unknown Artist";
@@ -643,6 +650,12 @@ const Profile = ({ currentUser }) => {
                         )}
                     </div>
                 </div>
+
+                {avatarSuccess && (
+                    <div style={{ background: '#238636', color: '#fff', padding: '0.75rem 1rem', borderRadius: '8px', margin: '1rem 0', textAlign: 'center', fontWeight: 500 }}>
+                        {avatarSuccess}
+                    </div>
+                )}
 
                 {/* Tabs */}
                 <div className={styles.tabsContainer}>

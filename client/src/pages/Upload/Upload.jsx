@@ -82,7 +82,7 @@ const Upload = () => {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await fetch('http://localhost:5000/api/artworks/', {
+            const response = await fetch('/api/artworks/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

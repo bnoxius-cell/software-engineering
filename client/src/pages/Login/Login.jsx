@@ -57,6 +57,9 @@ const Login = ({ setUser }) => {
             if (res.data.name) {
                 localStorage.setItem('name', res.data.name);
             }
+            if (res.data.avatar) {
+                localStorage.setItem('avatar', res.data.avatar);
+            }
 
             // Set flag for welcome toast (shown once after login)
             sessionStorage.setItem('justLoggedIn', 'true');
