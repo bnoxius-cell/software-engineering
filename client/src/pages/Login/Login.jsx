@@ -72,21 +72,17 @@ const Login = ({ setUser }) => {
         }
     };
 
-    const handleSocialLogin = (provider) => {
-        console.log(`Login with ${provider}`);
-    };
-
     const handleGoogleSuccess = async (credentialResponse) => {
         try {
             setLoading(true);
             setError('');
-
+            
             const res = await axios.post(`${API_BASE}/api/auth/google-login`, {
                 token: credentialResponse.credential,
             });
-
+            
             localStorage.setItem('token', res.data.token);
-
+            
             const userRole = res.data.role;
             if (userRole) {
                 localStorage.setItem('role', userRole);
@@ -95,20 +91,19 @@ const Login = ({ setUser }) => {
                 localStorage.setItem('name', res.data.name);
             }
 
-            // Set flag for welcome toast (shown once after login)
             sessionStorage.setItem('justLoggedIn', 'true');
 
             setUser(res.data);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || "Google login failed. Please try again.");
+        } finally {
             setLoading(false);
         }
     };
 
     const handleGoogleError = () => {
         setError('Google login failed. Please try again.');
-        setLoading(false);
     };
 
     const handleAstronautError = (e) => {
@@ -189,29 +184,24 @@ const Login = ({ setUser }) => {
                     </button>
                 </form>
                 
-                <div className={styles["social-message"]}>
-                    <div className={styles["line"]}></div>
-                    <p className={styles["message"]}>Login with social accounts</p>
-                    <div className={styles["line"]}></div>
+                <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
+                    <div style={{ flex: 1, height: '1px', backgroundColor: '#30363d' }}></div>
+                    <p style={{ margin: '0 10px', color: '#8b949e', fontSize: '0.85rem' }}>Or continue with</p>
+                    <div style={{ flex: 1, height: '1px', backgroundColor: '#30363d' }}></div>
                 </div>
-                
-                <div className={styles["social-icons"]}>
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
                     {GOOGLE_CLIENT_ID ? (
                         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
                                 onError={handleGoogleError}
+                                theme="filled_black"
+                                shape="pill"
                             />
                         </GoogleOAuthProvider>
                     ) : (
-                        <button 
-                            aria-label="Log in with Google" 
-                            className={styles["icon"]}
-                            onClick={() => handleSocialLogin('google')}
-                            disabled={loading}
-                        >
-                            <img src="/assets/images/icons/google.png" alt="Google Sign-in" />
-                        </button>
+                        <p style={{ color: '#8b949e', fontSize: '0.85rem' }}>Google Auth Not Configured</p>
                     )}
                 </div>
                 
