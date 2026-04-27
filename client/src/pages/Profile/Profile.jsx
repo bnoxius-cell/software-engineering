@@ -500,7 +500,7 @@ const Profile = ({ currentUser }) => {
 
     return (
         <div className={styles.pageWrapper}>
-            <div className={styles.neonRainBg}></div>
+            <div className="background-fx"></div>
             <Navbar />
             <div className={styles.profileContainer}>
                 {/* Profile Card */}
@@ -919,6 +919,12 @@ const Profile = ({ currentUser }) => {
                                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                             )}
                                                         </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isSelected}
+                                                        readOnly
+                                                        className={styles.hiddenCheckbox}
+                                                    />
                                                     </div>
                                                 )}
                                                 {isVideoArtwork(aw) ? (
@@ -1115,9 +1121,9 @@ const Profile = ({ currentUser }) => {
                             (activeTab === 'following' ? following : followers).map((user) => (
                                 <div key={user._id} className={styles.userCard} onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
                                     <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.userAvatar} />
-                                    <div className={styles.userInfo}>
-                                        <h4>{user.name || user.username}</h4>
-                                        <p>{user.bio || 'No bio'}</p>
+                                    <div className={styles.textContainer}>
+                                        <h4 className={styles.userName}>{user.name || user.username}</h4>
+                                        <p className={styles.userBio}>{user.bio || 'No bio'}</p>
                                     </div>
                                 </div>
                             ))
