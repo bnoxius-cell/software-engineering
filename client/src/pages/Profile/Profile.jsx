@@ -493,7 +493,7 @@ const Profile = ({ currentUser }) => {
 
     return (
         <div className={styles.pageWrapper}>
-            <div className={styles.neonRainBg}></div>
+            <div className="background-fx"></div>
             <Navbar />
             <div className={styles.profileContainer}>
                 {/* Profile Card */}
@@ -748,14 +748,13 @@ const Profile = ({ currentUser }) => {
                                 ) : (
                                     <>
                                         <div className={styles.selectAllContainer}>
-                                            <label className={styles.selectAllLabel} htmlFor="selectAllAvailable">
+                                            <label className={styles.selectAllLabel}>
                                                 <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0 ? styles.customCheckboxActive : ''}`}>
                                                     {(selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0) && (
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                     )}
                                                 </div>
                                                 <input 
-                                                    id="selectAllAvailable"
                                                     type="checkbox" 
                                                     checked={selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0}
                                                     onChange={handleSelectAllAvailableArtworks}
@@ -786,7 +785,6 @@ const Profile = ({ currentUser }) => {
                                                         checked={isSelected} 
                                                         readOnly 
                                                         className={styles.hiddenCheckbox}
-                                                        aria-label={`Select ${aw.title}`}
                                                     />
                                                     {isVideoArtwork(aw) ? (
                                                         <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '4px', overflow: 'hidden' }}>
@@ -861,14 +859,13 @@ const Profile = ({ currentUser }) => {
                                         
                                         {selectedCollection.artworks && selectedCollection.artworks.length > 0 && (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                <label className={styles.selectAllLabel} htmlFor="selectAllToRemove">
+                                                <label className={styles.selectAllLabel}>
                                                     <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIdsToRemove.length === selectedCollection.artworks.length ? styles.customCheckboxActive : ''}`}>
                                                         {selectedArtworkIdsToRemove.length === selectedCollection.artworks.length && (
                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                         )}
                                                     </div>
                                                     <input 
-                                                        id="selectAllToRemove"
                                                         type="checkbox" 
                                                         checked={selectedArtworkIdsToRemove.length === selectedCollection.artworks.length}
                                                         onChange={handleSelectAllToRemove}
@@ -909,6 +906,12 @@ const Profile = ({ currentUser }) => {
                                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                             )}
                                                         </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isSelected}
+                                                        readOnly
+                                                        className={styles.hiddenCheckbox}
+                                                    />
                                                     </div>
                                                 )}
                                                 {isVideoArtwork(aw) ? (
