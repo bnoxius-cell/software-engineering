@@ -748,13 +748,14 @@ const Profile = ({ currentUser }) => {
                                 ) : (
                                     <>
                                         <div className={styles.selectAllContainer}>
-                                            <label className={styles.selectAllLabel}>
+                                            <label className={styles.selectAllLabel} htmlFor="selectAllAvailable">
                                                 <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0 ? styles.customCheckboxActive : ''}`}>
                                                     {(selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0) && (
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                     )}
                                                 </div>
                                                 <input 
+                                                    id="selectAllAvailable"
                                                     type="checkbox" 
                                                     checked={selectedArtworkIds.length === availableArtworks.length && availableArtworks.length > 0}
                                                     onChange={handleSelectAllAvailableArtworks}
@@ -785,6 +786,7 @@ const Profile = ({ currentUser }) => {
                                                         checked={isSelected} 
                                                         readOnly 
                                                         className={styles.hiddenCheckbox}
+                                                        aria-label={`Select ${aw.title}`}
                                                     />
                                                     {isVideoArtwork(aw) ? (
                                                         <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '4px', overflow: 'hidden' }}>
@@ -859,13 +861,14 @@ const Profile = ({ currentUser }) => {
                                         
                                         {selectedCollection.artworks && selectedCollection.artworks.length > 0 && (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                <label className={styles.selectAllLabel}>
+                                                <label className={styles.selectAllLabel} htmlFor="selectAllToRemove">
                                                     <div className={`${styles.customCheckbox} ${styles.customCheckboxSquare} ${selectedArtworkIdsToRemove.length === selectedCollection.artworks.length ? styles.customCheckboxActive : ''}`}>
                                                         {selectedArtworkIdsToRemove.length === selectedCollection.artworks.length && (
                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                         )}
                                                     </div>
                                                     <input 
+                                                        id="selectAllToRemove"
                                                         type="checkbox" 
                                                         checked={selectedArtworkIdsToRemove.length === selectedCollection.artworks.length}
                                                         onChange={handleSelectAllToRemove}
@@ -1102,9 +1105,9 @@ const Profile = ({ currentUser }) => {
                             (activeTab === 'following' ? following : followers).map((user) => (
                                 <div key={user._id} className={styles.userCard} onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
                                     <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.userAvatar} />
-                                    <div className={styles.userInfo}>
-                                        <h4>{user.name || user.username}</h4>
-                                        <p>{user.bio || 'No bio'}</p>
+                                    <div className={styles.textContainer}>
+                                        <h4 className={styles.userName}>{user.name || user.username}</h4>
+                                        <p className={styles.userBio}>{user.bio || 'No bio'}</p>
                                     </div>
                                 </div>
                             ))
