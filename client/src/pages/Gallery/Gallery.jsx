@@ -647,7 +647,7 @@ const Gallery = () => {
                                         {comments.map(comment => (
                                             <div key={comment._id} className={styles.commentItem}>
                                                 <div className={styles.commentAvatar}>
-                                                    <img src={comment.user?.avatar || PROFILE_PLACEHOLDER} alt="" />
+                                                    <img src={comment.user?.avatar ? (comment.user.avatar.startsWith('/avatars/') ? `${API_BASE}${comment.user.avatar}` : comment.user.avatar) : PROFILE_PLACEHOLDER} alt="" />
                                                 </div>
                                                 <div className={styles.commentContent}>
                                                     <div className={styles.commentMeta}>
