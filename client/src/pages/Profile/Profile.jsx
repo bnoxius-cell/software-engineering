@@ -268,6 +268,7 @@ const Profile = ({ currentUser }) => {
             setEditingBio(false);
         } catch (error) {
             console.error('Bio update error:', error);
+            alert('Failed to update bio. Please try again.');
         }
     };
 
@@ -281,6 +282,7 @@ const Profile = ({ currentUser }) => {
             setEditingSocials(false);
         } catch (error) {
             console.error('Social update error:', error);
+            alert('Failed to update social links. Please try again.');
         }
     };
 
@@ -371,7 +373,13 @@ const Profile = ({ currentUser }) => {
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
 
-    const displayAvatar = profileUser.avatar || "/assets/images/profile_icon.png";
+    const getAvatarUrl = (avatarPath) => {
+        if (!avatarPath) return "/assets/images/profile_icon.png";
+        if (avatarPath.startsWith('/avatars/')) return `${API_BASE}${avatarPath}`;
+        return avatarPath;
+    };
+
+    const displayAvatar = getAvatarUrl(profileUser.avatar);
     const displayName = profileUser.name || profileUser.username || "Unknown Artist";
     const displayBio = profileUser.bio || "No bio available.";
     const currentUserId = currentUser?._id || currentUser?.id;
@@ -521,6 +529,12 @@ const Profile = ({ currentUser }) => {
                         ) : (
                             <p onClick={isOwnProfile ? () => setEditingBio(true) : undefined} style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}>
                                 {displayBio || (isOwnProfile ? 'Click to add a bio...' : 'No bio available.')}
+                                {isOwnProfile && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', opacity: 0.6, verticalAlign: 'middle' }}>
+                                        <path d="M12 20h9"></path>
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                    </svg>
+                                )}
                             </p>
                         )}
                     </div>
@@ -698,7 +712,7 @@ const Profile = ({ currentUser }) => {
                         {(activeTab === 'following' || activeTab === 'followers') && 
                             (activeTab === 'following' ? following : followers).map((user) => (
                                 <div key={user._id} className={styles.userCard} onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
-                                    <img src={user.avatar || "/assets/images/profile_icon.png"} alt={user.name} className={styles.userAvatar} />
+                                    <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.userAvatar} />
                                     <div className={styles.userInfo}>
                                         <h4>{user.name || user.username}</h4>
                                         <p>{user.bio || 'No bio'}</p>
