@@ -7,7 +7,6 @@ const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
-const { protect } = require("../middleware/auth");
 const ffmpeg = require('fluent-ffmpeg');
 const { protect, requireAdmin } = require("../middleware/auth");
 
@@ -64,21 +63,6 @@ const artworkAndThumbnailUpload = upload.fields([
   { name: 'artworkImage', maxCount: 1 },
   { name: 'thumbnailImage', maxCount: 1 }
 ]);
-
-const requireAdmin = async (req, res, next) => {
-  try {
-    const userId = req.user.id || req.user._id;
-    const currentUser = await User.findById(userId);
-
-    if (!currentUser || currentUser.role !== "Admin") {
-      return res.status(403).json({ message: "Admin access required." });
-    }
-
-    next();
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to verify admin access" });
-  }
-};
 
 const prettifyFieldName = (field) =>
   field
@@ -336,12 +320,15 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
     // Enforce maxUploadSize from settings
     const maxSizeMB = settings ? settings.maxUploadSize : 10;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
-    if (req.file.size > maxSizeBytes) {
-      fs.unlinkSync(req.file.path);
+    if (artworkFile.size > maxSizeBytes) {
+      fs.unlinkSync(artworkFile.path);
+      if (thumbnailFile?.path && fs.existsSync(thumbnailFile.path)) {
+        fs.unlinkSync(thumbnailFile.path);
+      }
       return res.status(400).json({ message: `File exceeds maximum upload size of ${maxSizeMB}MB.` });
     }
 
-    const newArtwork = await Artwork.create({
+    const newArtworkData = {
       title: req.body.title,
       medium: req.body.medium,
       description: req.body.description,
@@ -349,7 +336,7 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
       mediaType: inferMediaType(artworkFile),
       image: `/Artworks/${artworkFile.filename}`,
       artistName: artistName,
-      uploadedBy: currentUser._id ,
+      uploadedBy: currentUser._id,
       status: artworkStatus
     };
 
