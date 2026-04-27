@@ -133,27 +133,6 @@
   font-weight: 500;
 }
 
-/* Social Links */
-.socialLinks {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.2rem;
-}
-
-.socialIcon {
-  color: #9ca3af;
-  transition: color 0.2s ease, transform 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.socialIcon:hover {
-  color: #a1ff14;
-  transform: translateY(-2px);
-}
-
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
   .infoSection { grid-template-columns: repeat(2, 1fr); }

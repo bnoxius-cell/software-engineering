@@ -19,29 +19,11 @@ const Contact = () => {
             <div className={styles.contactInfo}>
               <div className={styles.locationBlock}>
                 <strong>OLFU Main Campus:</strong>
-                <p>
-                  <a 
-                    href="https://www.google.com/maps/search/?api=1&query=120+MacArthur+Highway,+Valenzuela+City,+1440+Metro+Manila" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: '#a1ff14', textDecoration: 'underline', textUnderlineOffset: '4px' }}
-                  >
-                    120 MacArthur Highway, Valenzuela City, 1440 Metro Manila
-                  </a>
-                </p>
+                <p>120 MacArthur Highway, Valenzuela City, 1440 Metro Manila</p>
               </div>
               <div className={styles.locationBlock}>
                 <strong>Tamaraw Campus:</strong>
-                <p>
-                  <a 
-                    href="https://www.google.com/maps/search/?api=1&query=Tamaraw+Hills,+MacArthur+Highway,+Valenzuela+City" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: '#a1ff14', textDecoration: 'underline', textUnderlineOffset: '4px' }}
-                  >
-                    Tamaraw Hills, MacArthur Highway, Valenzuela City
-                  </a>
-                </p>
+                <p>Tamaraw Hills, MacArthur Highway, Valenzuela City</p>
               </div>
             </div>
           </div>

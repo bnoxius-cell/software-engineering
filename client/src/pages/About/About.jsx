@@ -2,6 +2,37 @@ import React from 'react';
 import styles from './About.module.css';
 
 const About = () => {
+  const developers = [
+    {
+      name: 'Tony Kishore',
+      role: 'Frontend & Design',
+      img: '/assets/images/tony_img.jpg',
+      alt: 'Tony Kishore - Frontend & Design',
+    },
+    {
+      name: 'Adrian Reniva',
+      role: 'Backend & Database',
+      img: '/assets/images/adrian_img.jpg',
+      alt: 'Adrian Reniva - Backend & Database',
+    },
+    {
+      name: 'Patrick Ronda',
+      role: 'Project Manager & Testing',
+      img: '/assets/images/ronda_img.jpg',
+      alt: 'Patrick Ronda - Project Manager & Testing',
+    },
+    {
+      name: 'John Carlo Lunaria',
+      role: 'Testing & Maintenance',
+      img: '/assets/images/lunaria_img.png',
+      alt: 'John Carlo Lunaria - Testing & Maintenance',
+    },
+  ];
+
+  const handleImageError = (e) => {
+    e.target.src = '/assets/images/placeholder-avatar.png';
+  };
+
   return (
     <div className={styles.aboutWrapper}>
       <div className={styles.container}>
@@ -39,6 +70,25 @@ const About = () => {
             <p>
               Our Lady of Fatima University (OLFU) is a premier educational institution committed to academic excellence, continuous innovation, and the holistic development of its students. With a strong foundation across various disciplines including technology and computer studies, OLFU empowers its learners to become highly competent professionals. The university fosters a culture of resilience and compassion, ensuring every Fatimanian is prepared to "Rise to the Top."
             </p>
+          </div>
+        </section>
+
+        <section className={styles.teamSection}>
+          <h2>Meet the Developers</h2>
+          <div className={styles.teamGrid}>
+            {developers.map((dev) => (
+              <div key={dev.name} className={styles.teamCard}>
+                <img
+                  src={dev.img}
+                  alt={dev.alt}
+                  onError={handleImageError}
+                  loading="lazy"
+                  className={styles.avatar}
+                />
+                <h3>{dev.name}</h3>
+                <p>{dev.role}</p>
+              </div>
+            ))}
           </div>
         </section>
       </div>
