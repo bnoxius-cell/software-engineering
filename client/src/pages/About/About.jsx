@@ -30,39 +30,68 @@ const About = () => {
   ];
 
   const handleImageError = (e) => {
-    e.target.src = '/assets/images/placeholder-avatar.png'; // fallback image
+    e.target.src = '/assets/images/placeholder-avatar.png';
   };
 
   return (
-    <div className={styles['about-wrapper']}>
-      <section className={styles.hero} aria-label="About EMC Artisan">
-        <div className={styles['hero-content']}>
+    <div className={styles.aboutWrapper}>
+      <div className={styles.container}>
+        <header className={styles.pageHeader}>
           <h1>About EMC Artisan</h1>
-          <p>
-            EMC Artisan is a web-based project developed as a course requirement for SOFE311 (Software Engineering) under the Bachelor of Science in Computing (BSCS) program. 
-            The system is designed to provide a centralized and visually engaging platform for students to display their creative works. 
-            It supports artistic expression, collaboration, and accessibility through features such as a dynamic gallery, search functionality, and interactive user interface elements.
-          </p>
-        </div>
-      </section>
+          <p>Discover the platform, the program, and the institution driving digital innovation.</p>
+        </header>
 
-      <section className={styles['team-section']} aria-labelledby="team-heading">
-        <h2 id="team-heading">Meet the Developers</h2>
-        <div className={styles['team-grid']}>
-          {developers.map((dev, idx) => (
-            <div key={dev.name} className={styles['team-card']}>
-              <img
-                src={dev.img}
-                alt={dev.alt}
-                onError={handleImageError}
-                loading="lazy"
-              />
-              <h3>{dev.name}</h3>
-              <p>{dev.role}</p>
+        <section className={styles.infoSection}>
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <span className={styles.icon}>🎨</span>
+              <h2>The E-Portfolio Platform</h2>
             </div>
-          ))}
-        </div>
-      </section>
+            <p>
+              EMC Artisan is a centralized digital gallery designed to spotlight the innovative creations of our students. Developed as a core requirement for SOFE311 (Software Engineering), this platform bridges the gap between academic submissions and professional showcasing. It empowers students to curate their 2D/3D art, animations, and UI/UX designs in a visually engaging environment that fosters artistic expression and collaboration.
+            </p>
+          </div>
+
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <span className={styles.icon}>💻</span>
+              <h2>Entertainment & Multimedia Computing (EMC)</h2>
+            </div>
+            <p>
+              The Bachelor of Science in Entertainment and Multimedia Computing (EMC) is a dynamic program tailored for aspiring digital artisans. It seamlessly blends computing science with creative design, focusing on the development of multimedia content, digital animation, game development, and interactive applications. The curriculum is built to equip students with both the technical prowess and artistic vision required to thrive in the modern digital entertainment industry.
+            </p>
+          </div>
+
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <span className={styles.icon}>🏛️</span>
+              <h2>Our Lady of Fatima University</h2>
+            </div>
+            <p>
+              Our Lady of Fatima University (OLFU) is a premier educational institution committed to academic excellence, continuous innovation, and the holistic development of its students. With a strong foundation across various disciplines including technology and computer studies, OLFU empowers its learners to become highly competent professionals. The university fosters a culture of resilience and compassion, ensuring every Fatimanian is prepared to "Rise to the Top."
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.teamSection}>
+          <h2>Meet the Developers</h2>
+          <div className={styles.teamGrid}>
+            {developers.map((dev) => (
+              <div key={dev.name} className={styles.teamCard}>
+                <img
+                  src={dev.img}
+                  alt={dev.alt}
+                  onError={handleImageError}
+                  loading="lazy"
+                  className={styles.avatar}
+                />
+                <h3>{dev.name}</h3>
+                <p>{dev.role}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

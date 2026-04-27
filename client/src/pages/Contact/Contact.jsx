@@ -2,67 +2,78 @@ import React from 'react';
 import styles from './Contact.module.css';
 
 const Contact = () => {
-  const contacts = [
-    {
-      name: 'Our Lady of Fatima University',
-      description: 'Official institution supporting academic excellence and innovation.',
-      link: 'https://fatima.edu.ph',
-      img: '/assets/images/logos/olfu_logo.png',
-      alt: 'OLFU Logo',
-    },
-    {
-      name: 'Department of Computer Science',
-      description: 'Focused on software engineering, computing research, and system development.',
-      link: 'https://fatima.edu.ph/bachelor-of-science-in-computer-science/',
-      img: '/assets/images/logos/ccs_logo.jpg',
-      alt: 'Computer Science Logo',
-    },
-    {
-      name: 'Entertainment & Multimedia Computing',
-      description: 'Creative technology program combining design, media, and computing.',
-      link: 'https://fatima.edu.ph/bachelor-of-science-in-entertainment-and-multimedia-computing-major-in-digital-animation-technology/',
-      img: '/assets/images/logos/emc_logo.jpg',
-      alt: 'EMC Logo',
-    },
-  ];
-
-  const handleImageError = (e) => {
-    e.target.src = '/assets/images/placeholder-logo.png'; // fallback image
-  };
-
   return (
-    <div className={styles['contact-wrapper']}>
-      <section className={styles['page-header']}>
-        <div className={styles['header-content']}>
+    <div className={styles.contactWrapper}>
+      <div className={styles.container}>
+        <header className={styles.pageHeader}>
           <h1>Contact Us</h1>
-          <p>Get in touch with the departments and institutions behind the EMC Artisan project.</p>
-        </div>
-      </section>
+          <p>Get in touch with our departments and OLFU campus offices.</p>
+        </header>
 
-      <section className={styles['contact-section']}>
-        <div className={styles['contact-grid']}>
-          {contacts.map((contact, idx) => (
-            <div key={contact.name} className={styles['contact-card']}>
-              <img
-                src={contact.img}
-                alt={contact.alt}
-                onError={handleImageError}
-                loading="lazy"
-              />
-              <h3>{contact.name}</h3>
-              <p>{contact.description}</p>
-              <a
-                href={contact.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Visit ${contact.name} website`}
-              >
-                Program Details
-              </a>
+        <section className={styles.contactGrid}>
+          {/* Card 1: Campus Locations */}
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <h3>📍 Campus Locations</h3>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className={styles.contactInfo}>
+              <div className={styles.locationBlock}>
+                <strong>OLFU Main Campus:</strong>
+                <p>120 MacArthur Highway, Valenzuela City, 1440 Metro Manila</p>
+              </div>
+              <div className={styles.locationBlock}>
+                <strong>Tamaraw Campus:</strong>
+                <p>Tamaraw Hills, MacArthur Highway, Valenzuela City</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Front Desk */}
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <h3>📞 Front Desk Inquiries</h3>
+            </div>
+            <div className={styles.contactInfo}>
+              <p className={styles.desc}>For university admissions, registrar, and general inquiries.</p>
+              <ul className={styles.contactList}>
+                <li><strong>Phone:</strong> +63 (02) 8291-6538</li>
+                <li><strong>Mobile:</strong> +63 917-123-4567</li>
+                <li><strong>Email:</strong> info@fatima.edu.ph</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Card 3: CCS Contacts */}
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <h3>🖥️ College of Computer Studies</h3>
+            </div>
+            <div className={styles.contactInfo}>
+              <p className={styles.desc}>For inquiries regarding BSCS, BSIT, and general computing programs.</p>
+              <ul className={styles.contactList}>
+                <li><strong>Dean's Office:</strong> loc. 204</li>
+                <li><strong>Direct Line:</strong> +63 (02) 8291-1234</li>
+                <li><strong>Email:</strong> ccs.inquiries@fatima.edu.ph</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Card 4: EMC Contacts */}
+          <div className={styles.glassCard}>
+            <div className={styles.cardHeader}>
+              <h3>🎮 EMC Department</h3>
+            </div>
+            <div className={styles.contactInfo}>
+              <p className={styles.desc}>For EMC program-specific concerns, academic advising, and lab inquiries.</p>
+              <ul className={styles.contactList}>
+                <li><strong>Department Head:</strong> loc. 205</li>
+                <li><strong>Lab Support:</strong> emc.labs@fatima.edu.ph</li>
+                <li><strong>Email:</strong> emc.dept@fatima.edu.ph</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
