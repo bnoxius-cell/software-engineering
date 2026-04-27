@@ -4,8 +4,6 @@ import Sidebar from '../../components/Sidebar';
 import Topbar from '../../components/Topbar';
 import styles from './AdminSettings.module.css';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
 const AdminSettings = () => {
     const [settings, setSettings] = useState({
         maintenanceMode: false,
@@ -15,12 +13,13 @@ const AdminSettings = () => {
     });
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ text: '', type: '' });
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await axios.get(`${API_BASE}/api/admin/settings`, {
+                const res = await axios.get('/api/admin/settings', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data) setSettings(res.data);
@@ -39,18 +38,44 @@ const AdminSettings = () => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+        // Clear error on change
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const validate = () => {
+        const newErrors = {};
+        if (!settings.siteName || settings.siteName.trim().length === 0) {
+            newErrors.siteName = 'Site name is required.';
+        } else if (settings.siteName.trim().length > 100) {
+            newErrors.siteName = 'Site name must be 100 characters or fewer.';
+        }
+        const size = Number(settings.maxUploadSize);
+        if (!Number.isFinite(size) || size < 1 || size > 500) {
+            newErrors.maxUploadSize = 'Max upload size must be between 1 and 500 MB.';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validate()) return;
+
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE}/api/admin/settings`, settings, {
+            const payload = {
+                ...settings,
+                maxUploadSize: Number(settings.maxUploadSize)
+            };
+            await axios.post('/api/admin/settings', payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessage({ text: 'Settings updated successfully!', type: 'success' });
         } catch (error) {
-            setMessage({ text: 'Failed to update settings.', type: 'error' });
+            const msg = error.response?.data?.message || 'Failed to update settings.';
+            setMessage({ text: msg, type: 'error' });
         }
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     };

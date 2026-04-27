@@ -8,6 +8,7 @@ const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
+const { requireAdmin } = require("../middleware/auth");
 
 // Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -71,21 +72,6 @@ const verifyToken = (req, res, next) => {
     });
   } else {
     return res.status(401).json({ message: "You are not authenticated!" });
-  }
-};
-
-const requireAdmin = async (req, res, next) => {
-  try {
-    const userId = req.user.id || req.user._id;
-    const currentUser = await User.findById(userId);
-
-    if (!currentUser || currentUser.role !== "Admin") {
-      return res.status(403).json({ message: "Admin access required." });
-    }
-
-    next();
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to verify admin access" });
   }
 };
 
@@ -334,6 +320,14 @@ router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) =>
     const globalAutoApproveStudents = settings ? settings.autoApproveStudents : false;
     const autoApprove = currentUser.role.toLowerCase() !== 'student' || globalAutoApproveStudents;
     const artworkStatus = autoApprove ? 'published' : 'pending';
+
+    // Enforce maxUploadSize from settings
+    const maxSizeMB = settings ? settings.maxUploadSize : 10;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (req.file.size > maxSizeBytes) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: `File exceeds maximum upload size of ${maxSizeMB}MB.` });
+    }
 
     const newArtwork = await Artwork.create({
       title: req.body.title,

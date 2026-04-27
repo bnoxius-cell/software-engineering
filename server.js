@@ -9,11 +9,56 @@ const notificationRoutes = require("./server/routes/notifications");
 const collectionRoutes = require("./server/routes/collections");
 const adminRoutes = require("./server/routes/admin");
 const connectDB = require("./server/config/db");
+const Settings = require("./server/models/Settings");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+// Maintenance mode middleware — must run after body parser so req.path is reliable
+const PUBLIC_PATHS = ["/api/auth/login", "/api/auth/register", "/api/admin/settings"];
+app.use(async (req, res, next) => {
+    try {
+        // Skip health-check or asset paths
+        if (req.path.startsWith("/Artworks") || req.path.startsWith("/avatars")) {
+            return next();
+        }
+        if (req.path.startsWith("/api/admin")) {
+            return next();
+        }
+        if (req.path.startsWith("/api/auth")) {
+            return next();
+        }
+
+        const settings = await Settings.findOne();
+        if (settings && settings.maintenanceMode === true) {
+            // Allow staff (Admin/Faculty) through
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                const jwt = require("jsonwebtoken");
+                const User = require("./server/models/User");
+                const token = authHeader.split(" ")[1];
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                    const user = await User.findById(decoded.id).select("role");
+                    if (user && ["Admin", "Faculty"].includes(user.role)) {
+                        return next();
+                    }
+                    // Non-staff users should be blocked
+                    return res.status(503).json({ message: "Server is under maintenance. Please try again later." });
+                } catch {
+                    return res.status(503).json({ message: "Server is under maintenance. Please try again later." });
+                }
+            }
+            return res.status(503).json({ message: "Server is under maintenance. Please try again later." });
+        }
+        next();
+    } catch (error) {
+        console.error("Maintenance middleware error:", error);
+        next();
+    }
+});
 
 // 1. Force the exact absolute path to the folder
 const artworksPath = path.join(__dirname, "public", "Artworks");

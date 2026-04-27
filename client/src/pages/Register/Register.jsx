@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './Register.module.css';
@@ -17,7 +17,25 @@ const Register = () => {
     const [showPopup, setShowPopup] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [modalContent, setModalContent] = useState('terms'); // 'terms' or 'privacy'
+    const [allowRegistration, setAllowRegistration] = useState(true);
+    const [checkingSettings, setCheckingSettings] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await axios.get('/api/admin/settings/public');
+                if (res.data && res.data.allowRegistration === false) {
+                    setAllowRegistration(false);
+                }
+            } catch (err) {
+                // Silently fail — default to allowing registration
+            } finally {
+                setCheckingSettings(false);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -88,6 +106,33 @@ const Register = () => {
         setModalContent(type);
         setShowTermsModal(true);
     };
+
+    if (checkingSettings) {
+        return (
+            <div className={styles["register-wrapper"]}>
+                <div className={styles["form-container"]}>
+                    <p className={styles["title"]}>Create Account</p>
+                    <p>Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!allowRegistration) {
+        return (
+            <div className={styles["register-wrapper"]}>
+                <div className={styles["form-container"]}>
+                    <p className={styles["title"]}>Registration Closed</p>
+                    <p className={styles.error} role="alert">
+                        New user registrations are currently disabled. Please contact an administrator.
+                    </p>
+                    <p className={styles["signup"]}>
+                        Already have an account? <Link to="/login">Log in</Link>
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles["register-wrapper"]}>
