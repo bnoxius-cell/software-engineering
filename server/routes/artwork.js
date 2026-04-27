@@ -3,12 +3,11 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const jwt = require("jsonwebtoken"); 
 const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
-const { requireAdmin } = require("../middleware/auth");
+const { protect, requireAdmin } = require("../middleware/auth");
 
 // Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -58,22 +57,6 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024,
   },
 });
-
-// JWT Authentication Middleware
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader) {
-    const token = authHeader.split(" ")[1]; 
-    
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: "Token is invalid or expired!" });
-      req.user = user; 
-      next();
-    });
-  } else {
-    return res.status(401).json({ message: "You are not authenticated!" });
-  }
-};
 
 const prettifyFieldName = (field) =>
   field
@@ -127,7 +110,7 @@ router.get("/", async (req, res) => {
 });
 
 // ADMIN pending artworks
-router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
+router.get("/admin/pending", protect, requireAdmin, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" })
       .populate("uploadedBy", "name username avatar");
@@ -137,7 +120,7 @@ router.get("/admin/pending", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-router.get("/interactions", verifyToken, async (req, res) => {
+router.get("/interactions", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const currentUser = await User.findById(userId).select("likedArtworks savedArtworks");
@@ -156,7 +139,7 @@ router.get("/interactions", verifyToken, async (req, res) => {
 });
 
 // Update artwork status
-router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
+router.put("/:id/status", protect, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const updatedArtwork = await Artwork.findByIdAndUpdate(
@@ -184,7 +167,7 @@ router.put("/:id/status", verifyToken, requireAdmin, async (req, res) => {
 });
 
 // All artworks for admin
-router.get("/all", verifyToken, async (req, res) => {
+router.get("/all", protect, async (req, res) => {
   try {
     const artworks = await Artwork.find({})
       .sort({ createdAt: -1 })
@@ -196,7 +179,7 @@ router.get("/all", verifyToken, async (req, res) => {
 });
 
 // Update artwork
-router.put("/:id", verifyToken, requireAdmin, upload.single("artworkImage"), async (req, res) => {
+router.put("/:id", protect, requireAdmin, upload.single("artworkImage"), async (req, res) => {
   try {
     const existingArtwork = await Artwork.findById(req.params.id);
 
@@ -263,7 +246,7 @@ router.get("/profile/:userId", async (req, res) => {
   }
 });
 
-router.post("/:id/like", verifyToken, async (req, res) => {
+router.post("/:id/like", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const { liked } = req.body;
@@ -301,7 +284,7 @@ router.post("/:id/like", verifyToken, async (req, res) => {
 });
 
 // POST upload
-router.post("/", verifyToken, upload.single("artworkImage"), async (req, res) => {
+router.post("/", protect, upload.single("artworkImage"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No media file uploaded." });
@@ -372,7 +355,7 @@ router.use((error, req, res, next) => {
 });
 
 // Get user's own artworks
-router.get("/user/me", verifyToken, async (req, res) => {
+router.get("/user/me", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
     const artworks = await Artwork.find({ uploadedBy: userId }).sort({ createdAt: -1 });
