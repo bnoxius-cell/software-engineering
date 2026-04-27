@@ -147,24 +147,29 @@ const Profile = ({ currentUser }) => {
 
     // Pre-fetch available artworks for the "add to collection" modal (only user's own artworks)
     useEffect(() => {
-        if (showAddArtworkModal && selectedCollection && currentUser?._id === profileUser?._id) {
+        const currentUserId = currentUser?._id || currentUser?.id;
+        
+        if (showAddArtworkModal && selectedCollection && currentUserId === profileUser?._id) {
             const fetchAvailableArtworks = async () => {
                 try {
                     const token = localStorage.getItem('token');
                     const res = await axios.get(`${API_BASE}/api/artworks/user/me`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id);
-                    const available = res.data.filter(aw => !alreadyInCollection.includes(aw._id));
+                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id || aw);
+                    const available = res.data.filter(aw => !alreadyInCollection.includes(aw._id) && aw.status === 'published');
                     setAvailableArtworks(available);
                 } catch (err) {
                     console.error('Failed to fetch artworks', err);
-                    setAvailableArtworks([]);
+                    // Fallback to already loaded artworks if the user/me endpoint fails
+                    const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id || aw);
+                    const available = artworks.filter(aw => !alreadyInCollection.includes(aw._id) && aw.status === 'published');
+                    setAvailableArtworks(available);
                 }
             };
             fetchAvailableArtworks();
         }
-    }, [showAddArtworkModal, selectedCollection, currentUser, profileUser]);
+    }, [showAddArtworkModal, selectedCollection, currentUser, profileUser, artworks]);
 
     // Collection CRUD handlers
     const handleCreateCollection = async () => {
@@ -368,7 +373,7 @@ const Profile = ({ currentUser }) => {
             fetchFollowingFollowers(activeTab);
         }
     }, [activeTab, profileUser]);
-
+    
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
@@ -645,7 +650,11 @@ const Profile = ({ currentUser }) => {
                                     <div className={styles.artworkList}>
                                         {availableArtworks.map(aw => (
                                             <div key={aw._id} className={styles.artworkItem} onClick={() => handleAddArtworkToCollection(aw._id)}>
-                                                <img src={`${API_BASE}${aw.image}`} alt={aw.title} className={styles.artworkThumb} />
+                                                <img 
+                                                    src={isVideoArtwork(aw) && aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : `${API_BASE}${aw.image}`} 
+                                                    alt={aw.title} 
+                                                    className={styles.artworkThumb} 
+                                                />
                                                 <div className={styles.artworkInfo}>
                                                     <strong>{aw.title}</strong>
                                                     <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
@@ -667,7 +676,7 @@ const Profile = ({ currentUser }) => {
                             <div key={work._id} className={styles.artCard} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>
                                 <div className={styles.imageWrapper}>
                                     {isVideoArtwork(work) ? (
-                                        <video src={`${API_BASE}${work.image}`} className={styles.artImage} muted playsInline preload="metadata" />
+                                        <video src={`${API_BASE}${work.image}`} poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined} className={styles.artImage} muted playsInline preload="metadata" />
                                     ) : (
                                         <img src={`${API_BASE}${work.image}`} alt={work.title} className={styles.artImage} />
                                     )}

@@ -249,15 +249,40 @@ const Gallery = () => {
             navigate('/login');
             return;
         }
-        const isLiked = commentLikeStates[commentId];
+        const isLiked = !!commentLikeStates[commentId];
+
+        // Optimistically update UI for immediate feedback
         setCommentLikeStates(prev => ({ ...prev, [commentId]: !isLiked }));
+        setComments(prev => prev.map(c => {
+            if (c._id === commentId) {
+                return { ...c, likes: (c.likes || 0) + (!isLiked ? 1 : -1) };
+            }
+            return c;
+        }));
+
         try {
-            await fetch(`${API_BASE}/api/comments/${commentId}/like`, {
+            const res = await fetch(`${API_BASE}/api/comments/${commentId}/like`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            if (!res.ok) throw new Error('Server request failed');
+
+            // Sync with server state to be 100% accurate, handling any race conditions
+            const data = await res.json();
+            setComments(prev => prev.map(c => 
+                c._id === commentId ? { ...c, likes: data.likes } : c
+            ));
         } catch (err) {
+            // Revert optimistic changes on any error
             setCommentLikeStates(prev => ({ ...prev, [commentId]: isLiked }));
+            setComments(prev => prev.map(c => {
+                if (c._id === commentId) {
+                    // This reverses the optimistic increment/decrement
+                    return { ...c, likes: (c.likes || 0) - (!isLiked ? 1 : -1) };
+                }
+                return c;
+            }));
             console.error('Failed to like comment', err);
         }
     };
@@ -387,7 +412,7 @@ const Gallery = () => {
             );
         }
 
-        const posterUrl = artwork.poster ? `${API_BASE}${artwork.poster}` : null;
+        const posterUrl = artwork.thumbnail ? `${API_BASE}${artwork.thumbnail}` : null;
         const videoUrl = `${API_BASE}${artwork.image}`;
 
         return (
@@ -520,7 +545,7 @@ const Gallery = () => {
                                 {isVideoArtwork(selectedArtwork) ? (
                                     <ArtworkVideoPlayer
                                         src={`${API_BASE}${selectedArtwork.image}`}
-                                        poster={selectedArtwork.poster ? `${API_BASE}${selectedArtwork.poster}` : null}
+                                        poster={selectedArtwork.thumbnail ? `${API_BASE}${selectedArtwork.thumbnail}` : null}
                                         alt={selectedArtwork.title}
                                         keyboardActive={isModalOpen}
                                     />
