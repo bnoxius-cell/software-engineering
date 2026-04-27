@@ -21,6 +21,7 @@ import UserManager from './pages/User_Admin/UserManager'
 import Dashboard from './pages/Dashboard_Admin/Dashboard'
 import Works from './pages/Works_Admin/Works'
 import Requests from './pages/Requests_Admin/Requests'
+import AdminSettings from './pages/Settings_Admin/AdminSettings'
 
 function App() {
     const [ user, setUser ] = useState(null);
@@ -69,10 +70,11 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard user={user} />} />
                     <Route path="/works" element={<Works />} />
                     <Route path="/requests" element={<Requests />} />
+                    <Route path="/admin/settings" element={<AdminSettings />} />
                 </Route>
             </Routes>
         </Router>
-    )
+    );
 }
 
-export default App
+export default App;
