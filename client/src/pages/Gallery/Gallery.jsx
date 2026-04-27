@@ -412,8 +412,8 @@ const Gallery = () => {
             );
         }
 
-        const posterUrl = artwork.thumbnail ? `${API_BASE}${artwork.thumbnail}` : null;
-        const videoUrl = `${API_BASE}${artwork.image}`;
+        const posterUrl = artwork.thumbnail ? `${API_BASE}${artwork.thumbnail}` : undefined;
+        const videoUrl = `${API_BASE}${artwork.image}${!artwork.thumbnail ? '#t=0.05' : ''}`;
 
         return (
             <div className={styles.videoCardWrapper}>
@@ -544,8 +544,8 @@ const Gallery = () => {
                             <div className={styles.modalArtwork}>
                                 {isVideoArtwork(selectedArtwork) ? (
                                     <ArtworkVideoPlayer
-                                        src={`${API_BASE}${selectedArtwork.image}`}
-                                        poster={selectedArtwork.thumbnail ? `${API_BASE}${selectedArtwork.thumbnail}` : null}
+                                        src={`${API_BASE}${selectedArtwork.image}${!selectedArtwork.thumbnail ? '#t=0.05' : ''}`}
+                                        poster={selectedArtwork.thumbnail ? `${API_BASE}${selectedArtwork.thumbnail}` : undefined}
                                         alt={selectedArtwork.title}
                                         keyboardActive={isModalOpen}
                                     />

@@ -715,11 +715,20 @@ const Profile = ({ currentUser }) => {
                                                         readOnly 
                                                         className={styles.hiddenCheckbox}
                                                     />
-                                                    <img 
-                                                        src={isVideoArtwork(aw) && aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : `${API_BASE}${aw.image}`} 
-                                                        alt={aw.title} 
-                                                        className={styles.artworkThumb} 
-                                                    />
+                                                    {isVideoArtwork(aw) ? (
+                                                        <video 
+                                                            src={`${API_BASE}${aw.image}${!aw.thumbnail ? '#t=0.05' : ''}`} 
+                                                            poster={aw.thumbnail ? `${API_BASE}${aw.thumbnail}` : undefined}
+                                                            className={styles.artworkThumb} 
+                                                            muted playsInline preload="metadata"
+                                                        />
+                                                    ) : (
+                                                        <img 
+                                                            src={`${API_BASE}${aw.image}`} 
+                                                            alt={aw.title} 
+                                                            className={styles.artworkThumb} 
+                                                        />
+                                                    )}
                                                     <div className={styles.artworkInfo}>
                                                         <strong>{aw.title}</strong>
                                                         <span>{aw.medium?.replace('_', ' ') || 'Artwork'}</span>
@@ -752,7 +761,7 @@ const Profile = ({ currentUser }) => {
                             <div key={work._id} className={styles.artCard} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>
                                 <div className={styles.imageWrapper}>
                                     {isVideoArtwork(work) ? (
-                                        <video src={`${API_BASE}${work.image}`} poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined} className={styles.artImage} muted playsInline preload="metadata" />
+                                        <video src={`${API_BASE}${work.image}${!work.thumbnail ? '#t=0.05' : ''}`} poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined} className={styles.artImage} muted playsInline preload="metadata" />
                                     ) : (
                                         <img src={`${API_BASE}${work.image}`} alt={work.title} className={styles.artImage} />
                                     )}
