@@ -1,5 +1,5 @@
 @echo off
-cd /d C:\Users\acm\software-engineering
+cd /d "%~dp0"
 
 echo ====================================
 echo   EMC Artisan E-Portfolio Server
@@ -15,4 +15,4 @@ echo Press Ctrl+C to stop the server
 echo.
 start http://localhost:5173
 timeout /t 3 /nobreak
-npm run dev
+npm.cmd run dev
