@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './Register.module.css';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -80,39 +78,6 @@ const Register = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleGoogleSuccess = async (credentialResponse) => {
-        try {
-            setLoading(true);
-            setError('');
-            
-            const res = await axios.post(`${API_BASE}/api/auth/google-login`, {
-                token: credentialResponse.credential,
-            });
-            
-            localStorage.setItem('token', res.data.token);
-            
-            const userRole = res.data.role;
-            if (userRole) {
-                localStorage.setItem('role', userRole);
-            }
-            if (res.data.name) {
-                localStorage.setItem('name', res.data.name);
-            }
-
-            sessionStorage.setItem('justLoggedIn', 'true');
-
-            window.location.href = '/';
-        } catch (err) {
-            setError(err.response?.data?.message || "Google registration failed. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleError = () => {
-        setError('Google registration failed. Please try again.');
     };
 
     const handleAstronautError = (e) => {
@@ -218,27 +183,6 @@ const Register = () => {
                         )}
                     </button>
                 </form>
-                
-                <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
-                    <div style={{ flex: 1, height: '1px', backgroundColor: '#30363d' }}></div>
-                    <p style={{ margin: '0 10px', color: '#8b949e', fontSize: '0.85rem' }}>Or continue with</p>
-                    <div style={{ flex: 1, height: '1px', backgroundColor: '#30363d' }}></div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-                    {GOOGLE_CLIENT_ID ? (
-                        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-                            <GoogleLogin
-                                onSuccess={handleGoogleSuccess}
-                                onError={handleGoogleError}
-                                theme="filled_black"
-                                shape="pill"
-                            />
-                        </GoogleOAuthProvider>
-                    ) : (
-                        <p style={{ color: '#8b949e', fontSize: '0.85rem' }}>Google Auth Not Configured</p>
-                    )}
-                </div>
                 
                 <p className={styles["signup"]}>
                     Already have an account? <Link to="/login">Log in</Link>
