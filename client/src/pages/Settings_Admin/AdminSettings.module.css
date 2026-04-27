@@ -1,0 +1,240 @@
+/* ===== Loading State ===== */
+.loadingState {
+    text-align: center;
+    padding: 3rem;
+    color: #97a0af;
+    font-size: 1.1rem;
+}
+
+/* ===== Alert Messages ===== */
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+}
+
+.success {
+    background: rgba(161, 255, 20, 0.12);
+    border: 1px solid rgba(161, 255, 20, 0.4);
+    color: #dfffb0;
+}
+
+.error {
+    background: rgba(255, 90, 80, 0.12);
+    border: 1px solid rgba(255, 90, 80, 0.4);
+    color: #ffb8b8;
+}
+
+/* ===== Main Panel ===== */
+.panel {
+    border: 1px solid rgba(161, 255, 20, 0.12);
+    border-radius: 22px;
+    padding: 1.75rem;
+    background: rgba(8, 12, 18, 0.88);
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+}
+
+.panelHeader {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.75rem;
+}
+
+.panelTitle {
+    margin: 0;
+    font-size: 1.45rem;
+    color: #e8ffd0;
+    font-weight: 700;
+}
+
+.panelText {
+    margin: 0.35rem 0 0;
+    color: #9aa6b2;
+}
+
+/* ===== Form ===== */
+.settingsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.formGroup label {
+    font-weight: 600;
+    color: #a1ff14;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+}
+
+.input {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(161, 255, 20, 0.2);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #a1ff14;
+    box-shadow: 0 0 0 2px rgba(161, 255, 20, 0.2);
+}
+
+/* ===== Checkbox (iOS style – same as Requests page) ===== */
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.iosCheckbox {
+    --checkbox-size: 28px;
+    --checkbox-color: #a1ff14;
+    --checkbox-bg: rgba(161, 255, 20, 0.2);
+    --checkbox-border: rgba(161, 255, 20, 0.5);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    color: #d5d9e1;
+    font-weight: 500;
+}
+
+.iosCheckbox input {
+    display: none;
+}
+
+.checkboxWrapper {
+    position: relative;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.checkboxBg {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    border: 2px solid var(--checkbox-border);
+    background: rgba(17, 24, 39, 0.9);
+    transition: all 0.2s ease;
+}
+
+.checkboxIcon {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 80%;
+    height: 80%;
+    color: white;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.checkPath {
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+    transition: stroke-dashoffset 0.3s ease 0.1s;
+}
+
+.iosCheckbox input:checked + .checkboxWrapper .checkboxBg {
+    background: var(--checkbox-color);
+    border-color: var(--checkbox-color);
+}
+
+.iosCheckbox input:checked + .checkboxWrapper .checkboxIcon {
+    transform: scale(1);
+}
+
+.iosCheckbox input:checked + .checkboxWrapper .checkPath {
+    stroke-dashoffset: 0;
+}
+
+.iosCheckbox:hover .checkboxWrapper {
+    transform: scale(1.05);
+}
+
+.iosCheckbox:active .checkboxWrapper {
+    transform: scale(0.95);
+}
+
+.iosCheckbox input:focus + .checkboxWrapper .checkboxBg {
+    box-shadow: 0 0 0 4px var(--checkbox-bg);
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.iosCheckbox input:checked + .checkboxWrapper {
+    animation: bounce 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Form Actions ===== */
+.formActions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.saveBtn {
+    background: #a1ff14;
+    color: #000;
+    border: none;
+    border-radius: 40px;
+    padding: 0.85rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(161, 255, 20, 0.3);
+}
+
+.saveBtn:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(161, 255, 20, 0.4);
+}
+
+.saveBtn:active {
+    transform: translateY(0);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+    .panel {
+        padding: 1.25rem;
+    }
+
+    .formActions {
+        justify-content: stretch;
+    }
+
+    .saveBtn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .checkboxGroup {
+        flex-wrap: wrap;
+    }
+}

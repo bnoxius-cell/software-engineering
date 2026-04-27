@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
+import { getAvatarUrl } from '../../utils/avatar';
 
 // Import our new UI Components
 import Card from '../../components/ui/Card/Card';
@@ -312,6 +313,7 @@ const UserManager = () => {
                             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                                 <thead>
                                     <tr>
+                                        <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Avatar</th>
                                         <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>ID</th>
                                         <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Name</th>
                                         <th style={{ padding: "1rem", borderBottom: "1px solid #30363d", color: "#8b949e" }}>Email</th>
@@ -324,7 +326,7 @@ const UserManager = () => {
                                 <tbody>
                                     {users.length === 0 ? (
                                         <tr>
-                                            <td colSpan="7" style={{textAlign: 'center', padding: '2rem', color: '#8b949e'}}>
+                                            <td colSpan="8" style={{textAlign: 'center', padding: '2rem', color: '#8b949e'}}>
                                                 No users found or loading...
                                             </td>
                                         </tr>
@@ -333,6 +335,13 @@ const UserManager = () => {
                                         
                                         return (
                                         <tr key={user._id} style={{ borderBottom: "1px solid #21262d" }}>
+                                            <td style={{ padding: "1rem" }}>
+                                                <img
+                                                    src={getAvatarUrl(user.avatar)}
+                                                    alt={user.name}
+                                                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', verticalAlign: 'middle' }}
+                                                />
+                                            </td>
                                             <td style={{ padding: "1rem", color: "#8b949e" }}>{user._id.substring(0, 8)}...</td>
                                             <td style={{ padding: "1rem", fontWeight: "600" }}>{user.name}</td>
                                             <td style={{ padding: "1rem" }}>{user.email}</td>

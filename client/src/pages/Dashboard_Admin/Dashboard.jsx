@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Dashboard.module.css';
+import { getAvatarUrl } from '../../utils/avatar';
 
 // Import our Reusable Components
 import Sidebar from '../../components/Sidebar';
@@ -81,6 +82,7 @@ const Dashboard = ({ user }) => {
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Avatar</th>
                                     <th>Name</th>
                                     <th>Role</th>
                                     <th>Status</th>
@@ -90,11 +92,18 @@ const Dashboard = ({ user }) => {
                             <tbody>
                                 {recentUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="4" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>No recent users</td>
+                                        <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>No recent users</td>
                                     </tr>
                                 ) : (
                                     recentUsers.map((user) => (
                                         <tr key={user._id}>
+                                            <td>
+                                                <img
+                                                    src={getAvatarUrl(user.avatar)}
+                                                    alt={user.name}
+                                                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                            </td>
                                             <td>{user.name}</td>
                                             <td>{user.role}</td>
                                             <td>

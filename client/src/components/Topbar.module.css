@@ -21,6 +21,18 @@
     margin: 0;
 }
 
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brandImg {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
 .profileLink {
     display: inline-block; 
     text-decoration: none; 
@@ -89,4 +101,5 @@
 
 @media (max-width: 768px) {
     .stickyHeader { position: relative; box-shadow: none; }
+    .brandImg { height: 32px; }
 }

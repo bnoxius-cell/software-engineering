@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const { protect } = require("../middleware/auth");
+const { protect, requireAdmin } = require("../middleware/auth");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
 const multer = require("multer");
@@ -40,13 +40,6 @@ const avatarUpload = multer({
 
 const normalizeRole = (role) => (typeof role === "string" ? role.trim().toLowerCase() : "");
 
-const requireAdmin = (req, res, next) => {
-    if (!req.user || req.user.role !== "Admin") {
-        return res.status(403).json({ message: "Admin access required." });
-    }
-    next();
-};
-
 const requireStaff = (req, res, next) => {
     if (!req.user || !["Admin", "Faculty"].includes(req.user.role)) {
         return res.status(403).json({ message: "Admin or faculty access required." });
@@ -67,6 +60,12 @@ router.post("/register", async (req, res) => {
     const { name, email, password, role, status } = req.body;
 
     try {
+        // Check if registration is allowed
+        const settings = await Settings.findOne();
+        if (settings && settings.allowRegistration === false) {
+            return res.status(403).json({ message: "New registrations are currently disabled." });
+        }
+
         if (!name || !email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -167,6 +166,7 @@ router.post("/login", async (req, res) => {
             name: userExists.name, 
             email: userExists.email, 
             role: userExists.role,
+            avatar: userExists.avatar || "",
             token,
         });
 
