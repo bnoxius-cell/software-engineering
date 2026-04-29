@@ -15,6 +15,17 @@ const formatDuration = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+const UserCard = React.memo(({ user, onNavigate }) => (
+    <div className={styles.userCard} onClick={() => onNavigate(user._id)} style={{ cursor: 'pointer' }}>
+        <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.userAvatar} />
+        <div className={styles.textContainer}>
+            <h4 className={styles.userName}>{user.name || user.username}</h4>
+            <p className={styles.userBio}>{user.bio || 'No bio'}</p>
+        </div>
+    </div>
+));
+UserCard.displayName = 'UserCard';
+
 const Profile = ({ currentUser }) => {
     const { userId } = useParams();
     const navigate = useNavigate();
@@ -35,6 +46,7 @@ const Profile = ({ currentUser }) => {
     const [showCreateCollection, setShowCreateCollection] = useState(false);
     const [newCollectionName, setNewCollectionName] = useState('');
     const [newCollectionDesc, setNewCollectionDesc] = useState('');
+    const [isCreatingCollection, setIsCreatingCollection] = useState(false);
 
     // Social links editing
     const [editingSocials, setEditingSocials] = useState(false);
@@ -50,6 +62,8 @@ const Profile = ({ currentUser }) => {
     const [editDesc, setEditDesc] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+    const [isUpdatingCollection, setIsUpdatingCollection] = useState(false);
+    const [isDeletingCollection, setIsDeletingCollection] = useState(false);
     const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
     const [availableArtworks, setAvailableArtworks] = useState([]);
@@ -245,6 +259,7 @@ const Profile = ({ currentUser }) => {
     // Collection CRUD handlers
     const handleCreateCollection = async () => {
         if (!newCollectionName.trim()) return;
+        setIsCreatingCollection(true);
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`${API_BASE}/api/collections`, {
@@ -259,6 +274,8 @@ const Profile = ({ currentUser }) => {
             setShowCreateCollection(false);
         } catch (error) {
             console.error('Collection creation error:', error);
+        } finally {
+            setIsCreatingCollection(false);
         }
     };
 
@@ -271,6 +288,7 @@ const Profile = ({ currentUser }) => {
 
     const handleUpdateCollection = async () => {
         if (!editName.trim()) return;
+        setIsUpdatingCollection(true);
         try {
             const token = localStorage.getItem('token');
             const res = await axios.put(`${API_BASE}/api/collections/${editingCollection._id}`, {
@@ -284,10 +302,13 @@ const Profile = ({ currentUser }) => {
             setEditingCollection(null);
         } catch (error) {
             console.error('Update error:', error);
+        } finally {
+            setIsUpdatingCollection(false);
         }
     };
 
     const handleDeleteCollection = async (collectionId) => {
+        setIsDeletingCollection(true);
         try {
             const token = localStorage.getItem('token');
             await axios.delete(`${API_BASE}/api/collections/${collectionId}`, {
@@ -297,6 +318,8 @@ const Profile = ({ currentUser }) => {
             setShowDeleteConfirm(null);
         } catch (error) {
             console.error('Delete error:', error);
+        } finally {
+            setIsDeletingCollection(false);
         }
     };
 
@@ -532,6 +555,10 @@ const Profile = ({ currentUser }) => {
         }
     }, [activeTab, fetchFollowingFollowers]);
     
+    const handleUserCardNavigate = useCallback((id) => {
+        navigate(`/profile/${id}`);
+    }, [navigate]);
+
     if (loading) return <div className={styles.pageWrapper}><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
@@ -748,8 +775,8 @@ const Profile = ({ currentUser }) => {
                                     className={styles.collectionTextarea}
                                 />
                                 <div className={styles.modalActions}>
-                                    <button onClick={handleCreateCollection} className={styles.saveBtn}>Create</button>
-                                    <button onClick={() => setShowCreateCollection(false)} className={styles.cancelBtn}>Cancel</button>
+                                    <button onClick={handleCreateCollection} className={styles.saveBtn} disabled={isCreatingCollection}>{isCreatingCollection ? 'Creating...' : 'Create'}</button>
+                                    <button onClick={() => setShowCreateCollection(false)} className={styles.cancelBtn} disabled={isCreatingCollection}>Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -774,8 +801,8 @@ const Profile = ({ currentUser }) => {
                                     className={styles.collectionTextarea}
                                 />
                                 <div className={styles.modalActions}>
-                                    <button onClick={handleUpdateCollection} className={styles.saveBtn}>Save</button>
-                                    <button onClick={() => setShowEditModal(false)} className={styles.cancelBtn}>Cancel</button>
+                                    <button onClick={handleUpdateCollection} className={styles.saveBtn} disabled={isUpdatingCollection}>{isUpdatingCollection ? 'Saving...' : 'Save'}</button>
+                                    <button onClick={() => setShowEditModal(false)} className={styles.cancelBtn} disabled={isUpdatingCollection}>Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -788,8 +815,8 @@ const Profile = ({ currentUser }) => {
                                 <h4>Delete Collection?</h4>
                                 <p>This action cannot be undone. The collection will be permanently removed.</p>
                                 <div className={styles.modalActions}>
-                                    <button onClick={() => handleDeleteCollection(showDeleteConfirm)} className={styles.saveBtn}>Delete</button>
-                                    <button onClick={() => setShowDeleteConfirm(null)} className={styles.cancelBtn}>Cancel</button>
+                                    <button onClick={() => handleDeleteCollection(showDeleteConfirm)} className={styles.saveBtn} disabled={isDeletingCollection}>{isDeletingCollection ? 'Deleting...' : 'Delete'}</button>
+                                    <button onClick={() => setShowDeleteConfirm(null)} className={styles.cancelBtn} disabled={isDeletingCollection}>Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -1163,13 +1190,7 @@ const Profile = ({ currentUser }) => {
                         {/* Following / Followers */}
                         {(activeTab === 'following' || activeTab === 'followers') && 
                             (activeTab === 'following' ? following : followers).map((user) => (
-                                <div key={user._id} className={styles.userCard} onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
-                                    <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.userAvatar} />
-                                    <div className={styles.textContainer}>
-                                        <h4 className={styles.userName}>{user.name || user.username}</h4>
-                                        <p className={styles.userBio}>{user.bio || 'No bio'}</p>
-                                    </div>
-                                </div>
+                                <UserCard key={user._id} user={user} onNavigate={handleUserCardNavigate} />
                             ))
                         }
                     </div>

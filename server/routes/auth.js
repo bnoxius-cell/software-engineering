@@ -108,7 +108,8 @@ router.post("/register", async (req, res) => {
             token,
         });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Register error:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
 })
 
@@ -147,7 +148,8 @@ router.post("/register/admin", protect, requireAdmin, async (req, res) => {
             role: user.role,
         });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Admin register error:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
 });
 
@@ -174,7 +176,8 @@ router.post("/login", async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
@@ -189,13 +192,15 @@ router.get("/saved", protect, async (req, res) => {
                 path: "savedArtworks",
                 match: { status: "published" },
             })
-            .select("savedArtworks");
+            .select("savedArtworks")
+            .lean();
 
         res.status(200).json({
             savedArtworks: (user?.savedArtworks || []).filter(Boolean),
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Get saved artworks error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
@@ -227,18 +232,20 @@ router.post("/saved", protect, async (req, res) => {
             savedArtworkIds: user.savedArtworks.map((id) => id.toString()),
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Save artwork error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
 // GET all users
 router.get("/", protect, requireStaff, async (req, res) => {
     try {
-        const users = await User.find({}); // get all users
+        const users = await User.find({}).select("-password").lean(); // get all users, exclude password
         const count = await User.countDocuments({}); // count total
         res.status(200).json({ users, total: count });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Get all users error:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
 });
 
@@ -254,7 +261,8 @@ router.get('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
       autoApproveStudents: settings ? settings.autoApproveStudents : false 
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get auto-approve settings error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -275,7 +283,8 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
       autoApproveStudents: newValue 
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update auto-approve settings error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -344,10 +353,11 @@ router.get('/following/:userId', protect, async (req, res) => {
       return res.status(403).json({ message: "Following list is private" });
     }
 
-    const following = await User.findById(userId).populate('following', 'name username avatar bio');
+    const following = await User.findById(userId).populate('following', 'name username avatar bio').lean();
     res.status(200).json({ following: following.following });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Get following list error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -366,10 +376,11 @@ router.get('/followers/:userId', protect, async (req, res) => {
       return res.status(403).json({ message: "Followers list is private" });
     }
 
-    const followers = await User.findById(userId).populate('followers', 'name username avatar bio');
+    const followers = await User.findById(userId).populate('followers', 'name username avatar bio').lean();
     res.status(200).json({ followers: followers.followers });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Get followers list error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -642,7 +653,8 @@ router.put("/:id", protect, requireStaff, async (req, res) => {
             user,
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error updating user" });
+        console.error("Update user error:", error);
+        res.status(500).json({ message: "Server error updating user", error: error.message });
     }
 });
 
@@ -679,7 +691,8 @@ router.put('/:id/status', protect, requireStaff, async (req, res) => {
         res.json({ message: `User status updated to ${status}`, user });
         
     } catch (error) {
-        res.status(500).json({ message: "Server error updating status" });
+        console.error("Update user status error:", error);
+        res.status(500).json({ message: "Server error updating status", error: error.message });
     }
 });
 
@@ -699,7 +712,8 @@ router.put('/:id/autoapprove', protect, requireAdmin, async (req, res) => {
             autoApproveUploads: user.autoApproveUploads 
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        console.error("Toggle auto-approve error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 

@@ -180,6 +180,7 @@ const Gallery = () => {
             setSelectedArtwork(requestedArtwork);
             setIsModalOpen(true);
             document.body.style.overflow = 'hidden';
+            setComments([]);
             fetchComments(requestedArtwork._id);
             setTimeout(() => modalRef.current?.focus(), 10);
         } else if (!loading) {
@@ -290,6 +291,7 @@ const Gallery = () => {
     const openModal = (artwork) => {
         setSelectedArtwork(artwork);
         setIsModalOpen(true);
+        setComments([]);
         document.body.style.overflow = 'hidden';
         navigate({ pathname: `/gallery/${artwork._id}`, search: location.search });
         fetchComments(artwork._id);
@@ -300,6 +302,7 @@ const Gallery = () => {
         setIsModalOpen(false);
         setSelectedArtwork(null);
         document.body.style.overflow = 'auto';
+        setComments([]);
         navigate({ pathname: '/gallery', search: location.search });
     };
 
