@@ -16,7 +16,7 @@ const About = () => {
               <span className={styles.icon}>🎨</span>
               <h2>The E-Portfolio Platform</h2>
             </div>
-            <p>
+          <p style={{ textAlign: 'justify' }}>
               EMC Artisan is a centralized digital gallery designed to spotlight the innovative creations of our students. Developed as a core requirement for SOFE311 (Software Engineering), this platform bridges the gap between academic submissions and professional showcasing. It empowers students to curate their 2D/3D art, animations, and UI/UX designs in a visually engaging environment that fosters artistic expression and collaboration.
             </p>
           </div>
@@ -26,7 +26,7 @@ const About = () => {
               <span className={styles.icon}>💻</span>
               <h2>Entertainment & Multimedia Computing (EMC)</h2>
             </div>
-            <p>
+          <p style={{ textAlign: 'justify' }}>
               The Bachelor of Science in Entertainment and Multimedia Computing (EMC) is a dynamic program tailored for aspiring digital artisans. It seamlessly blends computing science with creative design, focusing on the development of multimedia content, digital animation, game development, and interactive applications. The curriculum is built to equip students with both the technical prowess and artistic vision required to thrive in the modern digital entertainment industry.
             </p>
           </div>
@@ -36,7 +36,7 @@ const About = () => {
               <span className={styles.icon}>🏛️</span>
               <h2>Our Lady of Fatima University</h2>
             </div>
-            <p>
+          <p style={{ textAlign: 'justify' }}>
               Our Lady of Fatima University (OLFU) is a premier educational institution committed to academic excellence, continuous innovation, and the holistic development of its students. With a strong foundation across various disciplines including technology and computer studies, OLFU empowers its learners to become highly competent professionals. The university fosters a culture of resilience and compassion, ensuring every Fatimanian is prepared to "Rise to the Top."
             </p>
           </div>

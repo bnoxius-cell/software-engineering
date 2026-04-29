@@ -197,7 +197,7 @@ const Gallery = () => {
                 setComments(data);
                 const token = localStorage.getItem('token');
                 if (token) {
-                    const likeRes = await fetch(`${API_BASE}/api/comments/likes`, {
+                        const likeRes = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments/likes`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     if (likeRes.ok) {
@@ -250,6 +250,7 @@ const Gallery = () => {
             navigate('/login');
             return;
         }
+        if (!selectedArtwork) return;
         const isLiked = !!commentLikeStates[commentId];
 
         // Optimistically update UI for immediate feedback
@@ -262,7 +263,7 @@ const Gallery = () => {
         }));
 
         try {
-            const res = await fetch(`${API_BASE}/api/comments/${commentId}/like`, {
+            const res = await fetch(`${API_BASE}/api/artworks/${selectedArtwork._id}/comments/${commentId}/like`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -326,7 +327,7 @@ const Gallery = () => {
                 : prev
         ));
         try {
-            await fetch(`${API_BASE}/api/artworks/${artworkId}/like`, {
+            const response = await fetch(`${API_BASE}/api/artworks/${artworkId}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -334,6 +335,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ liked: newLiked }),
             });
+            if (!response.ok) throw new Error('Failed to update like');
         } catch {
             setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
             setArtworks(prev => prev.map((art) => (
@@ -359,7 +361,7 @@ const Gallery = () => {
         const newSaved = !savedStates[artworkId];
         setSavedStates(prev => ({ ...prev, [artworkId]: newSaved }));
         try {
-            await fetch(`${API_BASE}/api/auth/saved`, {
+            const response = await fetch(`${API_BASE}/api/auth/saved`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -367,6 +369,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ artworkId, saved: newSaved }),
             });
+            if (!response.ok) throw new Error('Failed to save artwork');
         } catch {
             setSavedStates(prev => ({ ...prev, [artworkId]: !newSaved }));
         }
