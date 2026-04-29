@@ -8,7 +8,7 @@ import Topbar from "../../components/Topbar";
 import Badge from "../../components/ui/Badge/Badge";
 import { isVideoArtwork } from "../../utils/artworkMedia";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const initialArtworkForm = {
   title: "",

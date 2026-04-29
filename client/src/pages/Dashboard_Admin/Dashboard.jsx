@@ -7,6 +7,8 @@ import Sidebar from '../../components/Sidebar';
 import Topbar from '../../components/Topbar';
 import Badge from '../../components/ui/Badge/Badge';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Dashboard = ({ user }) => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
@@ -18,7 +20,7 @@ const Dashboard = ({ user }) => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        fetch("http://localhost:5000/api/auth/", {
+        fetch(`${API_BASE}/api/auth/`, {
             headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => res.json())

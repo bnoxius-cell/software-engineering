@@ -27,9 +27,9 @@ import Maintenance from './pages/Maintenance/Maintenance'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
-    const [ user, setUser ] = useState(null);
-    const [ error, setError] = useState('');
-    const [ settings, setSettings ] = useState(null);
+    const [user, setUser] = useState(null);
+    const [error, setError] = useState('');
+    const [settings, setSettings] = useState(null);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -39,17 +39,17 @@ function App() {
                 try {
                     const res = await axios.get(`${API_BASE}/api/auth/me`, {
                         headers: { Authorization: `Bearer ${token}` }
-                    })
+                    });
                     setUser(res.data);
-                } catch (err) {
-
-                    setError("Failed to fetch user data");
+                } catch {
+                    setError('Failed to fetch user data');
                     localStorage.removeItem('token');
-                }  
+                }
             }
-        }
+        };
+
         fetchUser();
-    }, [])
+    }, []);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -58,21 +58,20 @@ function App() {
                 if (res.data) {
                     setSettings(res.data);
                 }
-            } catch (err) {
-                // Silently fail — public endpoint may not exist yet
+            } catch {
+                // Silently fail - public endpoint may not exist yet.
             }
         };
+
         fetchSettings();
     }, []);
 
-    // Apply siteName to document title
     useEffect(() => {
         if (settings?.siteName) {
             document.title = settings.siteName;
         }
     }, [settings]);
 
-    // Determine if maintenance mode should be shown
     const isAdmin = user?.role === 'Admin';
     const inMaintenance = settings?.maintenanceMode && !isAdmin;
 
@@ -97,16 +96,19 @@ function App() {
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/gallery/:artworkId" element={<Gallery />} />
                     <Route path="/upload" element={<Upload />} />
-                    <Route path="/login" element={<Login setUser={setUser}  />} />
+                    <Route path="/login" element={<Login setUser={setUser} />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile" element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />} />
+                    <Route
+                        path="/profile"
+                        element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />}
+                    />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
                 </Route>
 
                 <Route element={<AdminLayout />}>
-                    <Route path="/user" element={ <UserManager setUser={setUser} />} />
+                    <Route path="/user" element={<UserManager setUser={setUser} />} />
                     <Route path="/dashboard" element={<Dashboard user={user} />} />
                     <Route path="/works" element={<Works />} />
                     <Route path="/requests" element={<Requests />} />

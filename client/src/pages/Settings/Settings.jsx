@@ -35,14 +35,14 @@ const Settings = () => {
     const fetchUserData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('/api/auth/me', {
+            const response = await axios.get(`${API_BASE}/api/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(response.data);
             setProfileForm({
                 name: response.data.name || '',
                 bio: response.data.bio || '',
-                socialLink: response.data.socials?.portfolio || ''
+                socialLink: response.data.socials?.website || ''
             });
             setNotifications(response.data.notifications || { artworkAdded: true });
         } catch (error) {
@@ -57,15 +57,17 @@ const Settings = () => {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            await axios.put('/api/auth/profile', {
+            await axios.put(`${API_BASE}/api/auth/profile`, {
                 name: profileForm.name,
                 bio: profileForm.bio
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            await axios.put('/api/auth/socials', {
-                portfolio: profileForm.socialLink
+            await axios.put(`${API_BASE}/api/auth/socials`, {
+                socials: {
+                    website: profileForm.socialLink
+                }
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -90,7 +92,7 @@ const Settings = () => {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            await axios.put('/api/auth/password', {
+            await axios.put(`${API_BASE}/api/auth/password`, {
                 currentPassword: passwordForm.currentPassword,
                 newPassword: passwordForm.newPassword
             }, {
@@ -121,7 +123,7 @@ const Settings = () => {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('/api/auth/avatar', formData, {
+            const response = await axios.post(`${API_BASE}/api/auth/avatar`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -145,7 +147,7 @@ const Settings = () => {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            await axios.put('/api/auth/notifications', {
+            await axios.put(`${API_BASE}/api/auth/notifications`, {
                 notifications: { [type]: value }
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -153,7 +155,7 @@ const Settings = () => {
 
             setNotifications(prev => ({ ...prev, [type]: value }));
             setMessage('Notification preferences updated!');
-        } catch (error) {
+        } catch {
             setMessage('Error updating notification preferences.');
         } finally {
             setSaving(false);

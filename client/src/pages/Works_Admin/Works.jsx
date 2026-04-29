@@ -5,9 +5,10 @@ import Sidebar from "../../components/Sidebar";
 import { isVideoArtwork } from "../../utils/artworkMedia";
 import ArtworkVideoPlayer from "../../components/media/ArtworkVideoPlayer";
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Works = () => {
   const [works, setWorks] = useState([]);
-  const [selectedWorks, setSelectedWorks] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
 
   // Search and Sort State
@@ -23,7 +24,7 @@ const Works = () => {
   const fetchWorks = () => {
     const token = localStorage.getItem("token");
     // CHANGED: Now points to /all so the admin sees Pending and Drafts!
-    fetch("http://localhost:5000/api/artworks/all", {
+    fetch(`${API_BASE}/api/artworks/all`, {
       headers: { Authorization: `Bearer ${token}` } 
     })
       .then((res) => res.json())
@@ -38,15 +39,10 @@ const Works = () => {
     fetchWorks();
   }, []);
 
-  // Reset page to 1 when search or filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterStatus]);
-
   const handleStatusChange = async (workId, newStatus) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/artworks/${workId}/status`, {
+      const res = await fetch(`${API_BASE}/api/artworks/${workId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +90,7 @@ const Works = () => {
     const formData = new FormData(e.target);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/artworks/${editingWork._id}`, {
+      const res = await fetch(`${API_BASE}/api/artworks/${editingWork._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -209,14 +205,20 @@ const Works = () => {
               className={styles["search-input"]}
               placeholder="Search by title or author..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               style={{ maxWidth: '300px' }}
             />
             <select 
               className={styles["search-input"]} 
               style={{ width: "auto" }}
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>
@@ -364,12 +366,12 @@ const Works = () => {
               <div className={styles.modalImageCol}>
                 {isVideoArtwork(viewingWork) ? (
                   <ArtworkVideoPlayer
-                    src={`http://localhost:5000${viewingWork.image}`}
-                    poster={viewingWork.poster ? `http://localhost:5000${viewingWork.poster}` : null}
+                    src={`${API_BASE}${viewingWork.image}`}
+                    poster={viewingWork.thumbnail ? `${API_BASE}${viewingWork.thumbnail}` : null}
                     alt={viewingWork.title}
                   />
                 ) : (
-                  <img src={`http://localhost:5000${viewingWork.image}`} alt={viewingWork.title} className={styles.previewImage} />
+                  <img src={`${API_BASE}${viewingWork.image}`} alt={viewingWork.title} className={styles.previewImage} />
                 )}
               </div>
               
@@ -416,12 +418,12 @@ const Works = () => {
                 <div className={styles.modalImageCol}>
                   {isVideoArtwork(editingWork) ? (
                     <ArtworkVideoPlayer
-                      src={`http://localhost:5000${editingWork.image}`}
-                      poster={editingWork.poster ? `http://localhost:5000${editingWork.poster}` : null}
+                      src={`${API_BASE}${editingWork.image}`}
+                      poster={editingWork.thumbnail ? `${API_BASE}${editingWork.thumbnail}` : null}
                       alt={editingWork.title}
                     />
                   ) : (
-                    <img src={`http://localhost:5000${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
+                    <img src={`${API_BASE}${editingWork.image}`} alt={editingWork.title} className={styles.previewImage} />
                   )}
                   <div className={styles["form-group"]} style={{ marginTop: '1rem' }}>
                     <label>Update Media (Optional)</label>
