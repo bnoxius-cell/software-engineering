@@ -272,33 +272,25 @@ router.post("/:id/like", protect, async (req, res) => {
     const userId = req.user.id || req.user._id;
     const { liked } = req.body;
     const artwork = await Artwork.findById(req.params.id);
-    const currentUser = await User.findById(userId);
 
-    if (!artwork || !currentUser) {
-      return res.status(404).json({ message: "Artwork or user not found." });
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found." });
     }
 
-    artwork.likedBy = artwork.likedBy || [];
-    currentUser.likedArtworks = currentUser.likedArtworks || [];
-
-    const alreadyLiked = artwork.likedBy.some((id) => id.toString() === userId.toString());
-
-    if (liked && !alreadyLiked) {
-      artwork.likedBy.push(userId);
-      artwork.likes = artwork.likedBy.length;
-      currentUser.likedArtworks.addToSet(artwork._id);
+    if (liked) {
+      await Artwork.findByIdAndUpdate(req.params.id, { $addToSet: { likedBy: userId } });
+      await User.findByIdAndUpdate(userId, { $addToSet: { likedArtworks: req.params.id } });
+    } else {
+      await Artwork.findByIdAndUpdate(req.params.id, { $pull: { likedBy: userId } });
+      await User.findByIdAndUpdate(userId, { $pull: { likedArtworks: req.params.id } });
     }
 
-    if (!liked && alreadyLiked) {
-      artwork.likedBy = artwork.likedBy.filter((id) => id.toString() !== userId.toString());
-      artwork.likes = artwork.likedBy.length;
-      currentUser.likedArtworks = currentUser.likedArtworks.filter((id) => id.toString() !== artwork._id.toString());
-    }
+    // Recalculate likes safely
+    const updatedArtwork = await Artwork.findById(req.params.id);
+    updatedArtwork.likes = updatedArtwork.likedBy ? updatedArtwork.likedBy.length : 0;
+    await updatedArtwork.save();
 
-    await artwork.save();
-    await currentUser.save();
-
-    res.status(200).json({ liked: !!liked, likes: artwork.likes });
+    res.status(200).json({ liked: !!liked, likes: updatedArtwork.likes });
   } catch (error) {
     console.error("Like/unlike error:", error);
     res.status(500).json({ message: "Failed to update like", error: error.message });
@@ -352,6 +344,54 @@ router.post("/:id/comments", protect, async (req, res) => {
   } catch (error) {
     console.error("Add comment error:", error);
     res.status(500).json({ message: "Failed to add comment", error: error.message });
+  }
+});
+
+// Get liked comments for a specific artwork
+router.get("/:id/comments/likes", protect, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ message: "Artwork not found." });
+
+    const likedCommentIds = (artwork.comments || [])
+      .filter(comment => comment.likedBy && comment.likedBy.some(id => id && id.toString() === userId.toString()))
+      .map(comment => comment._id);
+
+    res.status(200).json(likedCommentIds);
+  } catch (error) {
+    console.error("Fetch comment likes error:", error);
+    res.status(500).json({ message: "Failed to fetch comment likes" });
+  }
+});
+
+// Like/Unlike a comment
+router.post("/:id/comments/:commentId/like", protect, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ message: "Artwork not found" });
+
+    const comment = artwork.comments.find(c => c._id.toString() === req.params.commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    comment.likedBy = comment.likedBy || [];
+    const alreadyLiked = comment.likedBy.some(id => id && id.toString() === userId.toString());
+
+    if (!alreadyLiked) {
+      comment.likedBy.push(userId);
+    } else {
+      comment.likedBy = comment.likedBy.filter(id => id && id.toString() !== userId.toString());
+    }
+    comment.likes = comment.likedBy.length;
+    
+    artwork.markModified('comments');
+    await artwork.save();
+
+    res.status(200).json({ liked: !alreadyLiked, likes: comment.likes });
+  } catch (error) {
+    console.error("Comment like error:", error);
+    res.status(500).json({ message: "Failed to update comment like" });
   }
 });
 

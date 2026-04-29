@@ -207,29 +207,19 @@ router.get("/saved", protect, async (req, res) => {
 router.post("/saved", protect, async (req, res) => {
     try {
         const { artworkId, saved } = req.body;
-        const user = await User.findById(req.user._id || req.user.id);
+        const userId = req.user._id || req.user.id;
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        if (saved) {
+            await User.findByIdAndUpdate(userId, { $addToSet: { savedArtworks: artworkId } });
+        } else {
+            await User.findByIdAndUpdate(userId, { $pull: { savedArtworks: artworkId } });
         }
-
-        user.savedArtworks = user.savedArtworks || [];
-
-        const alreadySaved = user.savedArtworks.some((id) => id.toString() === artworkId);
-
-        if (saved && !alreadySaved) {
-            user.savedArtworks.push(artworkId);
-        }
-
-        if (!saved && alreadySaved) {
-            user.savedArtworks = user.savedArtworks.filter((id) => id.toString() !== artworkId);
-        }
-
-        await user.save();
+        
+        const updatedUser = await User.findById(userId);
 
         res.status(200).json({
             saved: !!saved,
-            savedArtworkIds: user.savedArtworks.map((id) => id.toString()),
+            savedArtworkIds: (updatedUser.savedArtworks || []).map((id) => id && id.toString()).filter(Boolean),
         });
     } catch (error) {
         console.error("Save artwork error:", error);
