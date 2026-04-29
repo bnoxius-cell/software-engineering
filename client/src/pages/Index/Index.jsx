@@ -22,7 +22,6 @@ const Index = ({ user }) => {
   const [showWelcome, setShowWelcome] = useState(false);
   const userName = user?.name || localStorage.getItem('name');
 
-  // Show toast only when user just logged in (flag set)
   useEffect(() => {
     const justLoggedIn = sessionStorage.getItem('justLoggedIn');
     if (justLoggedIn === 'true' && userName) {
@@ -38,11 +37,11 @@ const Index = ({ user }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`${API_BASE}/api/artworks?status=published`);
         if (response.ok) {
           const data = await response.json();
-          const publishedOnly = data.filter(work => work.status === 'published');
+          const publishedOnly = data.filter((work) => work.status === 'published');
           const latest = publishedOnly
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 10);
@@ -50,17 +49,18 @@ const Index = ({ user }) => {
         } else {
           setError('Failed to load artworks');
         }
-      } catch (error) {
+      } catch {
         setError('Unable to connect to the gallery. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchRecentWorks();
   }, []);
 
   const handleVideoMetadataLoaded = (artworkId, duration) => {
-    setVideoDurations(prev => ({ ...prev, [artworkId]: duration }));
+    setVideoDurations((prev) => ({ ...prev, [artworkId]: duration }));
   };
 
   const handleImageError = (e) => {
@@ -73,21 +73,19 @@ const Index = ({ user }) => {
 
   return (
     <div className={styles.pageWrapper}>
-      {/* ===== HERO SECTION WITH WELCOME TOAST ===== */}
       <section className={styles.hero}>
         <div className={styles["hero-box"]}>
-          {/* Welcome toast – appears only once after login */}
           {showWelcome && userName && (
             <div className={styles.welcomeToast}>
               <div className={styles.toastContent}>
-                <span className={styles.toastIcon}>👨‍🚀</span>
+                <span className={styles.toastIcon}>ART</span>
                 <span className={styles.toastText}>Welcome back, {userName}!</span>
                 <button
                   className={styles.toastClose}
                   onClick={() => setShowWelcome(false)}
                   aria-label="Dismiss"
                 >
-                  ✕
+                  x
                 </button>
               </div>
             </div>
@@ -97,10 +95,10 @@ const Index = ({ user }) => {
             <span className={styles.heroSubtitle}>Digital Portfolio Showcase</span>
             <h1>Welcome to <br /><span>EMC Artisan</span></h1>
             <p>
-              The definitive digital archive for Entertainment & Multimedia Computing students. 
+              The definitive digital archive for Entertainment & Multimedia Computing students.
               Explore a curated collection of student mastery and digital innovation.
             </p>
-            
+
             <Link to="/gallery" className={styles["button-link"]}>
               <button className={styles.button}>
                 <svg className={styles.svgIcon} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
@@ -110,6 +108,7 @@ const Index = ({ user }) => {
               </button>
             </Link>
           </div>
+
           <div className={styles["hero-image"]}>
             <img src={backgroundImage} alt="Featured Art" />
             <div className={styles.artworkCredit}>Artwork by: Jennah Casulla</div>
@@ -117,7 +116,6 @@ const Index = ({ user }) => {
         </div>
       </section>
 
-      {/* ===== RECENT WORKS GALLERY (3D VAULT) ===== */}
       <section className={styles.galleryPreviewSection}>
         <div className={styles.perspectiveGridFloor}></div>
         <div className={styles.perspectiveGridCeiling}></div>
@@ -141,6 +139,7 @@ const Index = ({ user }) => {
               duplicateWorks.map((work, idx) => {
                 const duplicateFlag = idx >= recentWorks.length ? 1 : 0;
                 const uniqueKey = `${work._id}-dup${duplicateFlag}`;
+
                 return (
                   <div key={uniqueKey} className={styles.slide}>
                     <Link to={`/gallery/${work._id}`} className={styles.cardLink}>
@@ -156,7 +155,10 @@ const Index = ({ user }) => {
                               preload="metadata"
                               onLoadedMetadata={(e) => handleVideoMetadataLoaded(work._id, e.target.duration)}
                               onMouseEnter={(e) => e.target.play()}
-                              onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                              onMouseLeave={(e) => {
+                                e.target.pause();
+                                e.target.currentTime = 0;
+                              }}
                               aria-label={`Video preview: ${work.title}`}
                             />
                             <div className={styles.videoBadge}>

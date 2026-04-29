@@ -12,6 +12,8 @@ import styles from './UserManager.module.css';
 import Topbar from "../../components/Topbar";
 import Sidebar from '../../components/Sidebar';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const UserManager = () => {
     const [users, setUsers] = useState([]);
     const [totalUsers, setTotalUsers] = useState(0);
@@ -28,7 +30,7 @@ const UserManager = () => {
         if (!token) return;
 
         try {
-            const res = await fetch("http://localhost:5000/api/auth/", {
+            const res = await fetch(`${API_BASE}/api/auth/`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             
@@ -77,8 +79,8 @@ const UserManager = () => {
         e.preventDefault();
         try {
             // Admin created accounts are instantly active
-            const payload = { ...formData, status: 'Active' };
-            await axios.post('http://localhost:5000/api/auth/register', payload);
+            const payload = { ...formData, status: 'active' };
+            await axios.post(`${API_BASE}/api/auth/register`, payload);
             resetForm();
             
             // Refresh the user table using the restored fetch function
@@ -94,7 +96,7 @@ const UserManager = () => {
 
         try {
             await axios.post(
-                'http://localhost:5000/api/auth/register/admin',
+                `${API_BASE}/api/auth/register/admin`,
                 { ...adminFormData, status: 'active' },
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -112,7 +114,7 @@ const UserManager = () => {
         const token = localStorage.getItem("token");
         try {
             // 👇 CHANGED 'users' TO 'auth' HERE 👇
-            const res = await fetch(`http://localhost:5000/api/auth/${userId}/status`, {
+            const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

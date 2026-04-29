@@ -5,16 +5,17 @@ import { Link } from 'react-router-dom';
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const DEFAULT_AVATAR = '/assets/images/profile_icon.png';
+
+const getInitialAvatar = () => {
+    const storedAvatar = localStorage.getItem('avatar');
+    return storedAvatar ? getAvatarUrl(storedAvatar) : DEFAULT_AVATAR;
+};
 
 const Topbar = ({ title }) => {
-    const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [avatar, setAvatar] = useState(getInitialAvatar);
 
     useEffect(() => {
-        const storedAvatar = localStorage.getItem('avatar');
-        if (storedAvatar) {
-            setAvatar(getAvatarUrl(storedAvatar));
-        }
-
         const token = localStorage.getItem('token');
         if (token) {
             fetch(`${API_BASE}/api/auth/me`, {
@@ -58,7 +59,7 @@ const Topbar = ({ title }) => {
                 </div>
                 <Link to="/profile" className={styles.profileLink}>
                     <img className={styles.avatar} src={avatar} alt="Admin Profile" onError={(e) => {
-                        e.target.src = '/assets/images/profile_icon.png';
+                        e.target.src = DEFAULT_AVATAR;
                     }} />
                 </Link>
             </header>

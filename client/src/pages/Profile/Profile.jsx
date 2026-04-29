@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../../components/Navbar';
@@ -30,6 +30,7 @@ const Profile = ({ currentUser }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isFollowing, setIsFollowing] = useState(false);
+    const [viewerUserId, setViewerUserId] = useState(currentUser?._id || currentUser?.id || null);
     const [editingBio, setEditingBio] = useState(false);
     const [bioText, setBioText] = useState('');
     const [showCreateCollection, setShowCreateCollection] = useState(false);
@@ -53,6 +54,7 @@ const Profile = ({ currentUser }) => {
     const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
     const [availableArtworks, setAvailableArtworks] = useState([]);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
     const [selectedArtworkIds, setSelectedArtworkIds] = useState([]);
     const [addingArtworks, setAddingArtworks] = useState(false);
     const [showViewCollectionModal, setShowViewCollectionModal] = useState(false);
@@ -104,21 +106,48 @@ const Profile = ({ currentUser }) => {
     }, [avatarSuccess]);
 
     useEffect(() => {
+        const nextViewerId = currentUser?._id || currentUser?.id || null;
+        if (nextViewerId) {
+            setViewerUserId(nextViewerId);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
         const fetchProfile = async () => {
             let targetId = userId;
+            let resolvedViewerId = currentUser?._id || currentUser?.id || null;
+            const token = localStorage.getItem('token');
+
+            if (!resolvedViewerId && token) {
+                try {
+                    const meRes = await axios.get(`${API_BASE}/api/auth/me`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    resolvedViewerId = meRes.data._id || meRes.data.id;
+                    setViewerUserId(resolvedViewerId);
+                    if (!targetId) {
+                        targetId = resolvedViewerId;
+                    }
+                } catch {
+                    if (!targetId) {
+                        navigate('/login');
+                        return;
+                    }
+                }
+            }
 
             if (!targetId) {
                 if (currentUser) {
                     targetId = currentUser._id || currentUser.id;
                 } else {
-                    const token = localStorage.getItem('token');
                     if (token) {
                         try {
                             const meRes = await axios.get(`${API_BASE}/api/auth/me`, {
                                 headers: { Authorization: `Bearer ${token}` }
                             });
+                            resolvedViewerId = meRes.data._id || meRes.data.id;
                             targetId = meRes.data._id || meRes.data.id;
-                        } catch (meErr) {
+                        } catch {
                             navigate('/login');
                             return;
                         }
@@ -145,18 +174,16 @@ const Profile = ({ currentUser }) => {
                 setArtworks(res.data.artworks);
                 setBioText(res.data.user.bio || '');
                 setSocialLinks(res.data.user.socials || { twitter: '', instagram: '', website: '' });
-
-                const currentUserId = currentUser?._id || currentUser?.id;
-                const token = localStorage.getItem('token');
+                setViewerUserId(resolvedViewerId);
                 
-                if (currentUserId && currentUserId === targetId) {
+                if (resolvedViewerId && resolvedViewerId === targetId) {
                     if (token) {
                         try {
                             const savedRes = await axios.get(`${API_BASE}/api/auth/saved`, {
                                 headers: { Authorization: `Bearer ${token}` },
                             });
                             setSavedArtworks(savedRes.data.savedArtworks || []);
-                        } catch (savedError) {
+                        } catch {
                             setSavedArtworks([]);
                         }
                     } else {
@@ -170,15 +197,17 @@ const Profile = ({ currentUser }) => {
                 const collectionsRes = await axios.get(`${API_BASE}/api/collections/user/${targetId}`);
                 setCollections(collectionsRes.data);
 
-                if (currentUserId && currentUserId !== targetId && token) {
-                    const currentUserData = await axios.get(`${API_BASE}/api/auth/following/${currentUserId}`, {
+                if (resolvedViewerId && resolvedViewerId !== targetId && token) {
+                    const currentUserData = await axios.get(`${API_BASE}/api/auth/following/${resolvedViewerId}`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     setIsFollowing(currentUserData.data.following.some(user => user._id === targetId));
+                } else {
+                    setIsFollowing(false);
                 }
 
                 setError('');
-            } catch (err) {
+            } catch {
                 setError("Profile not found.");
             } finally {
                 setLoading(false);
@@ -190,7 +219,7 @@ const Profile = ({ currentUser }) => {
 
     // Pre-fetch available artworks for the "add to collection" modal (only user's own artworks)
     useEffect(() => {
-        const currentUserId = currentUser?._id || currentUser?.id;
+        const currentUserId = viewerUserId;
         
         if (showAddArtworkModal && selectedCollection && currentUserId === profileUser?._id) {
             const fetchAvailableArtworks = async () => {
@@ -212,7 +241,7 @@ const Profile = ({ currentUser }) => {
             };
             fetchAvailableArtworks();
         }
-    }, [showAddArtworkModal, selectedCollection, currentUser, profileUser, artworks]);
+    }, [showAddArtworkModal, selectedCollection, viewerUserId, profileUser, artworks]);
 
     // Collection CRUD handlers
     const handleCreateCollection = async () => {
@@ -352,15 +381,26 @@ const Profile = ({ currentUser }) => {
     };
 
     const handleFollow = async () => {
-        if (!currentUser) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const targetId = profileUser?._id || profileUser?.id;
+        if (!targetId) {
+            return;
+        }
+
+        setIsFollowLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_BASE}/api/auth/follow/${profileUser._id}`, {}, {
+            const res = await axios.post(`${API_BASE}/api/auth/follow/${targetId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setIsFollowing(res.data.following);
             setProfileUser(prev => ({
                 ...prev,
+                followingCount: typeof res.data.followingCount === 'number' ? res.data.followingCount : prev.followingCount,
                 followerCount: res.data.followerCount
             }));
             if (activeTab === 'following' || activeTab === 'followers') {
@@ -368,6 +408,9 @@ const Profile = ({ currentUser }) => {
             }
         } catch (error) {
             console.error('Follow error:', error);
+            alert(error.response?.data?.message || 'Failed to follow user. Please try again.');
+        } finally {
+            setIsFollowLoading(false);
         }
     };
 
@@ -461,7 +504,11 @@ const Profile = ({ currentUser }) => {
         }
     };
 
-    const fetchFollowingFollowers = async (tab) => {
+    const fetchFollowingFollowers = useCallback(async (tab) => {
+        if (!profileUser?._id) {
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
             if (tab === 'following') {
@@ -478,13 +525,13 @@ const Profile = ({ currentUser }) => {
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    };
+    }, [profileUser?._id]);
 
     useEffect(() => {
         if (activeTab === 'following' || activeTab === 'followers') {
             fetchFollowingFollowers(activeTab);
         }
-    }, [activeTab, profileUser]);
+    }, [activeTab, fetchFollowingFollowers]);
     
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
@@ -493,7 +540,7 @@ const Profile = ({ currentUser }) => {
     const displayAvatar = getAvatarUrl(profileUser.avatar);
     const displayName = profileUser.name || profileUser.username || "Unknown Artist";
     const displayBio = profileUser.bio || "No bio available.";
-    const currentUserId = currentUser?._id || currentUser?.id;
+    const currentUserId = viewerUserId;
     const profileUserId = profileUser._id || userId;
     const isOwnProfile = !!currentUserId && !!profileUserId && currentUserId === profileUserId;
     const visibleWorks = activeTab === 'bookmarks' ? savedArtworks : artworks;
@@ -541,7 +588,7 @@ const Profile = ({ currentUser }) => {
                         </div>
                         <div className={styles.actionBlock}>
                             {!isOwnProfile && (
-                                <button className={styles.followBtn} onClick={handleFollow}>
+                                <button className={styles.followBtn} onClick={handleFollow} disabled={isFollowLoading}>
                                     {isFollowing ? 'Unfollow' : 'Follow'}
                                 </button>
                             )}

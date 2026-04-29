@@ -82,14 +82,17 @@ const Notifications = () => {
                 method: 'PUT',
                 headers: { Authorization: `Bearer ${token}` },
             });
-        } catch (err) {
-
+        } catch {
+            setNotifications((current) =>
+                current.map((note) => (note._id === id ? { ...note, isRead: false } : note))
+            );
         }
     };
 
     const markAllAsRead = async () => {
         if (!token) return;
 
+        const previousNotifications = notifications;
         setNotifications((current) => current.map((note) => ({ ...note, isRead: true })));
 
         try {
@@ -97,8 +100,8 @@ const Notifications = () => {
                 method: 'PUT',
                 headers: { Authorization: `Bearer ${token}` },
             });
-        } catch (err) {
-
+        } catch {
+            setNotifications(previousNotifications);
         }
     };
 

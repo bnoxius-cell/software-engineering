@@ -332,7 +332,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ liked: newLiked }),
             });
-        } catch (err) {
+        } catch {
             setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
             setArtworks(prev => prev.map((art) => (
                 art._id === artworkId
@@ -365,7 +365,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ artworkId, saved: newSaved }),
             });
-        } catch (err) {
+        } catch {
             setSavedStates(prev => ({ ...prev, [artworkId]: !newSaved }));
         }
     };

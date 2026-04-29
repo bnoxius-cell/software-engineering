@@ -55,6 +55,9 @@ const prettifyFieldName = (field) =>
         .trim()
         .replace(/^./, (char) => char.toUpperCase());
 
+const isLocalAvatarPath = (avatar) =>
+    typeof avatar === "string" && avatar.startsWith("/avatars/");
+
 // Register
 router.post("/register", async (req, res) => {
     const { name, email, password, role, status } = req.body;
@@ -280,7 +283,11 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
 router.post('/follow/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
-    const currentUserId = req.user._id || req.user.id;
+    const currentUserId = req.user?._id || req.user?.id;
+
+    if (!currentUserId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     if (userId === currentUserId.toString()) {
       return res.status(400).json({ message: "Cannot follow yourself" });
@@ -293,28 +300,32 @@ router.post('/follow/:userId', protect, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const isFollowing = currentUser.following.includes(userId);
+    const isFollowing = currentUser.following && currentUser.following.some(
+      (id) => id && id.toString() === userId.toString()
+    );
 
     if (isFollowing) {
-      // Unfollow
-      currentUser.following = currentUser.following.filter(id => id.toString() !== userId);
-      userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUserId.toString());
+      // Unfollow using MongoDB native operators
+      await User.findByIdAndUpdate(currentUserId, { $pull: { following: userId } });
+      await User.findByIdAndUpdate(userId, { $pull: { followers: currentUserId } });
     } else {
-      // Follow
-      currentUser.following.push(userId);
-      userToFollow.followers.push(currentUserId);
+      // Follow using MongoDB native operators
+      await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: userId } });
+      await User.findByIdAndUpdate(userId, { $addToSet: { followers: currentUserId } });
     }
 
-    await currentUser.save();
-    await userToFollow.save();
+    const updatedUserToFollow = await User.findById(userId);
 
     res.status(200).json({
       following: !isFollowing,
-      followingCount: currentUser.following.length,
-      followerCount: userToFollow.followers.length
+      followingCount: updatedUserToFollow.following ? updatedUserToFollow.following.length : 0,
+      followerCount: updatedUserToFollow.followers ? updatedUserToFollow.followers.length : 0,
+      profileUserId: updatedUserToFollow._id.toString(),
+      currentUserId: currentUserId.toString()
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Follow error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -479,15 +490,15 @@ router.post('/avatar', protect, avatarUpload.single('avatar'), async (req, res) 
     }
 
     // Delete old avatar if exists
-    if (user.avatar && user.avatar !== "/assets/images/profile_icon.png") {
-      const oldAvatarPath = path.join(__dirname, "../../public", user.avatar);
+    if (isLocalAvatarPath(user.avatar)) {
+      const oldAvatarPath = path.join(__dirname, "../../public", user.avatar.replace(/^\//, ""));
       if (fs.existsSync(oldAvatarPath)) {
         fs.unlinkSync(oldAvatarPath);
       }
     }
 
     user.avatar = `/avatars/${req.file.filename}`;
-    await User.findByIdAndUpdate(userId, { avatar: user.avatar });
+    await user.save();
 
     res.status(200).json({ avatar: user.avatar });
   } catch (error) {

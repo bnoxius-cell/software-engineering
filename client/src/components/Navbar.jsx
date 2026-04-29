@@ -5,6 +5,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const DEFAULT_AVATAR = '/assets/images/profile_icon.png';
+
+const getInitialAvatar = () => {
+    const storedAvatar = localStorage.getItem('avatar');
+    return storedAvatar ? getAvatarUrl(storedAvatar) : DEFAULT_AVATAR;
+};
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +18,7 @@ const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState('all');
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [avatar, setAvatar] = useState(getInitialAvatar);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     
     const menuRef = useRef(null);
@@ -24,12 +30,6 @@ const Navbar = () => {
 
     // Load avatar from localStorage + fetch from API for accuracy
     useEffect(() => {
-        const storedAvatar = localStorage.getItem('avatar');
-        if (storedAvatar) {
-            setAvatar(getAvatarUrl(storedAvatar));
-        }
-
-        // Fetch fresh user data if logged in
         if (token) {
             fetch(`${API_BASE}/api/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -104,7 +104,7 @@ const Navbar = () => {
             window.removeEventListener('focus', fetchNotificationSummary);
             clearInterval(interval);
         };
-    }, [token, unreadNotifications]); // Refetch if count changes
+    }, [token]);
 
     const toggleMenu = () => {
         if (isMenuOpen) {
@@ -314,7 +314,7 @@ const Navbar = () => {
                 <li ref={menuRef} className={styles.menuContainer}>
                     <button type="button" className={styles.profileBtn} onClick={toggleMenu}>
                         <img src={avatar} alt="Profile" className={styles.avatar} onError={(e) => {
-                            e.target.src = '/assets/images/profile_icon.png';
+                            e.target.src = DEFAULT_AVATAR;
                         }} />
                     </button>
 
