@@ -26,6 +26,8 @@ const Navbar = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [avatar, setAvatar] = useState(getInitialAvatar);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [userName, setUserName] = useState('Artist');
+    const [userEmail, setUserEmail] = useState('');
     
     const menuRef = useRef(null);
     const filterRef = useRef(null);
@@ -42,10 +44,14 @@ const Navbar = () => {
             })
                 .then((res) => res.ok ? res.json() : null)
                 .then((data) => {
-                    if (data?.avatar) {
-                        const resolved = getAvatarUrl(data.avatar);
-                        setAvatar(resolved);
-                        localStorage.setItem('avatar', data.avatar);
+                    if (data) {
+                        if (data.avatar) {
+                            const resolved = getAvatarUrl(data.avatar);
+                            setAvatar(resolved);
+                            localStorage.setItem('avatar', data.avatar);
+                        }
+                        if (data.name || data.username) setUserName(data.name || data.username);
+                        if (data.email) setUserEmail(data.email);
                     }
                 })
                 .catch(() => {});
@@ -336,6 +342,19 @@ const Navbar = () => {
                         <div className={styles.dropdown}>
                             {token ? (
                                 <>
+                                    <div className={styles.profileHeader}>
+                                        <img 
+                                            src={avatar} 
+                                            alt="Profile" 
+                                            className={styles.dropdownAvatar} 
+                                            onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                                        />
+                                        <div className={styles.profileText}>
+                                            <h4>{userName}</h4>
+                                            <p title={userEmail}>{userEmail}</p>
+                                        </div>
+                                    </div>
+
                                     <Link to="/profile" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
                                         <svg className={styles.dropdownIcon} viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                                         My Profile
@@ -347,7 +366,6 @@ const Navbar = () => {
                                             {isAdmin ? 'Admin Dashboard' : 'Faculty Dashboard'}
                                         </Link>
                                     )}
-                                    
 
 
                                     <Link to="/settings" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
@@ -395,4 +413,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

@@ -108,10 +108,12 @@ const serializeArtwork = (artwork) => {
 router.get("/", async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "published" })
-      .populate("uploadedBy", "name username avatar");
+      .populate("uploadedBy", "name username avatar")
+      .lean();
     res.status(200).json(artworks.map(serializeArtwork));
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch artworks" });
+    console.error("Fetch artworks error:", error);
+    res.status(500).json({ message: "Failed to fetch artworks", error: error.message });
   }
 });
 
@@ -119,10 +121,12 @@ router.get("/", async (req, res) => {
 router.get("/admin/pending", protect, requireAdmin, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" })
-      .populate("uploadedBy", "name username avatar");
+      .populate("uploadedBy", "name username avatar")
+      .lean();
     res.status(200).json(artworks.map(serializeArtwork));
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch pending artworks" });
+    console.error("Fetch pending artworks error:", error);
+    res.status(500).json({ message: "Failed to fetch pending artworks", error: error.message });
   }
 });
 
@@ -140,7 +144,8 @@ router.get("/interactions", protect, async (req, res) => {
       savedArtworkIds: (currentUser.savedArtworks || []).map((id) => id.toString()),
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch interactions" });
+    console.error("Fetch interactions error:", error);
+    res.status(500).json({ message: "Failed to fetch interactions", error: error.message });
   }
 });
 
@@ -168,7 +173,8 @@ router.put("/:id/status", protect, requireAdmin, async (req, res) => {
 
     res.status(200).json(updatedArtwork);
   } catch (error) {
-    res.status(500).json({ message: "Failed to update artwork status" });
+    console.error("Update artwork status error:", error);
+    res.status(500).json({ message: "Failed to update artwork status", error: error.message });
   }
 });
 
@@ -177,10 +183,12 @@ router.get("/all", protect, async (req, res) => {
   try {
     const artworks = await Artwork.find({})
       .sort({ createdAt: -1 })
-      .populate("uploadedBy", "name username avatar");
+      .populate("uploadedBy", "name username avatar")
+      .lean();
     res.status(200).json(artworks.map(serializeArtwork));
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch all artworks" });
+    console.error("Fetch all artworks error:", error);
+    res.status(500).json({ message: "Failed to fetch all artworks", error: error.message });
   }
 });
 
@@ -230,29 +238,32 @@ router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req,
 
     res.status(200).json(updatedArtwork);
   } catch (error) {
-    res.status(500).json({ message: "Failed to update artwork" });
+    console.error("Update artwork error:", error);
+    res.status(500).json({ message: "Failed to update artwork", error: error.message });
   }
 });
 
 // Profile artworks
 router.get("/profile/:userId", async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select("-password");
+    const user = await User.findById(req.params.userId).select("-password").lean();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     const artworks = await Artwork.find({
       uploadedBy: req.params.userId, 
       status: "published" 
-    }).populate("uploadedBy", "name username avatar");
+    }).populate("uploadedBy", "name username avatar")
+      .lean();
     const userWithCounts = {
-      ...user.toObject(),
+      ...user,
       followingCount: user.following.length,
       followerCount: user.followers.length
     };
     res.status(200).json({ user: userWithCounts, artworks: artworks.map(serializeArtwork) });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch profile artworks" });
+    console.error("Fetch profile artworks error:", error);
+    res.status(500).json({ message: "Failed to fetch profile artworks", error: error.message });
   }
 });
 
@@ -289,7 +300,58 @@ router.post("/:id/like", protect, async (req, res) => {
 
     res.status(200).json({ liked: !!liked, likes: artwork.likes });
   } catch (error) {
-    res.status(500).json({ message: "Failed to update like" });
+    console.error("Like/unlike error:", error);
+    res.status(500).json({ message: "Failed to update like", error: error.message });
+  }
+});
+
+// Get comments for a specific artwork
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id)
+      .populate("comments.user", "name username avatar");
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found." });
+    }
+    // Sort comments newest first to match frontend expectations
+    const sortedComments = artwork.comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.status(200).json(sortedComments);
+  } catch (error) {
+    console.error("Fetch comments error:", error);
+    res.status(500).json({ message: "Failed to fetch comments", error: error.message });
+  }
+});
+
+// Add a comment
+router.post("/:id/comments", protect, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: "Comment content is required." });
+    }
+
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found." });
+    }
+
+    const newComment = {
+      user: userId,
+      content: content.trim(),
+      createdAt: new Date()
+    };
+
+    artwork.comments = artwork.comments || [];
+    artwork.comments.push(newComment);
+    await artwork.save();
+
+    const populatedArtwork = await artwork.populate("comments.user", "name username avatar");
+    res.status(201).json(populatedArtwork.comments[populatedArtwork.comments.length - 1]);
+  } catch (error) {
+    console.error("Add comment error:", error);
+    res.status(500).json({ message: "Failed to add comment", error: error.message });
   }
 });
 
@@ -414,7 +476,8 @@ router.get("/user/me", protect, async (req, res) => {
     const artworks = await Artwork.find({ uploadedBy: userId }).sort({ createdAt: -1 });
     res.status(200).json(artworks.map(serializeArtwork));
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch artworks" });
+    console.error("Fetch user artworks error:", error);
+    res.status(500).json({ message: "Failed to fetch artworks", error: error.message });
   }
 });
 
