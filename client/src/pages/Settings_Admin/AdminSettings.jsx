@@ -83,7 +83,6 @@ const AdminSettings = () => {
     if (loading) {
         return (
             <>
-                <div className="background-fx"></div>
                 <div className="admin-layout">
                     <Sidebar activePage="settings" />
                     <main className="main-view">
@@ -97,7 +96,6 @@ const AdminSettings = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
             <div className="admin-layout">
                 <Sidebar activePage="settings" />
                 <main className="main-view">

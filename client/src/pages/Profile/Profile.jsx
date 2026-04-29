@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Navbar from '../../components/Navbar';
 import styles from './Profile.module.css';
 import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
@@ -533,8 +532,8 @@ const Profile = ({ currentUser }) => {
         }
     }, [activeTab, fetchFollowingFollowers]);
     
-    if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
-    if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
+    if (loading) return <div className={styles.pageWrapper}><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
+    if (error) return <div className={styles.pageWrapper}><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
 
     const displayAvatar = getAvatarUrl(profileUser.avatar);
@@ -547,8 +546,6 @@ const Profile = ({ currentUser }) => {
 
     return (
         <div className={styles.pageWrapper}>
-            <div className="background-fx"></div>
-            <Navbar />
             <div className={styles.profileContainer}>
                 {/* Profile Card */}
                 <div className={styles.profileCard}>

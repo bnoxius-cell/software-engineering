@@ -79,7 +79,9 @@ function App() {
         return (
             <Router>
                 <Routes>
-                    <Route path="/login" element={<Login setUser={setUser} />} />
+                    <Route element={<MainLayout showNavbar={false} />}>
+                        <Route path="/login" element={<Login setUser={setUser} />} />
+                    </Route>
                     <Route path="*" element={<Maintenance />} />
                 </Routes>
             </Router>
@@ -96,8 +98,6 @@ function App() {
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/gallery/:artworkId" element={<Gallery />} />
                     <Route path="/upload" element={<Upload />} />
-                    <Route path="/login" element={<Login setUser={setUser} />} />
-                    <Route path="/register" element={<Register />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route
@@ -105,6 +105,11 @@ function App() {
                         element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />}
                     />
                     <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
+                </Route>
+
+                <Route element={<MainLayout showNavbar={false} />}>
+                    <Route path="/login" element={<Login setUser={setUser} />} />
+                    <Route path="/register" element={<Register />} />
                 </Route>
 
                 <Route element={<AdminLayout />}>

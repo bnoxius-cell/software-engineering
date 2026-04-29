@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../../components/Navbar';
 import styles from './Notifications.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -107,9 +106,6 @@ const Notifications = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
-            <Navbar />
-
             <div className={styles.pageWrapper}>
                 <section className={styles.heroCard}>
                     <div>
