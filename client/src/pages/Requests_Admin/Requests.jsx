@@ -642,8 +642,6 @@ const Requests = () => {
 
   return (
     <>
-      <div className="background-fx"></div>
-
       <div className="admin-layout">
         <Sidebar activePage="requests" />
 

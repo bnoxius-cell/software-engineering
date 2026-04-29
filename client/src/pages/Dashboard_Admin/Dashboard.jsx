@@ -36,9 +36,6 @@ const Dashboard = ({ user }) => {
 
     return (
         <>
-            {/* Background Effect (from Admin.css) */}
-            <div className="background-fx"></div>
-
             <div className="admin-layout">
                 {/* Sidebar automatically sets the active page */}
                 <Sidebar activePage="dashboard" />

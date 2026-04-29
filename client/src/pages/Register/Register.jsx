@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+
+import BackButton from '../../components/BackButton';
 import styles from './Register.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -10,7 +12,7 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -40,7 +42,9 @@ const Register = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (error) setError('');
+        if (error) {
+            setError('');
+        }
     };
 
     const validateForm = () => {
@@ -74,7 +78,9 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setLoading(true);
         setError('');
@@ -83,7 +89,7 @@ const Register = () => {
             await axios.post(`${API_BASE}/api/auth/register`, {
                 name: formData.name,
                 email: formData.email,
-                password: formData.password
+                password: formData.password,
             });
 
             setShowPopup(true);
@@ -99,10 +105,6 @@ const Register = () => {
         }
     };
 
-    const handleAstronautError = (e) => {
-        e.target.src = '/assets/images/placeholder-astronaut.png';
-    };
-
     const openTermsModal = (type) => {
         setModalContent(type);
         setShowTermsModal(true);
@@ -112,10 +114,17 @@ const Register = () => {
 
     if (checkingSettings) {
         return (
-            <div className={styles["register-wrapper"]}>
-                <div className={styles["form-container"]}>
-                    <p className={styles["title"]}>Create Account</p>
-                    <p>Loading...</p>
+            <div className={styles.registerWrapper}>
+                <BackButton />
+                <div className={styles.formContainer}>
+                    <div className={styles.cardHeader}>
+                        <p className={styles.eyebrow}>Create Profile</p>
+                        <h1 className={styles.title}>Create account</h1>
+                        <p className={styles.subtitle}>
+                            Start your EMC Artisan profile and prepare your portfolio for review.
+                        </p>
+                    </div>
+                    <p className={styles.stateMessage}>Loading registration settings...</p>
                 </div>
             </div>
         );
@@ -123,13 +132,20 @@ const Register = () => {
 
     if (!allowRegistration) {
         return (
-            <div className={styles["register-wrapper"]}>
-                <div className={styles["form-container"]}>
-                    <p className={styles["title"]}>Registration Closed</p>
+            <div className={styles.registerWrapper}>
+                <BackButton />
+                <div className={styles.formContainer}>
+                    <div className={styles.cardHeader}>
+                        <p className={styles.eyebrow}>Registration Status</p>
+                        <h1 className={styles.title}>Registration closed</h1>
+                        <p className={styles.subtitle}>
+                            New signups are paused right now while account access is being managed.
+                        </p>
+                    </div>
                     <p className={styles.error} role="alert">
                         New user registrations are currently disabled. Please contact an administrator.
                     </p>
-                    <p className={styles["signup"]}>
+                    <p className={styles.signup}>
                         Already have an account? <Link to="/login">Log in</Link>
                     </p>
                 </div>
@@ -138,30 +154,22 @@ const Register = () => {
     }
 
     return (
-        <div className={styles["register-wrapper"]}>
-            <div className={styles["login-bg"]}>
-                <div className={styles["stars"]}></div>
-                <div className={styles["stars2"]}></div>
-                <div className={styles["stars3"]}></div>
-                <div className={styles["moon"]}></div>
-                <div className={styles["astronaut-container"]}>
-                    <img
-                        src="/assets/images/icons/astronaut.png"
-                        alt="Astronaut"
-                        className={styles["astronaut"]}
-                        onError={handleAstronautError}
-                    />
-                    <div className={styles["glow"]}></div>
-                </div>
-            </div>
+        <div className={styles.registerWrapper}>
+            <BackButton />
 
-            <div className={styles["form-container"]}>
-                <p className={styles["title"]}>Create Account</p>
+            <div className={styles.formContainer}>
+                <div className={styles.cardHeader}>
+                    <p className={styles.eyebrow}>Create Profile</p>
+                    <h1 className={styles.title}>Create account</h1>
+                    <p className={styles.subtitle}>
+                        Build your EMC Artisan presence and submit work for review when you are ready.
+                    </p>
+                </div>
 
                 {error && <p className={styles.error} role="alert">{error}</p>}
 
-                <form className={styles["form"]} onSubmit={handleSubmit} noValidate>
-                    <div className={styles["input-group"]}>
+                <form className={styles.form} onSubmit={handleSubmit} noValidate>
+                    <div className={styles.inputGroup}>
                         <label htmlFor="name">Full Name</label>
                         <input
                             type="text"
@@ -176,7 +184,7 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className={styles["input-group"]}>
+                    <div className={styles.inputGroup}>
                         <label htmlFor="email">E-mail</label>
                         <input
                             type="email"
@@ -191,7 +199,7 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className={styles["input-group"]}>
+                    <div className={styles.inputGroup}>
                         <label htmlFor="password">Password</label>
                         <input
                             type="password"
@@ -205,7 +213,7 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className={styles["input-group"]}>
+                    <div className={styles.inputGroup}>
                         <label htmlFor="confirmPassword">Confirm Password</label>
                         <input
                             type="password"
@@ -219,7 +227,7 @@ const Register = () => {
                         />
                     </div>
 
-                    <button className={styles["sign"]} type="submit" disabled={loading}>
+                    <button className={styles.sign} type="submit" disabled={loading}>
                         {loading ? (
                             <>
                                 <span className={styles.spinner}></span>
@@ -231,7 +239,7 @@ const Register = () => {
                     </button>
                 </form>
 
-                <p className={styles["signup"]}>
+                <p className={styles.signup}>
                     Already have an account? <Link to="/login">Log in</Link>
                 </p>
 
@@ -248,14 +256,14 @@ const Register = () => {
             </div>
 
             {showPopup && (
-                <div className={styles["popup-overlay"]}>
-                    <div className={styles["popup-content"]}>
-                        <p className={styles["popup-message"]}>
+                <div className={styles.popupOverlay}>
+                    <div className={styles.popupContent}>
+                        <p className={styles.popupMessage}>
                             Your account will be created once an admin accepts your user registration.
                         </p>
                         <button
                             type="button"
-                            className={styles["popup-button"]}
+                            className={styles.popupButton}
                             onClick={() => navigate('/login')}
                         >
                             OK
@@ -275,7 +283,7 @@ const Register = () => {
                                 onClick={() => setShowTermsModal(false)}
                                 aria-label="Close terms dialog"
                             >
-                                x
+                                &times;
                             </button>
                         </div>
                         <div className={styles.modalBody}>

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { isVideoArtwork } from '../../utils/artworkMedia';
@@ -450,8 +449,6 @@ const Gallery = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
-            <Navbar />
             <div className={styles.pageContainer}>
                 <header className={styles.feedHeader}>
                     <h1>Discover Art</h1>

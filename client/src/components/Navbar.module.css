@@ -197,6 +197,38 @@
     color: #ffffff;
 }
 
+.navLink {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0;
+}
+
+.navLink::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -0.45rem;
+    width: 100%;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.navLink:hover::after,
+.navLinkActive::after {
+    transform: scaleX(1);
+    box-shadow: 0 0 12px rgba(161, 255, 20, 0.55);
+}
+
+.navLinkActive {
+    color: #ffffff !important;
+    text-shadow: 0 0 12px rgba(161, 255, 20, 0.7);
+}
+
 /* ===== BUTTONS ===== */
 .animatedButton {
     position: relative;
@@ -291,6 +323,16 @@
     width: 220px;
     height: 220px;
     opacity: 1;
+}
+
+.animatedButtonActive {
+    color: #ffffff;
+    background-color: rgba(161, 255, 20, 0.12);
+    box-shadow: 0 0 0 2px #a1ff14, 0 0 22px rgba(161, 255, 20, 0.35);
+}
+
+.animatedButtonActive svg {
+    fill: currentColor;
 }
 
 .menuContainer {

@@ -167,8 +167,6 @@ const Upload = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
-
             <div className={styles.pageContainer}>
                 <div className={styles.uploadWrapper}>
                     

@@ -1,0 +1,39 @@
+.backButton {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(161, 255, 20, 0.35);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #a1ff14;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.backButton:hover {
+    color: #ffffff;
+    border-color: #a1ff14;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.35), 0 0 18px rgba(161, 255, 20, 0.18);
+}
+
+.arrow {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+@media (max-width: 640px) {
+    .backButton {
+        top: 1rem;
+        left: 1rem;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.85rem;
+    }
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.css';
 import artisanLogo from '../assets/images/artisanLogo.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -11,6 +11,12 @@ const getInitialAvatar = () => {
     const storedAvatar = localStorage.getItem('avatar');
     return storedAvatar ? getAvatarUrl(storedAvatar) : DEFAULT_AVATAR;
 };
+
+const getNavLinkClassName = ({ isActive }) =>
+    isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink;
+
+const getUploadLinkClassName = ({ isActive }) =>
+    isActive ? `${styles.animatedButton} ${styles.animatedButtonActive}` : styles.animatedButton;
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -224,12 +230,20 @@ const Navbar = () => {
             </form>
 
             <ul className={styles.navLinks}>
-                <li><Link to="/about">About</Link></li>
-                <li><Link to="/contact">Contact Us</Link></li>
+                <li>
+                    <NavLink to="/about" end className={getNavLinkClassName}>
+                        About
+                    </NavLink>
+                </li>
+                <li>
+                    <NavLink to="/contact" end className={getNavLinkClassName}>
+                        Contact Us
+                    </NavLink>
+                </li>
                 
                 <li>
                     {token ? (
-                        <Link to="/upload" className={styles.animatedButton}>
+                        <NavLink to="/upload" end className={getUploadLinkClassName}>
                             <svg viewBox="0 0 24 24" className={styles.arr2} xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.9999 7.82843L18.364 13.1925L19.7782 11.7783L11.9999 4L4.22168 11.7783L5.63589 13.1925L10.9999 7.82843V20H12.9999V7.82843Z"></path>
                             </svg>
@@ -238,7 +252,7 @@ const Navbar = () => {
                             <svg viewBox="0 0 24 24" className={styles.arr1} xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.9999 7.82843L18.364 13.1925L19.7782 11.7783L11.9999 4L4.22168 11.7783L5.63589 13.1925L10.9999 7.82843V20H12.9999V7.82843Z"></path>
                             </svg>
-                        </Link>
+                        </NavLink>
                     ) : (
                         <button 
                             type="button" 
