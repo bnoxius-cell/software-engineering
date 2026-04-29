@@ -293,7 +293,10 @@ router.post('/follow/:userId', protect, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const isFollowing = currentUser.following.includes(userId);
+    currentUser.following = currentUser.following || [];
+    userToFollow.followers = userToFollow.followers || [];
+
+    const isFollowing = currentUser.following.some(id => id.toString() === userId);
 
     if (isFollowing) {
       // Unfollow
@@ -301,8 +304,12 @@ router.post('/follow/:userId', protect, async (req, res) => {
       userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUserId.toString());
     } else {
       // Follow
-      currentUser.following.push(userId);
-      userToFollow.followers.push(currentUserId);
+      if (!currentUser.following.some(id => id.toString() === userId)) {
+        currentUser.following.push(userId);
+      }
+      if (!userToFollow.followers.some(id => id.toString() === currentUserId.toString())) {
+        userToFollow.followers.push(currentUserId);
+      }
     }
 
     await currentUser.save();
@@ -417,21 +424,20 @@ router.put('/privacy', protect, async (req, res) => {
   try {
     const { privacy } = req.body;
     const userId = req.user._id || req.user.id;
-    
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        privacy: {
-          hideFollowers: privacy?.hideFollowers || false,
-          hideFollowing: privacy?.hideFollowing || false
-        }
-      },
-      { new: true, runValidators: true }
-    );
+
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    user.privacy = {
+      hideFollowers: Boolean(privacy?.hideFollowers),
+      hideFollowing: Boolean(privacy?.hideFollowing)
+    };
+
+    await user.save();
+
     res.status(200).json({ privacy: user.privacy });
   } catch (error) {
     console.error("Privacy update error:", error);

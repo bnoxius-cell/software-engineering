@@ -7,14 +7,12 @@ import { getAvatarUrl } from '../utils/avatar';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Topbar = ({ title }) => {
-    const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [avatar, setAvatar] = useState(() => {
+        const storedAvatar = localStorage.getItem('avatar');
+        return storedAvatar ? getAvatarUrl(storedAvatar) : '/assets/images/profile_icon.png';
+    });
 
     useEffect(() => {
-        const storedAvatar = localStorage.getItem('avatar');
-        if (storedAvatar) {
-            setAvatar(getAvatarUrl(storedAvatar));
-        }
-
         const token = localStorage.getItem('token');
         if (token) {
             fetch(`${API_BASE}/api/auth/me`, {

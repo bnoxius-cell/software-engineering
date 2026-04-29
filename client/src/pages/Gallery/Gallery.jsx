@@ -48,6 +48,10 @@ const Gallery = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [likedStates, setLikedStates] = useState({});
     const [savedStates, setSavedStates] = useState({});
+    const [followingStates, setFollowingStates] = useState({});
+    const [currentUserId, setCurrentUserId] = useState('');
+    const [followMessage, setFollowMessage] = useState('');
+    const [followLoading, setFollowLoading] = useState({});
     const [videoDurations, setVideoDurations] = useState({});
     
     // Comment-related state
@@ -101,12 +105,10 @@ const Gallery = () => {
                 if (!response.ok) throw new Error('Failed to fetch interactions');
 
                 const data = await response.json();
-                setLikedStates(
-                    (data.likedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {})
-                );
-                setSavedStates(
-                    (data.savedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {})
-                );
+                setCurrentUserId(data.currentUserId || '');
+                setLikedStates((data.likedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
+                setSavedStates((data.savedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
+                setFollowingStates((data.followingUserIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error(err);
@@ -117,6 +119,12 @@ const Gallery = () => {
         fetchInteractions();
         return () => abortController.abort();
     }, []);
+
+    useEffect(() => {
+        if (!followMessage) return;
+        const timer = setTimeout(() => setFollowMessage(''), 3000);
+        return () => clearTimeout(timer);
+    }, [followMessage]);
 
     // Restore body overflow on unmount
     useEffect(() => {
@@ -129,12 +137,15 @@ const Gallery = () => {
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape' && isModalOpen) {
-                closeModal();
+                setIsModalOpen(false);
+                setSelectedArtwork(null);
+                document.body.style.overflow = 'auto';
+                navigate({ pathname: '/gallery', search: location.search });
             }
         };
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [isModalOpen]);
+    }, [isModalOpen, location.search, navigate]);
 
     // Search & filter logic
     const rawSearchQuery = searchParams.get('search')?.trim() || '';
@@ -172,22 +183,6 @@ const Gallery = () => {
         });
     })();
 
-    // URL direct artwork opening
-    useEffect(() => {
-        if (!artworkId || loading) return;
-        setError('');
-        const requestedArtwork = artworks.find((art) => art._id === artworkId);
-        if (requestedArtwork) {
-            setSelectedArtwork(requestedArtwork);
-            setIsModalOpen(true);
-            document.body.style.overflow = 'hidden';
-            fetchComments(requestedArtwork._id);
-            setTimeout(() => modalRef.current?.focus(), 10);
-        } else if (!loading) {
-            setError('The requested artwork could not be found.');
-        }
-    }, [artworkId, artworks, loading]);
-
     // --- Comment functions ---
     const fetchComments = useCallback(async (artworkId) => {
         try {
@@ -212,6 +207,22 @@ const Gallery = () => {
             console.error('Failed to fetch comments', err);
         }
     }, []);
+
+    // URL direct artwork opening
+    useEffect(() => {
+        if (!artworkId || loading) return;
+        setError('');
+        const requestedArtwork = artworks.find((art) => art._id === artworkId);
+        if (requestedArtwork) {
+            setSelectedArtwork(requestedArtwork);
+            setIsModalOpen(true);
+            document.body.style.overflow = 'hidden';
+            fetchComments(requestedArtwork._id);
+            setTimeout(() => modalRef.current?.focus(), 10);
+        } else if (!loading) {
+            setError('The requested artwork could not be found.');
+        }
+    }, [artworkId, artworks, fetchComments, loading]);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
@@ -332,7 +343,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ liked: newLiked }),
             });
-        } catch (err) {
+        } catch {
             setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
             setArtworks(prev => prev.map((art) => (
                 art._id === artworkId
@@ -365,7 +376,7 @@ const Gallery = () => {
                 },
                 body: JSON.stringify({ artworkId, saved: newSaved }),
             });
-        } catch (err) {
+        } catch {
             setSavedStates(prev => ({ ...prev, [artworkId]: !newSaved }));
         }
     };
@@ -397,6 +408,49 @@ const Gallery = () => {
         const artistId = typeof artwork.uploadedBy === 'object' ? artwork.uploadedBy._id : artwork.uploadedBy;
         closeModal();
         navigate(`/profile/${artistId}`);
+    };
+
+    const getArtistId = (artwork) => {
+        const artist = artwork?.uploadedBy;
+        if (!artist) return '';
+        return typeof artist === 'object' ? artist._id || artist.id || '' : artist;
+    };
+
+    const handleFollowArtist = async (artwork, event) => {
+        event?.stopPropagation();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const artistId = getArtistId(artwork);
+        if (!artistId || String(artistId) === String(currentUserId)) return;
+
+        const wasFollowing = !!followingStates[artistId];
+        setFollowLoading(prev => ({ ...prev, [artistId]: true }));
+        setFollowingStates(prev => ({ ...prev, [artistId]: !wasFollowing }));
+
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/follow/${artistId}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update follow status');
+            }
+
+            const data = await res.json();
+            setFollowingStates(prev => ({ ...prev, [artistId]: data.following }));
+            setFollowMessage(data.following ? `Following ${artwork.artistName}` : `Unfollowed ${artwork.artistName}`);
+        } catch (error) {
+            setFollowingStates(prev => ({ ...prev, [artistId]: wasFollowing }));
+            setFollowMessage(error.message || 'Unable to update follow status.');
+        } finally {
+            setFollowLoading(prev => ({ ...prev, [artistId]: false }));
+        }
     };
 
     // --- VIDEO CARD RENDERING ---
@@ -483,7 +537,7 @@ const Gallery = () => {
                         <div key={art._id} className={styles.artCard} onClick={() => openModal(art)}>
                             {renderCardMedia(art)}
                             <div className={styles.cardOverlay}>
-                                <div>
+                                <div className={styles.cardInfoBlock}>
                                     <h3 className={styles.artTitle}>{art.title}</h3>
                                     <button className={styles.artistLink} onClick={(event) => goToArtistProfile(art, event)} type="button">
                                         by {art.artistName}
@@ -523,6 +577,11 @@ const Gallery = () => {
                                 ⟳ RETRY
                             </button>
                         </div>
+                    </div>
+                )}
+                {followMessage && (
+                    <div className={styles.followNotice}>
+                        {followMessage}
                     </div>
                 )}
             </div>
@@ -658,6 +717,20 @@ const Gallery = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {getArtistId(selectedArtwork) && String(getArtistId(selectedArtwork)) !== String(currentUserId) && (
+                                    <button
+                                        type="button"
+                                        className={`${styles.followArtistBtn} ${followingStates[getArtistId(selectedArtwork)] ? styles.followingArtistBtn : ''}`}
+                                        onClick={(event) => handleFollowArtist(selectedArtwork, event)}
+                                        disabled={!!followLoading[getArtistId(selectedArtwork)]}
+                                    >
+                                        {followLoading[getArtistId(selectedArtwork)]
+                                            ? 'Updating...'
+                                            : followingStates[getArtistId(selectedArtwork)]
+                                                ? 'Following'
+                                                : 'Follow Artist'}
+                                    </button>
+                                )}
 
                                 {/* ===== COMMENTS SECTION ===== */}
                                 <div className={styles.commentsSection}>

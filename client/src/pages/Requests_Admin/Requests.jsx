@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styles from "./Requests.module.css";
 import uploadStyles from "../Upload/Upload.module.css";
 import registerStyles from "../Register/Register.module.css";
@@ -73,9 +73,9 @@ const Requests = () => {
   const [lastAction, setLastAction] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(initialConfirmDialog);
 
-  const getToken = () => localStorage.getItem("token");
+  const getToken = useCallback(() => localStorage.getItem("token"), []);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     const token = getToken();
     if (!token) return;
 
@@ -111,11 +111,11 @@ const Requests = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getToken]);
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
 
   useEffect(() => {
     localStorage.setItem(storageKeyByType.artworks, String(autoApproveArtworks));
@@ -225,7 +225,7 @@ const Requests = () => {
     setAccountForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const updateArtworkRequest = async (requestId, payload, nextStatus) => {
+  const updateArtworkRequest = useCallback(async (requestId, payload, nextStatus) => {
     const token = getToken();
     if (!token) {
       throw new Error("Missing admin session.");
@@ -258,7 +258,7 @@ const Requests = () => {
       const statusError = await statusRes.json();
       throw new Error(statusError.message || "Failed to update artwork status.");
     }
-  };
+  }, [getToken]);
 
   const revertArtworkRequest = async (requestId, payload, previousStatus) => {
     await updateArtworkRequest(requestId, payload, previousStatus);
@@ -293,7 +293,7 @@ const Requests = () => {
     }
   };
 
-  const updateAccountRequest = async (requestId, payload, nextStatus) => {
+  const updateAccountRequest = useCallback(async (requestId, payload, nextStatus) => {
     const token = getToken();
     if (!token) {
       throw new Error("Missing admin session.");
@@ -326,7 +326,7 @@ const Requests = () => {
       const statusError = await statusRes.json();
       throw new Error(statusError.message || "Failed to update account status.");
     }
-  };
+  }, [getToken]);
 
   const revertAccountRequest = async (requestId, payload, previousStatus) => {
     await updateAccountRequest(requestId, payload, previousStatus);
@@ -402,7 +402,7 @@ const Requests = () => {
     );
   };
 
-  const processArtworkBatch = async (requests) => {
+  const processArtworkBatch = useCallback(async (requests) => {
     await Promise.all(
       requests.map((request) =>
         updateArtworkRequest(
@@ -418,9 +418,9 @@ const Requests = () => {
         )
       )
     );
-  };
+  }, [updateArtworkRequest]);
 
-  const processAccountBatch = async (requests) => {
+  const processAccountBatch = useCallback(async (requests) => {
     await Promise.all(
       requests.map((request) =>
         updateAccountRequest(
@@ -434,9 +434,9 @@ const Requests = () => {
         )
       )
     );
-  };
+  }, [updateAccountRequest]);
 
-  const buildActionSnapshot = (requests, type, label) => ({
+  const buildActionSnapshot = useCallback((requests, type, label) => ({
     type,
     label,
     items: requests.map((request) => ({
@@ -459,7 +459,7 @@ const Requests = () => {
     })),
     createdAt: Date.now(),
     count: requests.length,
-  });
+  }), []);
 
   const runUndoLastAction = async () => {
     if (!lastAction) return;
@@ -602,8 +602,12 @@ const Requests = () => {
     accountRequests,
     autoApproveArtworks,
     autoApproveAccounts,
+    buildActionSnapshot,
+    fetchRequests,
     isLoading,
     isSubmitting,
+    processAccountBatch,
+    processArtworkBatch,
   ]);
 
   const currentSelectionCount =

@@ -113,6 +113,11 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.cardInfoBlock {
+    min-width: 0;
 }
 
 .artistName {
@@ -374,6 +379,53 @@
 .modalArtistLink:hover .artistNameModal,
 .modalArtistLink:focus-visible .artistNameModal {
     color: #a1ff14;
+}
+
+.followArtistBtn {
+    width: 100%;
+    margin: 1rem 0 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #a1ff14;
+    border-radius: 8px;
+    background: #a1ff14;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.followArtistBtn:hover:not(:disabled) {
+    background: #fff;
+    transform: translateY(-1px);
+}
+
+.followArtistBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.followingArtistBtn {
+    background: transparent;
+    color: #a1ff14;
+}
+
+.followingArtistBtn:hover:not(:disabled) {
+    background: rgba(161, 255, 20, 0.12);
+    color: #fff;
+}
+
+.followNotice {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 3000;
+    background: rgba(13, 17, 23, 0.95);
+    border: 1px solid rgba(161, 255, 20, 0.6);
+    color: #fff;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+    font-weight: 600;
 }
 
 .artistAvatar {

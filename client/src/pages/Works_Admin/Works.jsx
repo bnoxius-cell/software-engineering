@@ -7,7 +7,6 @@ import ArtworkVideoPlayer from "../../components/media/ArtworkVideoPlayer";
 
 const Works = () => {
   const [works, setWorks] = useState([]);
-  const [selectedWorks, setSelectedWorks] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
 
   // Search and Sort State
@@ -37,11 +36,6 @@ const Works = () => {
   useEffect(() => {
     fetchWorks();
   }, []);
-
-  // Reset page to 1 when search or filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterStatus]);
 
   const handleStatusChange = async (workId, newStatus) => {
     const token = localStorage.getItem("token");
@@ -209,14 +203,20 @@ const Works = () => {
               className={styles["search-input"]}
               placeholder="Search by title or author..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               style={{ maxWidth: '300px' }}
             />
             <select 
               className={styles["search-input"]} 
               style={{ width: "auto" }}
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>

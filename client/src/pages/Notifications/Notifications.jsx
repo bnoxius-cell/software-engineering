@@ -52,7 +52,6 @@ const Notifications = () => {
                 setNotifications(Array.isArray(data) ? data : []);
             } catch (err) {
                 if (err.name !== 'AbortError') {
-
                     setError('Unable to load notifications right now.');
                 }
             } finally {
@@ -83,7 +82,7 @@ const Notifications = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
         } catch (err) {
-
+            console.error('Failed to mark notification as read:', err);
         }
     };
 
@@ -98,7 +97,7 @@ const Notifications = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
         } catch (err) {
-
+            console.error('Failed to mark all notifications as read:', err);
         }
     };
 

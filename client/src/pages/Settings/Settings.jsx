@@ -153,7 +153,7 @@ const Settings = () => {
 
             setNotifications(prev => ({ ...prev, [type]: value }));
             setMessage('Notification preferences updated!');
-        } catch (error) {
+        } catch {
             setMessage('Error updating notification preferences.');
         } finally {
             setSaving(false);

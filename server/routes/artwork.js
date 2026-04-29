@@ -7,6 +7,7 @@ const Artwork = require("../models/Artwork");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
+const Collection = require("../models/Collection");
 const ffmpeg = require('fluent-ffmpeg');
 const { protect, requireAdmin } = require("../middleware/auth");
 
@@ -85,6 +86,30 @@ const collectChangedFields = (originalDoc, nextValues) =>
       newValue: value,
     }));
 
+const authorizeArtworkMutation = async (req, res, next) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id);
+
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found" });
+    }
+
+    const isAdmin = req.user?.role === "Admin";
+    const isOwner = artwork.uploadedBy?.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: "You can only modify your own artworks." });
+    }
+
+    req.artwork = artwork;
+    req.isArtworkAdmin = isAdmin;
+    req.isArtworkOwner = isOwner;
+    next();
+  } catch (error) {
+    res.status(500).json({ message: "Failed to authorize artwork action" });
+  }
+};
+
 const serializeArtwork = (artwork) => {
   const plainArtwork = artwork.toObject ? artwork.toObject() : artwork;
   const uploader =
@@ -129,7 +154,7 @@ router.get("/admin/pending", protect, requireAdmin, async (req, res) => {
 router.get("/interactions", protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
-    const currentUser = await User.findById(userId).select("likedArtworks savedArtworks");
+    const currentUser = await User.findById(userId).select("likedArtworks savedArtworks following");
 
     if (!currentUser) {
       return res.status(404).json({ message: "User not found." });
@@ -138,6 +163,8 @@ router.get("/interactions", protect, async (req, res) => {
     res.status(200).json({
       likedArtworkIds: (currentUser.likedArtworks || []).map((id) => id.toString()),
       savedArtworkIds: (currentUser.savedArtworks || []).map((id) => id.toString()),
+      followingUserIds: (currentUser.following || []).map((id) => id.toString()),
+      currentUserId: currentUser._id.toString(),
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch interactions" });
@@ -184,23 +211,23 @@ router.get("/all", protect, async (req, res) => {
   }
 });
 
-// Update artwork
-router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req, res) => {
+// Update artwork. Admins can update any artwork; users can only update their own.
+router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload, async (req, res) => {
   try {
-    const existingArtwork = await Artwork.findById(req.params.id);
-
-    if (!existingArtwork) {
-      return res.status(404).json({ message: "Artwork not found" });
-    }
-
+    const existingArtwork = req.artwork;
+    const isAdmin = req.isArtworkAdmin;
+    const isOwner = req.isArtworkOwner;
     const updateData = {
       title: req.body.title,
       medium: req.body.medium,
-      status: req.body.status,
       tags: req.body.tags,
-      artistName: req.body.artistName,
       description: req.body.description
     };
+
+    if (isAdmin) {
+      updateData.status = req.body.status;
+      updateData.artistName = req.body.artistName;
+    }
 
     if (req.files && req.files.artworkImage) {
       updateData.image = `/Artworks/${req.files.artworkImage[0].filename}`;
@@ -219,7 +246,7 @@ router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req,
       { new: true }
     );
 
-    if (changedFields.length > 0) {
+    if (isAdmin && changedFields.length > 0 && !isOwner) {
       await Notification.create({
         recipient: updatedArtwork.uploadedBy,
         type: 'info_modified',
@@ -228,7 +255,7 @@ router.put("/:id", protect, requireAdmin, artworkAndThumbnailUpload, async (req,
       });
     }
 
-    res.status(200).json(updatedArtwork);
+    res.status(200).json(serializeArtwork(updatedArtwork));
   } catch (error) {
     res.status(500).json({ message: "Failed to update artwork" });
   }
@@ -415,6 +442,27 @@ router.get("/user/me", protect, async (req, res) => {
     res.status(200).json(artworks.map(serializeArtwork));
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch artworks" });
+  }
+});
+
+// Delete artwork. Admins can delete any artwork; users can only delete their own.
+router.delete("/:id", protect, authorizeArtworkMutation, async (req, res) => {
+  try {
+    const artwork = req.artwork;
+
+    await Artwork.findByIdAndDelete(req.params.id);
+    await Collection.updateMany(
+      { artworks: artwork._id },
+      { $pull: { artworks: artwork._id } }
+    );
+    await User.updateMany(
+      { $or: [{ savedArtworks: artwork._id }, { likedArtworks: artwork._id }] },
+      { $pull: { savedArtworks: artwork._id, likedArtworks: artwork._id } }
+    );
+
+    res.status(200).json({ message: "Artwork deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete artwork" });
   }
 });
 

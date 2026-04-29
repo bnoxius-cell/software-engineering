@@ -41,7 +41,7 @@ function App() {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                     setUser(res.data);
-                } catch (err) {
+                } catch {
 
                     setError("Failed to fetch user data");
                     localStorage.removeItem('token');
@@ -58,7 +58,7 @@ function App() {
                 if (res.data) {
                     setSettings(res.data);
                 }
-            } catch (err) {
+            } catch {
                 // Silently fail — public endpoint may not exist yet
             }
         };

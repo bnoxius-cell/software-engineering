@@ -50,7 +50,7 @@ const Index = ({ user }) => {
         } else {
           setError('Failed to load artworks');
         }
-      } catch (error) {
+      } catch {
         setError('Unable to connect to the gallery. Please try again later.');
       } finally {
         setLoading(false);

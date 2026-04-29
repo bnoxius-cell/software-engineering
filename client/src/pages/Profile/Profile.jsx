@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../../components/Navbar';
@@ -29,7 +29,9 @@ const Profile = ({ currentUser }) => {
     const [followers, setFollowers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [profileMessage, setProfileMessage] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
     const [editingBio, setEditingBio] = useState(false);
     const [bioText, setBioText] = useState('');
     const [showCreateCollection, setShowCreateCollection] = useState(false);
@@ -60,6 +62,23 @@ const Profile = ({ currentUser }) => {
     const [selectedArtworkIdsToRemove, setSelectedArtworkIdsToRemove] = useState([]);
     const [removingArtworks, setRemovingArtworks] = useState(false);
 
+    // Artwork editing / deletion
+    const [editingArtwork, setEditingArtwork] = useState(null);
+    const [editArtworkForm, setEditArtworkForm] = useState({
+        title: '',
+        medium: 'digital_2d',
+        description: '',
+        tags: ''
+    });
+    const [editArtworkFile, setEditArtworkFile] = useState(null);
+    const [editArtworkThumbnailFile, setEditArtworkThumbnailFile] = useState(null);
+    const [editPreviewUrl, setEditPreviewUrl] = useState(null);
+    const [editThumbnailPreviewUrl, setEditThumbnailPreviewUrl] = useState(null);
+    const [editMediaType, setEditMediaType] = useState('image');
+    const [isUpdatingArtwork, setIsUpdatingArtwork] = useState(false);
+    const [showEditArtworkModal, setShowEditArtworkModal] = useState(false);
+    const [showDeleteArtworkConfirm, setShowDeleteArtworkConfirm] = useState(null);
+
     // Avatar upload
     const fileInputRef = useRef(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -75,7 +94,7 @@ const Profile = ({ currentUser }) => {
 
     // Lock background scrolling when any modal popup is open
     useEffect(() => {
-        if (showCreateCollection || showEditModal || showDeleteConfirm || showAddArtworkModal || showViewCollectionModal) {
+        if (showCreateCollection || showEditModal || showDeleteConfirm || showAddArtworkModal || showViewCollectionModal || showEditArtworkModal || showDeleteArtworkConfirm) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -83,7 +102,7 @@ const Profile = ({ currentUser }) => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [showCreateCollection, showEditModal, showDeleteConfirm, showAddArtworkModal, showViewCollectionModal]);
+    }, [showCreateCollection, showEditModal, showDeleteConfirm, showAddArtworkModal, showViewCollectionModal, showEditArtworkModal, showDeleteArtworkConfirm]);
 
     // Close more menu when clicking outside
     useEffect(() => {
@@ -103,10 +122,16 @@ const Profile = ({ currentUser }) => {
         return () => clearTimeout(timer);
     }, [avatarSuccess]);
 
+    // Auto-dismiss profile action messages after 3 seconds
+    useEffect(() => {
+        if (!profileMessage) return;
+        const timer = setTimeout(() => setProfileMessage(null), 3000);
+        return () => clearTimeout(timer);
+    }, [profileMessage]);
+
     useEffect(() => {
         const fetchProfile = async () => {
             let targetId = userId;
-
             if (!targetId) {
                 if (currentUser) {
                     targetId = currentUser._id || currentUser.id;
@@ -118,7 +143,7 @@ const Profile = ({ currentUser }) => {
                                 headers: { Authorization: `Bearer ${token}` }
                             });
                             targetId = meRes.data._id || meRes.data.id;
-                        } catch (meErr) {
+                        } catch {
                             navigate('/login');
                             return;
                         }
@@ -128,13 +153,11 @@ const Profile = ({ currentUser }) => {
                     }
                 }
             }
-
             if (!targetId) {
                 setError('Profile not found');
                 setLoading(false);
                 return;
             }
-
             try {
                 setLoading(true);
                 const res = await axios.get(`${API_BASE}/api/artworks/profile/${targetId}`);
@@ -156,7 +179,7 @@ const Profile = ({ currentUser }) => {
                                 headers: { Authorization: `Bearer ${token}` },
                             });
                             setSavedArtworks(savedRes.data.savedArtworks || []);
-                        } catch (savedError) {
+                        } catch {
                             setSavedArtworks([]);
                         }
                     } else {
@@ -178,20 +201,18 @@ const Profile = ({ currentUser }) => {
                 }
 
                 setError('');
-            } catch (err) {
+            } catch {
                 setError("Profile not found.");
             } finally {
                 setLoading(false);
             }
         };
-
         fetchProfile();
     }, [userId, currentUser, navigate]);
 
     // Pre-fetch available artworks for the "add to collection" modal (only user's own artworks)
     useEffect(() => {
         const currentUserId = currentUser?._id || currentUser?.id;
-        
         if (showAddArtworkModal && selectedCollection && currentUserId === profileUser?._id) {
             const fetchAvailableArtworks = async () => {
                 try {
@@ -204,7 +225,6 @@ const Profile = ({ currentUser }) => {
                     setAvailableArtworks(available);
                 } catch (err) {
                     console.error('Failed to fetch artworks', err);
-                    // Fallback to already loaded artworks if the user/me endpoint fails
                     const alreadyInCollection = selectedCollection.artworks.map(aw => aw._id || aw);
                     const available = artworks.filter(aw => !alreadyInCollection.includes(aw._id) && aw.status === 'published');
                     setAvailableArtworks(available);
@@ -351,8 +371,173 @@ const Profile = ({ currentUser }) => {
         }
     };
 
+    // ---- Artwork edit/delete handlers ----
+    const getArtworkOwnerId = (artwork) => {
+        const owner = artwork?.uploadedBy;
+        if (!owner) return '';
+        return typeof owner === 'object' ? owner._id || owner.id || '' : owner;
+    };
+
+    const userOwnsArtwork = (artwork) => {
+        const currentUserId = currentUser?._id || currentUser?.id;
+        return !!currentUserId && String(getArtworkOwnerId(artwork)) === String(currentUserId);
+    };
+
+    const closeEditArtworkModal = () => {
+        setShowEditArtworkModal(false);
+        setEditingArtwork(null);
+        setEditArtworkFile(null);
+        setEditArtworkThumbnailFile(null);
+        if (editPreviewUrl && editPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(editPreviewUrl);
+        if (editThumbnailPreviewUrl && editThumbnailPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(editThumbnailPreviewUrl);
+        setEditPreviewUrl(null);
+        setEditThumbnailPreviewUrl(null);
+    };
+
+    const openEditArtworkModal = (artwork) => {
+        if (!userOwnsArtwork(artwork)) {
+            setProfileMessage({ type: 'error', text: "You can't edit another user's artwork." });
+            return;
+        }
+        setEditingArtwork(artwork);
+        setEditArtworkForm({
+            title: artwork.title || '',
+            medium: artwork.medium || 'digital_2d',
+            description: artwork.description || '',
+            tags: artwork.tags || ''
+        });
+        setEditPreviewUrl(`${API_BASE}${artwork.image}`);
+        setEditMediaType(isVideoArtwork(artwork) ? 'video' : 'image');
+        setEditArtworkFile(null);
+        setEditArtworkThumbnailFile(null);
+        setEditThumbnailPreviewUrl(artwork.thumbnail ? `${API_BASE}${artwork.thumbnail}` : null);
+        setShowEditArtworkModal(true);
+    };
+
+    const handleEditArtworkChange = (e) => {
+        const { name, value } = e.target;
+        setEditArtworkForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleEditArtworkFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (editPreviewUrl && editPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(editPreviewUrl);
+        setEditArtworkFile(file);
+        setEditMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+        const url = URL.createObjectURL(file);
+        setEditPreviewUrl(url);
+    };
+
+    const handleEditThumbnailSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        if (editThumbnailPreviewUrl && editThumbnailPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(editThumbnailPreviewUrl);
+        setEditArtworkThumbnailFile(file);
+        const url = URL.createObjectURL(file);
+        setEditThumbnailPreviewUrl(url);
+    };
+
+    const handleUpdateArtwork = async () => {
+        if (!editingArtwork || !userOwnsArtwork(editingArtwork)) {
+            setProfileMessage({ type: 'error', text: "You can't edit another user's artwork." });
+            closeEditArtworkModal();
+            return;
+        }
+        if (!editArtworkForm.title.trim()) {
+            alert('Title is required.');
+            return;
+        }
+        if (!editArtworkForm.description.trim()) {
+            alert('Description is required.');
+            return;
+        }
+        if (!editArtworkForm.tags.trim()) {
+            alert('Tags are required.');
+            return;
+        }
+
+        setIsUpdatingArtwork(true);
+        try {
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('title', editArtworkForm.title.trim());
+            formData.append('medium', editArtworkForm.medium);
+            formData.append('description', editArtworkForm.description.trim());
+            formData.append('tags', editArtworkForm.tags.trim());
+            if (editArtworkFile) {
+                formData.append('artworkImage', editArtworkFile);
+            }
+            if (editArtworkThumbnailFile) {
+                formData.append('thumbnailImage', editArtworkThumbnailFile);
+            }
+
+            const res = await fetch(`${API_BASE}/api/artworks/${editingArtwork._id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+
+            if (res.ok) {
+                const updatedArtwork = await res.json();
+                setArtworks(prev => prev.map(artwork => artwork._id === updatedArtwork._id ? updatedArtwork : artwork));
+                setCollections(prev => prev.map(collection => ({
+                    ...collection,
+                    artworks: collection.artworks?.map(artwork => artwork._id === updatedArtwork._id ? updatedArtwork : artwork) || []
+                })));
+                closeEditArtworkModal();
+                setProfileMessage({ type: 'success', text: 'Artwork successfully updated.' });
+            } else {
+                const err = await res.json();
+                setProfileMessage({ type: 'error', text: err.message || 'Failed to update artwork.' });
+            }
+        } catch (error) {
+            console.error(error);
+            setProfileMessage({ type: 'error', text: 'Server error. Could not update artwork.' });
+        } finally {
+            setIsUpdatingArtwork(false);
+        }
+    };
+
+    const handleDeleteArtwork = async (artworkId) => {
+        const artwork = artworks.find(item => item._id === artworkId);
+        if (artwork && !userOwnsArtwork(artwork)) {
+            setProfileMessage({ type: 'error', text: "You can't delete another user's artwork." });
+            setShowDeleteArtworkConfirm(null);
+            return;
+        }
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE}/api/artworks/${artworkId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setArtworks(prev => prev.filter(a => a._id !== artworkId));
+                setCollections(prev => prev.map(collection => ({
+                    ...collection,
+                    artworks: collection.artworks?.filter(artwork => artwork._id !== artworkId) || []
+                })));
+                setShowDeleteArtworkConfirm(null);
+                setProfileMessage({ type: 'success', text: 'Artwork successfully removed.' });
+            } else {
+                const err = await res.json().catch(() => ({}));
+                setProfileMessage({ type: 'error', text: err.message || 'Failed to delete artwork.' });
+            }
+        } catch (error) {
+            console.error(error);
+            setProfileMessage({ type: 'error', text: 'Server error. Could not delete artwork.' });
+        }
+    };
+
     const handleFollow = async () => {
-        if (!currentUser) return;
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
+        if (!profileUser?._id || followLoading) return;
+
+        setFollowLoading(true);
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`${API_BASE}/api/auth/follow/${profileUser._id}`, {}, {
@@ -363,11 +548,18 @@ const Profile = ({ currentUser }) => {
                 ...prev,
                 followerCount: res.data.followerCount
             }));
+            setProfileMessage({
+                type: 'success',
+                text: res.data.following ? `You are now following ${displayName}.` : `You unfollowed ${displayName}.`
+            });
             if (activeTab === 'following' || activeTab === 'followers') {
                 fetchFollowingFollowers(activeTab);
             }
         } catch (error) {
             console.error('Follow error:', error);
+            setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Unable to update follow status.' });
+        } finally {
+            setFollowLoading(false);
         }
     };
 
@@ -418,21 +610,18 @@ const Profile = ({ currentUser }) => {
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         try {
             setUploadingAvatar(true);
             setAvatarSuccess('');
             const token = localStorage.getItem('token');
             const formData = new FormData();
             formData.append('avatar', file);
-
             const res = await axios.post(`${API_BASE}/api/auth/avatar`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
             setProfileUser(prev => ({ ...prev, avatar: res.data.avatar }));
             setAvatarSuccess('Profile picture successfully updated!');
             localStorage.setItem('avatar', res.data.avatar);
@@ -451,17 +640,35 @@ const Profile = ({ currentUser }) => {
     const handlePrivacyUpdate = async (setting, value) => {
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
             const privacy = { ...profileUser.privacy, [setting]: value };
-            await axios.put(`${API_BASE}/api/auth/privacy`, { privacy }, {
+            const res = await axios.put(`${API_BASE}/api/auth/privacy`, { privacy }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setProfileUser(prev => ({ ...prev, privacy }));
+            const updatedPrivacy = res.data.privacy || privacy;
+            setProfileUser(prev => ({ ...prev, privacy: updatedPrivacy }));
+
+            const fieldLabel = setting === 'hideFollowers' ? 'Followers' : 'Following';
+            setProfileMessage({
+                type: 'success',
+                text: value
+                    ? `${fieldLabel} has been hidden from other users.`
+                    : `${fieldLabel} is now visible to other users.`
+            });
         } catch (error) {
             console.error('Privacy update error:', error);
+            setProfileMessage({
+                type: 'error',
+                text: error.response?.data?.message || 'Unable to update privacy settings.'
+            });
         }
     };
 
-    const fetchFollowingFollowers = async (tab) => {
+    const fetchFollowingFollowers = useCallback(async (tab) => {
+        if (!profileUser?._id) return;
         try {
             const token = localStorage.getItem('token');
             if (tab === 'following') {
@@ -478,13 +685,13 @@ const Profile = ({ currentUser }) => {
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    };
+    }, [profileUser?._id]);
 
     useEffect(() => {
         if (activeTab === 'following' || activeTab === 'followers') {
             fetchFollowingFollowers(activeTab);
         }
-    }, [activeTab, profileUser]);
+    }, [activeTab, fetchFollowingFollowers]);
     
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
@@ -495,7 +702,9 @@ const Profile = ({ currentUser }) => {
     const displayBio = profileUser.bio || "No bio available.";
     const currentUserId = currentUser?._id || currentUser?.id;
     const profileUserId = profileUser._id || userId;
-    const isOwnProfile = !!currentUserId && !!profileUserId && currentUserId === profileUserId;
+    const isOwnProfile = !!currentUserId && !!profileUserId && String(currentUserId) === String(profileUserId);
+    const canViewFollowing = isOwnProfile || !profileUser.privacy?.hideFollowing;
+    const canViewFollowers = isOwnProfile || !profileUser.privacy?.hideFollowers;
     const visibleWorks = activeTab === 'bookmarks' ? savedArtworks : artworks;
 
     return (
@@ -534,15 +743,15 @@ const Profile = ({ currentUser }) => {
                             <div className={styles.nameBlock}>
                                 <h1>{displayName}</h1>
                                 <div className={styles.stats}>
-                                    <span><strong>{profileUser.followingCount || 0}</strong> Following</span>
-                                    <span><strong>{profileUser.followerCount || 0}</strong> Followers</span>
+                                    {canViewFollowing && <span><strong>{profileUser.followingCount || 0}</strong> Following</span>}
+                                    {canViewFollowers && <span><strong>{profileUser.followerCount || 0}</strong> Followers</span>}
                                 </div>
                             </div>
                         </div>
                         <div className={styles.actionBlock}>
                             {!isOwnProfile && (
-                                <button className={styles.followBtn} onClick={handleFollow}>
-                                    {isFollowing ? 'Unfollow' : 'Follow'}
+                                <button className={`${styles.followBtn} ${isFollowing ? styles.followingBtn : ''}`} onClick={handleFollow} disabled={followLoading}>
+                                    {followLoading ? 'Updating...' : isFollowing ? 'Unfollow' : 'Follow'}
                                 </button>
                             )}
                             <button className={styles.iconBtn} title="Share" onClick={handleShare}>
@@ -568,6 +777,7 @@ const Profile = ({ currentUser }) => {
                             )}
                         </div>
                     </div>
+
                     <div className={styles.socialRow}>
                         {editingSocials ? (
                             <div className={styles.socialEditContainer}>
@@ -614,14 +824,30 @@ const Profile = ({ currentUser }) => {
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                                     </a>
                                 )}
-                                {isOwnProfile && (!profileUser.socials?.twitter && !profileUser.socials?.instagram && !profileUser.socials?.website) && (
+                                {isOwnProfile && !profileUser.socials?.twitter && !profileUser.socials?.instagram && !profileUser.socials?.website && (
                                     <button onClick={() => setEditingSocials(true)} className={styles.addSocialBtn} title="Add social links">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    </button>
+                                )}
+                                {isOwnProfile && (
+                                    <button 
+                                        onClick={() => {
+                                            setEditingSocials(true);
+                                            setSocialLinks(profileUser.socials || { twitter: '', instagram: '', website: '' });
+                                        }} 
+                                        className={styles.editSocialBtn} 
+                                        title="Edit social links"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                        </svg>
                                     </button>
                                 )}
                             </>
                         )}
                     </div>
+
                     <div className={styles.bioBlock}>
                         {editingBio ? (
                             <div>
@@ -657,14 +883,20 @@ const Profile = ({ currentUser }) => {
                     </div>
                 )}
 
+                {profileMessage && (
+                    <div className={`${styles.profileNotice} ${profileMessage.type === 'error' ? styles.profileNoticeError : styles.profileNoticeSuccess}`}>
+                        {profileMessage.text}
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className={styles.tabsContainer}>
                     <button className={`${styles.tab} ${activeTab === 'portfolio' ? styles.activeTab : ''}`} onClick={() => setActiveTab('portfolio')}>Works</button>
                     <button className={`${styles.tab} ${activeTab === 'collections' ? styles.activeTab : ''}`} onClick={() => setActiveTab('collections')}>Collections</button>
-                    {(!profileUser.privacy?.hideFollowing || isOwnProfile) && (
+                    {canViewFollowing && (
                         <button className={`${styles.tab} ${activeTab === 'following' ? styles.activeTab : ''}`} onClick={() => setActiveTab('following')}>Following ({profileUser?.followingCount || 0})</button>
                     )}
-                    {(!profileUser.privacy?.hideFollowers || isOwnProfile) && (
+                    {canViewFollowers && (
                         <button className={`${styles.tab} ${activeTab === 'followers' ? styles.activeTab : ''}`} onClick={() => setActiveTab('followers')}>Followers ({profileUser?.followerCount || 0})</button>
                     )}
                     {isOwnProfile && <button className={`${styles.tab} ${activeTab === 'bookmarks' ? styles.activeTab : ''}`} onClick={() => setActiveTab('bookmarks')}>Bookmarks</button>}
@@ -737,7 +969,7 @@ const Profile = ({ currentUser }) => {
                         </div>
                     )}
 
-                    {/* Delete Confirmation Modal */}
+                    {/* Delete Collection Confirmation Modal */}
                     {showDeleteConfirm && (
                         <div className={styles.modalOverlay} onClick={() => setShowDeleteConfirm(null)}>
                             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -1054,11 +1286,11 @@ const Profile = ({ currentUser }) => {
                         </div>
                     )}
 
+                    {/* Portfolio Grid */}
                     <div className={styles.portfolioGrid}>
-                        {/* Portfolio / Bookmarks content */}
                         {(activeTab === 'portfolio' || activeTab === 'bookmarks') && visibleWorks.map((work) => (
-                            <div key={work._id} className={styles.artCard} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>
-                                <div className={styles.imageWrapper}>
+                            <div key={work._id} className={styles.artCard}>
+                                <div className={styles.imageWrapper} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>
                                     {isVideoArtwork(work) ? (
                                         <div className={styles.videoCardWrapper}>
                                             <video 
@@ -1094,7 +1326,23 @@ const Profile = ({ currentUser }) => {
                                         <span>{work.likes || 0}</span>
                                     </div>
                                 </div>
-                                <h4 className={styles.artTitle}>{work.title}</h4>
+                                <div className={styles.artworkMeta}>
+                                    <h4 className={styles.artTitle} onClick={() => navigate(`/gallery/${work._id}`)} style={{ cursor: 'pointer' }}>{work.title}</h4>
+                                    {isOwnProfile && userOwnsArtwork(work) && (
+                                        <div className={styles.artworkActions}>
+                                            <button onClick={() => openEditArtworkModal(work)} className={styles.iconBtnSmall} title="Edit">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                                </svg>
+                                            </button>
+                                            <button onClick={() => setShowDeleteArtworkConfirm(work._id)} className={styles.iconBtnSmall} title="Delete">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M9 3h6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
 
@@ -1129,6 +1377,126 @@ const Profile = ({ currentUser }) => {
                             ))
                         }
                     </div>
+
+                    {/* Edit Artwork Modal */}
+                    {showEditArtworkModal && editingArtwork && (
+                        <div className={styles.modalOverlay} onClick={closeEditArtworkModal}>
+                            <div className={styles.editArtworkModal} onClick={(e) => e.stopPropagation()}>
+                                <div className={styles.modalHeader}>
+                                    <h3 className={styles.modalTitle}>Edit Artwork</h3>
+                                    <button type="button" className={styles.modalClose} onClick={closeEditArtworkModal}>×</button>
+                                </div>
+                                <div className={styles.editArtworkContent}>
+                                    {/* Left side – media preview */}
+                                    <div className={styles.editMediaSection}>
+                                        <div className={styles.editDropZone}>
+                                            {editPreviewUrl ? (
+                                                <>
+                                                    {editMediaType === 'video' ? (
+                                                        <video src={editPreviewUrl} className={styles.editPreviewImage} controls />
+                                                    ) : (
+                                                        <img src={editPreviewUrl} alt="Preview" className={styles.editPreviewImage} />
+                                                    )}
+                                                    <button 
+                                                        type="button"
+                                                        className={styles.changeImageBtn}
+                                                        onClick={() => document.getElementById('edit-artwork-file').click()}
+                                                    >
+                                                        Replace Media
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <div className={styles.editDropZonePlaceholder} onClick={() => document.getElementById('edit-artwork-file').click()}>
+                                                    <svg className={styles.uploadIcon} viewBox="0 0 24 24">
+                                                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.36 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                                                    </svg>
+                                                    <p>Click or drag to replace artwork</p>
+                                                </div>
+                                            )}
+                                            <input 
+                                                id="edit-artwork-file"
+                                                type="file" 
+                                                accept="image/*,video/*" 
+                                                onChange={handleEditArtworkFileSelect}
+                                                style={{ display: 'none' }}
+                                            />
+                                        </div>
+                                        {editMediaType === 'video' && (
+                                            <div className={styles.editThumbnailSection}>
+                                                <label>Thumbnail (optional)</label>
+                                                <div className={styles.editThumbnailDropZone} onClick={() => document.getElementById('edit-thumbnail-file').click()}>
+                                                    {editThumbnailPreviewUrl ? (
+                                                        <img src={editThumbnailPreviewUrl} alt="Thumbnail" className={styles.editPreviewImage} />
+                                                    ) : (
+                                                        <div className={styles.editDropZonePlaceholder}>
+                                                            <svg className={styles.uploadIcon} viewBox="0 0 24 24">
+                                                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.36 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                                                            </svg>
+                                                            <p>Add a custom thumbnail</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <input 
+                                                    id="edit-thumbnail-file"
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    onChange={handleEditThumbnailSelect}
+                                                    style={{ display: 'none' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Right side – edit form */}
+                                    <div className={styles.editFormSection}>
+                                        <div className={styles.inputGroup}>
+                                            <label>Title *</label>
+                                            <input type="text" name="title" value={editArtworkForm.title} onChange={handleEditArtworkChange} className={styles.input} />
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label>Medium / Category</label>
+                                            <select name="medium" value={editArtworkForm.medium} onChange={handleEditArtworkChange} className={styles.select}>
+                                                <option value="digital_2d">Digital 2D Illustration</option>
+                                                <option value="3d_model">3D Modeling & Render</option>
+                                                <option value="traditional">Traditional (Paint, Ink, Pencil)</option>
+                                                <option value="animation">Animation / Motion Graphics</option>
+                                                <option value="ui_ux">UI/UX & Web Design</option>
+                                                <option value="photography">Photography</option>
+                                            </select>
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label>Description *</label>
+                                            <textarea name="description" value={editArtworkForm.description} onChange={handleEditArtworkChange} className={styles.textarea} rows="4" />
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label>Tags (comma separated) *</label>
+                                            <input type="text" name="tags" value={editArtworkForm.tags} onChange={handleEditArtworkChange} className={styles.input} />
+                                        </div>
+                                        <div className={styles.modalActions}>
+                                            <button className={styles.cancelBtn} onClick={closeEditArtworkModal}>Cancel</button>
+                                            <button className={styles.saveBtn} onClick={handleUpdateArtwork} disabled={isUpdatingArtwork}>
+                                                {isUpdatingArtwork ? 'Saving...' : 'Save Changes'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Delete Artwork Confirmation Modal */}
+                    {showDeleteArtworkConfirm && (
+                        <div className={styles.modalOverlay} onClick={() => setShowDeleteArtworkConfirm(null)}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                                <h4>Delete Artwork?</h4>
+                                <p>This action cannot be undone. The artwork will be permanently removed from your portfolio.</p>
+                                <div className={styles.modalActions}>
+                                    <button onClick={() => handleDeleteArtwork(showDeleteArtworkConfirm)} className={styles.saveBtn}>Delete</button>
+                                    <button onClick={() => setShowDeleteArtworkConfirm(null)} className={styles.cancelBtn}>Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
