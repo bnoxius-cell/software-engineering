@@ -83,24 +83,28 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  // this prevents multiple hashing 
-  if (!this.isModified("password")) { 
-    return next();
-  }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+userSchema.pre("save", async function() {
+  try {
+    // Hash password if modified
+    if (this.isModified("password")) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
 
-  if (!this.permissions) {
-    if (this.role === "student" || this.role === "faculty") this.permissions = ["basic_access"];
-    // else if (this.role === "faculty") this.permissions = ["course_access"];
-    // Admin permissions will come from form
+    // Set default permissions based on role
+    if (!this.permissions) {
+      if (this.role === "Student" || this.role === "Faculty") {
+        this.permissions = ["basic_access"];
+      }
+      // Admin permissions set explicitly
+    }
+  } catch (error) {
+    throw error;
   }
-  next();
-})
+});
 
-userSchema.methods.matchPassword = async function (enteredPassword) {
+userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
-}
+};
 
 module.exports = mongoose.model("User", userSchema);

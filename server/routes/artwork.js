@@ -274,8 +274,8 @@ router.get("/profile/:userId", async (req, res) => {
     }).populate("uploadedBy", "name username avatar");
     const userWithCounts = {
       ...user.toObject(),
-      followingCount: user.following.length,
-      followerCount: user.followers.length
+      followingCount: (user.following || []).length,
+      followerCount: (user.followers || []).length
     };
     res.status(200).json({ user: userWithCounts, artworks: artworks.map(serializeArtwork) });
   } catch (error) {

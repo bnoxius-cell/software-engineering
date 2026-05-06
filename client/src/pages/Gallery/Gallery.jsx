@@ -691,46 +691,48 @@ const Gallery = () => {
                                         <span>{selectedArtwork.likes || 0} likes</span>
                                     </div>
                                 </div>
-                                <div
-                                    className={styles.modalArtistLink}
-                                    onClick={(event) => goToArtistProfile(selectedArtwork, event)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter' || event.key === ' ') {
-                                            goToArtistProfile(selectedArtwork, event);
-                                        }
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <div className={styles.modalArtist}>
-                                        <img
-                                            src={getAvatarUrl(selectedArtwork.artistAvatar)}
-                                            alt={`${selectedArtwork.artistName}'s avatar`}
-                                            className={styles.artistAvatar}
-                                            onError={(event) => {
-                                                event.target.src = PROFILE_PLACEHOLDER;
-                                            }}
-                                        />
-                                        <div>
-                                            <p className={styles.artistNameModal}>{selectedArtwork.artistName}</p>
-                                            <p className={styles.artistRole}>Artist</p>
+                                <div className={styles.modalArtistRow}>
+                                    <div
+                                        className={styles.modalArtistLink}
+                                        onClick={(event) => goToArtistProfile(selectedArtwork, event)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                goToArtistProfile(selectedArtwork, event);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                    >
+                                        <div className={styles.modalArtist}>
+                                            <img
+                                                src={getAvatarUrl(selectedArtwork.artistAvatar)}
+                                                alt={`${selectedArtwork.artistName}'s avatar`}
+                                                className={styles.artistAvatar}
+                                                onError={(event) => {
+                                                    event.target.src = PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                            <div>
+                                                <p className={styles.artistNameModal}>{selectedArtwork.artistName}</p>
+                                                <p className={styles.artistRole}>Artist</p>
+                                            </div>
                                         </div>
                                     </div>
+                                    {getArtistId(selectedArtwork) && String(getArtistId(selectedArtwork)) !== String(currentUserId) && (
+                                        <button
+                                            type="button"
+                                            className={`${styles.followArtistBtn} ${followingStates[getArtistId(selectedArtwork)] ? styles.followingArtistBtn : ''}`}
+                                            onClick={(event) => handleFollowArtist(selectedArtwork, event)}
+                                            disabled={!!followLoading[getArtistId(selectedArtwork)]}
+                                        >
+                                            {followLoading[getArtistId(selectedArtwork)]
+                                                ? 'Updating...'
+                                                : followingStates[getArtistId(selectedArtwork)]
+                                                    ? 'Following'
+                                                    : 'Follow'}
+                                        </button>
+                                    )}
                                 </div>
-                                {getArtistId(selectedArtwork) && String(getArtistId(selectedArtwork)) !== String(currentUserId) && (
-                                    <button
-                                        type="button"
-                                        className={`${styles.followArtistBtn} ${followingStates[getArtistId(selectedArtwork)] ? styles.followingArtistBtn : ''}`}
-                                        onClick={(event) => handleFollowArtist(selectedArtwork, event)}
-                                        disabled={!!followLoading[getArtistId(selectedArtwork)]}
-                                    >
-                                        {followLoading[getArtistId(selectedArtwork)]
-                                            ? 'Updating...'
-                                            : followingStates[getArtistId(selectedArtwork)]
-                                                ? 'Following'
-                                                : 'Follow Artist'}
-                                    </button>
-                                )}
 
                                 {/* ===== COMMENTS SECTION ===== */}
                                 <div className={styles.commentsSection}>

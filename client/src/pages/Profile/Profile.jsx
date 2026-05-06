@@ -172,7 +172,7 @@ const Profile = ({ currentUser }) => {
                 const currentUserId = currentUser?._id || currentUser?.id;
                 const token = localStorage.getItem('token');
                 
-                if (currentUserId && currentUserId === targetId) {
+                if (currentUserId && String(currentUserId) === String(targetId)) {
                     if (token) {
                         try {
                             const savedRes = await axios.get(`${API_BASE}/api/auth/saved`, {
@@ -193,11 +193,13 @@ const Profile = ({ currentUser }) => {
                 const collectionsRes = await axios.get(`${API_BASE}/api/collections/user/${targetId}`);
                 setCollections(collectionsRes.data);
 
-                if (currentUserId && currentUserId !== targetId && token) {
+                if (currentUserId && String(currentUserId) !== String(targetId) && token) {
                     const currentUserData = await axios.get(`${API_BASE}/api/auth/following/${currentUserId}`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-                    setIsFollowing(currentUserData.data.following.some(user => user._id === targetId));
+                    setIsFollowing(currentUserData.data.following.some(user => String(user._id) === String(targetId)));
+                } else {
+                    setIsFollowing(false);
                 }
 
                 setError('');

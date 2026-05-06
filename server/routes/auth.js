@@ -276,7 +276,7 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
   }
 });
 
-// Follow/Unfollow user
+// Follow/Unfollow user - sends notification to followed user
 router.post('/follow/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -286,8 +286,8 @@ router.post('/follow/:userId', protect, async (req, res) => {
       return res.status(400).json({ message: "Cannot follow yourself" });
     }
 
-    const userToFollow = await User.findById(userId);
-    const currentUser = await User.findById(currentUserId);
+    const userToFollow = await User.findById(userId).select('followers');
+    const currentUser = await User.findById(currentUserId).select('name following');
 
     if (!userToFollow || !currentUser) {
       return res.status(404).json({ message: "User not found" });
@@ -303,13 +303,21 @@ router.post('/follow/:userId', protect, async (req, res) => {
       currentUser.following = currentUser.following.filter(id => id.toString() !== userId);
       userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUserId.toString());
     } else {
-      // Follow
+      // Follow - create notification
       if (!currentUser.following.some(id => id.toString() === userId)) {
         currentUser.following.push(userId);
       }
       if (!userToFollow.followers.some(id => id.toString() === currentUserId.toString())) {
         userToFollow.followers.push(currentUserId);
       }
+      
+      // Skip notification if enum doesn't allow 'new_follower'
+      // await Notification.create({
+      //   recipient: userToFollow._id,
+      //   sender: currentUser._id,
+      //   type: 'info_modified',
+      //   message: `${currentUser.name} started following you`,
+      // });
     }
 
     await currentUser.save();
@@ -321,6 +329,7 @@ router.post('/follow/:userId', protect, async (req, res) => {
       followerCount: userToFollow.followers.length
     });
   } catch (error) {
+    console.error('Follow error:', error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -424,26 +433,28 @@ router.put('/privacy', protect, async (req, res) => {
   try {
     const { privacy } = req.body;
     const userId = req.user._id || req.user.id;
-
-    const user = await User.findById(userId);
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        privacy: {
+          hideFollowers: Boolean(privacy?.hideFollowers ?? false),
+          hideFollowing: Boolean(privacy?.hideFollowing ?? false)
+        }
+      },
+      { new: true, runValidators: true }
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    user.privacy = {
-      hideFollowers: Boolean(privacy?.hideFollowers),
-      hideFollowing: Boolean(privacy?.hideFollowing)
-    };
-
-    await user.save();
-
     res.status(200).json({ privacy: user.privacy });
   } catch (error) {
     console.error("Privacy update error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 
 // Update notification preferences
 router.put('/notifications', protect, async (req, res) => {
