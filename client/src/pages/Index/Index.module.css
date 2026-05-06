@@ -26,18 +26,48 @@
     margin: 0;
 }
 
-/* ===== ENHANCED HERO SECTION - REDUCED SIZE ===== */
+/* ===== HERO SECTION WITH CSS STARFIELD ===== */
 .hero {
     display: flex;
     justify-content: center;
-    padding: 120px 20px 60px 20px; /* Reduced top padding */
+    padding: 120px 20px 60px 20px;
+    position: relative;
+    background: radial-gradient(ellipse at bottom, #0a0a0a 0%, #000000 100%);
+    overflow: hidden;
 }
 
+/* Stars container – positioned behind hero-box */
+.stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Individual star (generated via JSX, but styled here) */
+.star {
+    position: absolute;
+    background: #a1ff14;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: twinkle 3s infinite alternate;
+}
+
+/* Twinkling effect for stars */
+@keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Hero box - stays opaque and above stars */
 .hero-box {
     display: flex;
     width: 95%;
-    max-width: 1200px; /* Reduced from 1400px */
-    height: 500px; /* REDUCED: From 700px to 500px */
+    max-width: 1200px;
+    height: 500px;
     background-color: #0d1117;
     border: 1px solid #30363d;
     border-radius: 32px;
@@ -49,10 +79,10 @@
 
 .hero-text {
     flex: 1.1;
-    padding: 60px; /* Reduced from 80px */
+    padding: 60px;
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Reduced from 24px */
+    gap: 20px;
     justify-content: center;
 }
 
@@ -61,11 +91,11 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     font-weight: 700;
-    font-size: 0.85rem; /* Slightly reduced */
+    font-size: 0.85rem;
 }
 
 .hero-text h1 {
-    font-size: 3.5rem; /* REDUCED: From 4.5rem */
+    font-size: 3.5rem;
     color: #fff;
     line-height: 1.1;
     font-weight: 900;
@@ -78,9 +108,9 @@
 
 .hero-text p {
     color: #8b949e;
-    font-size: 1.1rem; /* Reduced from 1.25rem */
+    font-size: 1.1rem;
     line-height: 1.5;
-    max-width: 500px; /* Reduced from 550px */
+    max-width: 500px;
 }
 
 /* Artwork credit on hero image */
@@ -90,7 +120,7 @@
     right: 16px;
     font-size: 0.75rem;
     color: #ffffff;
-    opacity: 0.7;        /* or #8b949e, #6b7280, etc. */
+    opacity: 0.7;
     background: none;
     padding: 0;
     border: none;
@@ -100,40 +130,40 @@
     pointer-events: none;
 }
 
-/* ===== UPDATED BUTTON - SCALED BACK TO REASONABLE SIZE ===== */
+/* ===== BUTTON STYLES ===== */
 .button {
-    width: 200px; /* Slightly wider to accommodate big icon */
-    height: 65px; /* Taller for the bigger icon */
+    width: 200px;
+    height: 65px;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Align items to the left */
-    gap: 15px; /* Space between icon and text */
+    justify-content: flex-start;
+    gap: 15px;
     background-color: rgb(161,255,20);
     border-radius: 40px;
     color: #131313;
-    font-size: 20px; /* Slightly larger text */
+    font-size: 20px;
     font-weight: 700;
     border: none;
     cursor: pointer;
-    padding: 0 25px 0 15px; /* Left padding for icon, right padding for balance */
+    padding: 0 25px 0 15px;
     transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     line-height: 1;
 }
 
 .button-link {
     text-decoration: none;
-    display: inline-block; /* Ensures it wraps tightly around the button */
-    line-height: 0; /* Removes any extra line height spacing */
-    font-size: 0; /* Removes any extra space from inline elements */
-    width: fit-content; /* Makes the link container only as wide as the button */
-    height: fit-content; /* Makes the link container only as tall as the button */
+    display: inline-block;
+    line-height: 0;
+    font-size: 0;
+    width: fit-content;
+    height: fit-content;
 }
 
 .svgIcon {
-    height: 42px; /* BIG icon as requested */
+    height: 42px;
     width: 42px;
     transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0; /* Prevents icon from shrinking */
+    flex-shrink: 0;
 }
 
 .button:hover {
@@ -166,7 +196,7 @@
 /* ===== 3D GALLERY BACKGROUND EFFECTS ===== */
 .galleryPreviewSection {
     position: relative;
-    padding: 100px 0; /* Reduced from 150px */
+    padding: 100px 0;
     background-color: #000;
     overflow: hidden;
     perspective: 1000px;
@@ -223,7 +253,7 @@
 
 .sectionHeader {
     text-align: center;
-    margin-bottom: 50px; /* Reduced from 60px */
+    margin-bottom: 50px;
     position: relative;
     z-index: 10;
 }
@@ -233,11 +263,11 @@
     text-transform: uppercase;
     letter-spacing: 5px;
     font-weight: 800;
-    font-size: 0.9rem; /* Added font size */
+    font-size: 0.9rem;
 }
 
 .sectionHeader h2 {
-    font-size: 2.5rem; /* Added heading size */
+    font-size: 2.5rem;
     color: #fff;
     margin: 10px 0 0;
 }
@@ -266,6 +296,11 @@
     animation: scroll 60s linear infinite;
     gap: 60px;
     padding: 0 100px;
+    transition: animation-play-state 0.3s;
+}
+
+.slider:hover .slideTrack {
+    animation-play-state: paused;
 }
 
 @keyframes scroll {
@@ -298,6 +333,7 @@
     object-fit: cover;
     filter: brightness(0.7);
     transition: 0.4s;
+    pointer-events: none;
 }
 
 .cardFrame:hover {
@@ -335,7 +371,7 @@
 .cardInfo h4 {
     color: #fff;
     margin: 0;
-    font-size: 1.2rem; /* Added font size */
+    font-size: 1.2rem;
 }
 
 .cardInfo span {
@@ -344,33 +380,39 @@
     font-weight: 700;
 }
 
-/* Optional: Add responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-    .hero-box {
-        height: auto;
-        flex-direction: column;
-    }
-    
-    .hero-text {
-        padding: 40px;
-    }
-    
-    .hero-text h1 {
-        font-size: 2.5rem;
-    }
-    
-    .button {
-        width: 160px;
-        height: 55px;
-        font-size: 16px;
-    }
-    
-    .svgIcon {
-        height: 30px;
-    }
+/* ===== VIDEO BADGE ===== */
+.videoBadge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #a1ff14;
+    border: 1px solid rgba(161, 255, 20, 0.5);
+    z-index: 5;
+    pointer-events: none;
 }
 
-/* Additional styles for better error/empty states */
+.videoBadge svg {
+    fill: #a1ff14;
+    width: 12px;
+    height: 12px;
+}
+
+.videoDuration {
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    font-size: 0.7rem;
+}
+
+/* ===== LOADER & ERROR STATES ===== */
 .loader {
     color: #a1ff14;
     text-align: center;
@@ -406,103 +448,12 @@
     height: 100%;
 }
 
-/* Add hover pause to slider */
-.slideTrack {
-    display: flex;
-    width: fit-content;
-    animation: scroll 60s linear infinite;
-    gap: 60px;
-    padding: 0 100px;
-    transition: animation-play-state 0.3s;
-}
-
-.slider:hover .slideTrack {
-    animation-play-state: paused;
-}
-
 @keyframes pulse {
-    0%, 100% {
-        opacity: 0.6;
-    }
-    50% {
-        opacity: 1;
-    }
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
-
-/* ===== VIDEO BADGE (same as gallery) ===== */
-.videoBadge {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    border-radius: 16px;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #a1ff14;
-    border: 1px solid rgba(161, 255, 20, 0.5);
-    z-index: 5;
-    pointer-events: none;
-}
-
-.videoBadge svg {
-    fill: #a1ff14;
-    width: 12px;
-    height: 12px;
-}
-
-.videoDuration {
-    font-family: monospace;
-    letter-spacing: 0.5px;
-    font-size: 0.7rem;
-}
-
-/* Fix slider z-index and positioning */
-.slider {
-    position: relative; /* ensures child absolute positioning is contained */
-    height: 450px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    z-index: 10;
-}
-
-/* Ensure cardFrame has proper stacking context */
-.cardFrame {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background: #0d1117;
-    border-radius: 20px;
-    border: 1px solid #30363d;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer;
-}
-
-/* Make video fill the frame and not block interactions */
-.cardFrame video,
-.cardFrame img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: brightness(0.7);
-    transition: 0.4s;
-    pointer-events: none; /* prevents video from interfering with link click */
-}
-
-/* Hover effects already defined – keep them */
-.cardFrame:hover video,
-.cardFrame:hover img {
-    filter: brightness(1.1);
-}
-
-/* ===== WELCOME TOAST (floating inside hero) ===== */
+/* ===== WELCOME TOAST ===== */
 .welcomeToast {
     position: absolute;
     top: 20px;
@@ -569,13 +520,26 @@
     }
 }
 
-/* Make the hero-box position relative so toast stays inside */
-.hero-box {
-    position: relative;
-}
-
-/* Responsive: smaller toast on mobile */
+/* Responsive adjustments */
 @media (max-width: 768px) {
+    .hero-box {
+        height: auto;
+        flex-direction: column;
+    }
+    .hero-text {
+        padding: 40px;
+    }
+    .hero-text h1 {
+        font-size: 2.5rem;
+    }
+    .button {
+        width: 160px;
+        height: 55px;
+        font-size: 16px;
+    }
+    .svgIcon {
+        height: 30px;
+    }
     .toastContent {
         padding: 0.4rem 0.8rem;
     }

@@ -73,8 +73,31 @@ const Index = ({ user }) => {
 
   return (
     <div className={styles.pageWrapper}>
-      {/* ===== HERO SECTION WITH WELCOME TOAST ===== */}
+      {/* ===== HERO SECTION WITH CSS STARFIELD ===== */}
       <section className={styles.hero}>
+        {/* Pure CSS stars – generated once, no canvas flicker */}
+        <div className={styles.stars}>
+          {[...Array(80)].map((_, i) => {
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const size = Math.random() * 2 + 1;
+            const delay = Math.random() * 5;
+            return (
+              <div
+                key={i}
+                className={styles.star}
+                style={{
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  animationDelay: `${delay}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+
         <div className={styles["hero-box"]}>
           {/* Welcome toast – appears only once after login */}
           {showWelcome && userName && (
