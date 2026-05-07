@@ -2,7 +2,7 @@
     min-height: 100vh;
     padding-top: 140px; 
     padding-bottom: 4rem;
-    position: relative;   /* ← add this */
+    position: relative;
 }
 
 .feedHeader {
@@ -70,12 +70,10 @@
     margin: 0 auto;
 }
 
-/* Responsive columns */
 @media (max-width: 1200px) { .masonryGrid { column-count: 3; } }
 @media (max-width: 900px) { .masonryGrid { column-count: 2; } }
 @media (max-width: 600px) { .masonryGrid { column-count: 1; } }
 
-/* Art Card Base */
 .artCard {
     break-inside: avoid;
     margin-bottom: 1.5rem;
@@ -100,7 +98,6 @@
     transition: all 0.4s ease;
 }
 
-/* Card Overlay */
 .cardOverlay {
     position: absolute;
     bottom: 0;
@@ -149,7 +146,6 @@
     margin-bottom: 0.25rem;
 }
 
-/* Hover Effects */
 .masonryGrid:has(.artCard:hover) .artCard:not(:hover) {
     filter: brightness(0.4) grayscale(0.3);
 }
@@ -164,7 +160,7 @@
     opacity: 1;
 }
 
-/* Modal Overlay */
+/* Modal styles (unchanged) */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -205,7 +201,6 @@
     }
 }
 
-/* Close Button - Properly positioned */
 .closeBtn {
     position: absolute;
     top: 20px;
@@ -240,7 +235,6 @@
     gap: 0;
 }
 
-/* Left Side - Artwork Display */
 .modalArtwork {
     flex: 1.5;
     background: #000;
@@ -258,7 +252,6 @@
     transition: transform 0.3s ease;
 }
 
-/* Right Side - Artwork Info */
 .modalInfo {
     flex: 1;
     padding: 2rem;
@@ -267,6 +260,8 @@
     border-left: 1px solid rgba(161, 255, 20, 0.2);
     position: relative;
 }
+
+/* ... all other modal, comments, loader, video badge, etc. styles remain exactly as in your original file ... */
 
 /* Modal Header with Title and Actions - Top section */
 .modalHeader {

@@ -280,7 +280,6 @@ const Gallery = () => {
 
             if (!res.ok) throw new Error('Server request failed');
 
-            // Sync with server state to be 100% accurate, handling any race conditions
             const data = await res.json();
             setComments(prev => prev.map(c => 
                 c._id === commentId ? { ...c, likes: data.likes } : c
@@ -290,7 +289,6 @@ const Gallery = () => {
             setCommentLikeStates(prev => ({ ...prev, [commentId]: isLiked }));
             setComments(prev => prev.map(c => {
                 if (c._id === commentId) {
-                    // This reverses the optimistic increment/decrement
                     return { ...c, likes: (c.likes || 0) - (!isLiked ? 1 : -1) };
                 }
                 return c;
@@ -453,7 +451,7 @@ const Gallery = () => {
         }
     };
 
-    // --- VIDEO CARD RENDERING ---
+    // --- VIDEO CARD RENDERING (hover play restored) ---
     const renderCardMedia = (artwork) => {
         if (!isVideoArtwork(artwork)) {
             return (
@@ -479,7 +477,8 @@ const Gallery = () => {
                     className={styles.artImage}
                     muted
                     loop
-                    preload="metadata"
+                    preload="auto"
+                    playsInline
                     onLoadedMetadata={(e) => handleVideoMetadataLoaded(artwork._id, e.target.duration)}
                     onMouseEnter={() => videoRefs.current[artwork._id]?.play()}
                     onMouseLeave={() => {

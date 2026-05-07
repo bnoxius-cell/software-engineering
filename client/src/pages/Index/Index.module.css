@@ -189,10 +189,34 @@
 /* ===== 3D GALLERY BACKGROUND EFFECTS ===== */
 .galleryPreviewSection {
     position: relative;
-    padding: 100px 0;
-    background-color: #000;
+    padding: 96px 0;
+    background:
+        radial-gradient(ellipse at 20% 35%, rgba(0, 204, 170, 0.08), transparent 36%),
+        radial-gradient(ellipse at 78% 24%, rgba(161, 255, 20, 0.08), transparent 34%),
+        radial-gradient(ellipse at bottom, #071005 0%, #000000 64%);
     overflow: hidden;
     perspective: 1000px;
+}
+
+.recentStars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.recentStar {
+    position: absolute;
+    background: #ffffff;
+    border-radius: 50%;
+    opacity: 0.42;
+    box-shadow: 0 0 8px rgba(161, 255, 20, 0.45);
+    animation: recentTwinkle 4s infinite alternate;
+}
+
+@keyframes recentTwinkle {
+    0% { opacity: 0.18; transform: scale(0.8); }
+    100% { opacity: 0.95; transform: scale(1.28); }
 }
 
 .perspectiveGridFloor {
@@ -244,11 +268,338 @@
     z-index: 2;
 }
 
+.spaceDust {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 12% 24%, rgba(255,255,255,0.75) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 28% 62%, rgba(161,255,20,0.5) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 64% 18%, rgba(255,255,255,0.65) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 86% 44%, rgba(0,204,170,0.5) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 76% 76%, rgba(255,255,255,0.5) 0 1px, transparent 1.5px);
+    background-size: 240px 240px, 280px 280px, 340px 340px, 300px 300px, 380px 380px;
+    opacity: 0.45;
+    animation: starDrift 28s linear infinite;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* ===== GREEN ROCKET ACCENT (rotated 45°, tilted exhaust) ===== */
+.rocketOrbit {
+    position: absolute;
+    right: max(32px, calc((100vw - 1180px) / 10 + 58px));
+    bottom: 210px;
+    width: 140px;          /* increased to fit rotated rocket */
+    height: 140px;         /* increased to fit rotated rocket */
+    z-index: 3;
+}
+
+.rocket {
+    background-color: #a1ff14;
+    height: 32px;
+    width: 16px;
+    border-radius: 50% 50% 0 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);  /* rotate 45° and center */
+    transform-origin: center center;
+    overflow: visible;
+}
+
+/* The rest of the rocket children (window, fire, gas) remain unchanged */
+.rocket:before {
+    content: "";
+    position: absolute;
+    background-color: #33cc66;
+    height: 14px;
+    width: 38px;
+    border-radius: 50% 50% 0 0;
+    z-index: -1;
+    right: -11px;
+    bottom: 0;
+}
+
+.rocket:after {
+    content: "";
+    position: absolute;
+    background-color: #00ccaa;
+    height: 3px;
+    width: 10px;
+    border-radius: 0 0 2px 2px;
+    bottom: -3px;
+    left: 3px;
+}
+
+.rocketWindow {
+    background-color: #0d1117;
+    height: 6px;
+    width: 6px;
+    border: 1px solid #b8d2ec;
+    border-radius: 50%;
+    position: absolute;
+    top: 10px;
+    left: 4px;
+}
+
+.rocketFire {
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 20px;
+    background: radial-gradient(ellipse at center, #a1ff14 0%, #33cc66 40%, #008866 70%, rgba(0,0,0,0) 100%);
+    border-radius: 50%;
+    animation: rocketFlame 0.3s infinite alternate;
+    z-index: -1;
+}
+
+@keyframes rocketFlame {
+    0% { transform: translateX(-50%) scaleY(1); opacity: 0.9; }
+    100% { transform: translateX(-50%) scaleY(1.4); opacity: 0.5; }
+}
+
+.rocketGas {
+    position: absolute;
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: rgba(161, 255, 20, 0.8);
+    border-radius: 50%;
+    animation: rocketGasBubble 1.5s infinite ease-out;
+}
+
+/* Gas positions remain the same – they will rotate with the rocket, so bubbles move diagonally */
+.rocketGas:nth-child(3) { animation-delay: 0.3s; left: 38%; }
+.rocketGas:nth-child(4) { animation-delay: 0.6s; left: 62%; }
+.rocketGas:nth-child(5) { animation-delay: 0.9s; left: 45%; }
+.rocketGas:nth-child(6) { animation-delay: 1.2s; left: 55%; }
+.rocketGas:nth-child(7) { animation-delay: 1.5s; left: 50%; }
+.rocketGas:nth-child(8) { animation-delay: 1.8s; left: 40%; }
+.rocketGas:nth-child(9) { animation-delay: 2.1s; left: 60%; }
+
+@keyframes rocketGasBubble {
+    0% { transform: translateX(-50%) scale(0.5); opacity: 0.8; }
+    100% { transform: translateX(-50%) translateY(30px) scale(1.6); opacity: 0; }
+}
+
+/* ===== OTHER ACCENTS ===== */
+.satelliteAccent,
+.creativeOrbit,
+.paletteAccent,
+.frameAccent {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.satelliteAccent {
+    top: 88px;                       /* moved up (was 118px) */
+    right: max(184px, calc((100vw - 1180px) / 15 + 270px));
+    width: 112px;
+    height: 72px;
+    transform: rotate(-14deg);
+    animation: satelliteDrift 9s ease-in-out infinite;
+}
+
+.satelliteBody {
+    position: absolute;
+    left: 42px;
+    top: 22px;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: linear-gradient(145deg, #d7dee8, #4e626f);
+    box-shadow: 0 0 18px rgba(0, 204, 170, 0.32);
+}
+
+.satellitePanelLeft,
+.satellitePanelRight {
+    position: absolute;
+    top: 18px;
+    width: 34px;
+    height: 36px;
+    border: 1px solid rgba(161, 255, 20, 0.4);
+    background:
+        linear-gradient(90deg, transparent 48%, rgba(161,255,20,0.35) 49% 51%, transparent 52%),
+        linear-gradient(0deg, transparent 48%, rgba(0,204,170,0.35) 49% 51%, transparent 52%),
+        rgba(13, 17, 23, 0.72);
+}
+
+.satellitePanelLeft {
+    left: 5px;
+}
+
+.satellitePanelRight {
+    right: 5px;
+}
+
+.satelliteSignal {
+    position: absolute;
+    right: -1px;
+    top: 3px;
+    width: 28px;
+    height: 28px;
+    border-top: 2px solid rgba(161, 255, 20, 0.55);
+    border-right: 2px solid rgba(161, 255, 20, 0.55);
+    border-radius: 0 28px 0 0;
+    animation: signalPulse 1.8s ease-in-out infinite;
+}
+
+.creativeOrbit {
+    top: 128px;
+    left: max(24px, calc((100vw - 1180px) / 2 - 36px));
+    width: 110px;
+    height: 110px;
+    border: 1px solid rgba(161, 255, 20, 0.32);
+    border-radius: 50%;
+    box-shadow: inset 0 0 20px rgba(0, 204, 170, 0.12), 0 0 18px rgba(161, 255, 20, 0.14);
+    animation: orbitFloat 8s ease-in-out infinite;
+}
+
+.creativeOrbit::before,
+.creativeOrbit::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+}
+
+.creativeOrbit::before {
+    width: 12px;
+    height: 12px;
+    top: 12px;
+    right: 18px;
+    background: #a1ff14;
+    box-shadow: 0 0 14px rgba(161, 255, 20, 0.8);
+}
+
+.creativeOrbit::after {
+    width: 70px;
+    height: 18px;
+    left: 19px;
+    top: 45px;
+    border-top: 1px solid rgba(0, 204, 170, 0.55);
+    transform: rotate(-18deg);
+}
+
+.paletteAccent {
+    left: max(26px, calc((100vw - 1180px) / 2 + 20px));
+    bottom: 190px;
+    width: 68px;
+    height: 54px;
+    border: 1px solid rgba(161, 255, 20, 0.28);
+    border-radius: 50% 44% 48% 42%;
+    background: rgba(13, 17, 23, 0.58);
+    box-shadow: 0 0 20px rgba(161, 255, 20, 0.14);
+    animation: artDrift 7s ease-in-out infinite;
+}
+
+.paletteAccent::before {
+    content: "";
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.paletteAccent span {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.paletteAccent span:nth-child(1) {
+    left: 15px;
+    top: 13px;
+    background: #a1ff14;
+}
+
+.paletteAccent span:nth-child(2) {
+    left: 31px;
+    top: 10px;
+    background: #00ccaa;
+}
+
+.paletteAccent span:nth-child(3) {
+    left: 23px;
+    top: 29px;
+    background: #ffffff;
+}
+
+.frameAccent {
+    top: 312px;
+    right: max(156px, calc((100vw - 1180px) / 2 + 170px));
+    width: 58px;
+    height: 42px;
+    border: 2px solid rgba(255, 255, 255, 0.24);
+    box-shadow: 0 0 18px rgba(0, 204, 170, 0.2);
+    transform: rotate(12deg);
+    animation: frameFloat 9s ease-in-out infinite;
+}
+
+.frameAccent::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    bottom: 8px;
+    height: 16px;
+    background:
+        linear-gradient(135deg, transparent 0 45%, rgba(161, 255, 20, 0.7) 46% 100%),
+        linear-gradient(45deg, transparent 0 42%, rgba(0, 204, 170, 0.7) 43% 100%);
+}
+
+@keyframes starDrift {
+    from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+    to { background-position: 120px 240px, -140px 280px, 170px 340px, -150px 300px, 190px 380px; }
+}
+
+@keyframes orbitFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(12px) rotate(10deg); }
+}
+
+@keyframes satelliteDrift {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-14deg); }
+    50% { transform: translate3d(-18px, 12px, 0) rotate(-6deg); }
+}
+
+@keyframes signalPulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.86); }
+    50% { opacity: 0.9; transform: scale(1.08); }
+}
+
+@keyframes artDrift {
+    0%, 100% { transform: translateY(0) rotate(-8deg); }
+    50% { transform: translateY(-10px) rotate(4deg); }
+}
+
+@keyframes frameFloat {
+    0%, 100% { transform: translateY(0) rotate(12deg); }
+    50% { transform: translateY(-12px) rotate(5deg); }
+}
+
 .sectionHeader {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 44px;
     position: relative;
     z-index: 10;
+}
+
+.sectionTitleRow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    position: relative;
 }
 
 .neonLabel {
@@ -263,6 +614,64 @@
     font-size: 2.5rem;
     color: #fff;
     margin: 10px 0 0;
+}
+
+.penDrawAccent {
+    position: relative;
+    width: 120px;
+    height: 54px;
+    margin-top: 14px;
+    pointer-events: none;
+}
+
+.penNib {
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 56px;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #d7dee8 0 54%, #a1ff14 55% 74%, #00ccaa 75% 100%);
+    box-shadow: 0 0 18px rgba(161, 255, 20, 0.3);
+    transform: rotate(-28deg);
+    animation: penSketch 2.6s ease-in-out infinite;
+}
+
+.penNib::after {
+    content: "";
+    position: absolute;
+    right: -9px;
+    top: 2px;
+    width: 0;
+    height: 0;
+    border-left: 13px solid #a1ff14;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
+.penLine {
+    position: absolute;
+    left: 20px;
+    bottom: 12px;
+    width: 94px;
+    height: 22px;
+    border-bottom: 2px solid #a1ff14;
+    border-radius: 50%;
+    filter: drop-shadow(0 0 8px rgba(161, 255, 20, 0.6));
+    animation: drawLine 2.6s ease-in-out infinite;
+    transform-origin: left center;
+}
+
+@keyframes penSketch {
+    0%, 100% { transform: translate(0, 0) rotate(-28deg); }
+    45% { transform: translate(58px, 22px) rotate(-18deg); }
+    70% { transform: translate(72px, 12px) rotate(-24deg); }
+}
+
+@keyframes drawLine {
+    0% { transform: scaleX(0); opacity: 0; }
+    35%, 80% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0; }
 }
 
 .neonDivider {
@@ -285,6 +694,46 @@
 .carousel {
     position: relative;
     margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Navigation Buttons */
+.navButtonPrev,
+.navButtonNext {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(13, 17, 23, 0.8);
+    border: 1px solid rgba(161, 255, 20, 0.4);
+    border-radius: 12px;
+    cursor: pointer;
+    color: #a1ff14;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.navButtonPrev svg,
+.navButtonNext svg {
+    width: 20px;
+    height: 20px;
+}
+
+.navButtonPrev:hover,
+.navButtonNext:hover {
+    background: rgba(161, 255, 20, 0.15);
+    border-color: #a1ff14;
+    box-shadow: 0 0 12px rgba(161, 255, 20, 0.3);
+    transform: scale(1.05);
+}
+
+.navButtonPrev:active,
+.navButtonNext:active {
+    transform: scale(0.95);
 }
 
 /* Main slide container */
@@ -295,6 +744,7 @@
     background: #0d1117;
     border: 1px solid rgba(161, 255, 20, 0.3);
     box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    flex: 1;
 }
 
 /* Each slide becomes a positioned container */
@@ -327,8 +777,32 @@
     display: block;
 }
 
+/* Video element styling */
+.carouselVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
 
+/* Custom video controls styling */
+.carouselVideo::-webkit-media-controls {
+    background-color: rgba(0, 0, 0, 0.8);
+}
 
+.carouselVideo::-webkit-media-controls-panel {
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+}
+
+.carouselVideo::-webkit-media-controls-play-button {
+    background-color: #a1ff14;
+}
+
+.carouselVideo::-moz-media-controls {
+    background-color: rgba(0, 0, 0, 0.8);
+}
 
 /* Overlays – positioned relative to the link, clicks pass through */
 .artworkDetailsOverlay,
@@ -440,6 +914,231 @@
     }
     .carouselLink {
         height: 250px;
+    }
+    .carousel {
+        gap: 8px;
+    }
+    .navButtonPrev,
+    .navButtonNext {
+        width: 36px;
+        height: 36px;
+    }
+    .navButtonPrev svg,
+    .navButtonNext svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Carousel layout refinements */
+.carouselContainer {
+    position: relative;
+    z-index: 10;
+    max-width: 980px;
+}
+
+.carousel {
+    display: block;
+}
+
+.carouselStage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.navButtonPrev,
+.navButtonNext {
+    z-index: 12;
+}
+
+.mainSlideWrapper {
+    min-width: 0;
+}
+
+.carouselSlide {
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(18px) scale(0.985);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.carouselSlide.activeSlide {
+    position: relative;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) scale(1);
+}
+
+.carouselLink {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    min-height: 280px;
+    max-height: 430px;
+}
+
+.carouselLink img {
+    object-fit: cover;
+}
+
+.videoBadgeCarousel {
+    top: 16px;
+    bottom: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.carouselCaption {
+    min-height: 48px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.35;
+}
+
+.carouselThumbnails {
+    margin: 16px 52px 0;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.carouselThumbnails li {
+    flex: none;
+    max-width: none;
+    margin: 0;
+    min-width: 0;
+}
+
+.thumbButton {
+    aspect-ratio: 4 / 3;
+    opacity: 0.72;
+    box-shadow: 0 0 0 1px rgba(161, 255, 20, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.thumbVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+    pointer-events: none;
+}
+
+.thumbButton:hover,
+.activeThumb {
+    opacity: 1;
+}
+
+.activeThumb {
+    box-shadow: 0 0 0 3px #a1ff14, 0 0 20px rgba(161, 255, 20, 0.35);
+}
+
+@media (max-width: 768px) {
+    /* Removed old rocketVideoAccent block */
+    .creativeOrbit,
+    .satelliteAccent,
+    .paletteAccent,
+    .frameAccent {
+        opacity: 0.42;
+        transform: scale(0.75);
+    }
+
+    .sectionTitleRow {
+        gap: 10px;
+    }
+
+    .penDrawAccent {
+        width: 78px;
+        transform: scale(0.75);
+        transform-origin: left center;
+    }
+
+    .carouselLink {
+        height: auto;
+        min-height: 220px;
+    }
+
+    .carouselStage {
+        gap: 8px;
+    }
+
+    .carouselThumbnails {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin: 16px 44px 0;
+        gap: 10px;
+    }
+
+    .carouselThumbnails li {
+        flex: none;
+        max-width: none;
+        margin: 0;
+    }
+}
+
+@media (max-width: 520px) {
+    .rocketOrbit,
+    .satelliteAccent,
+    .creativeOrbit,
+    .paletteAccent,
+    .frameAccent {
+        display: none;
+    }
+
+    .sectionTitleRow {
+        display: block;
+    }
+
+    .penDrawAccent {
+        display: none;
+    }
+
+    .carouselContainer {
+        padding: 0 12px;
+    }
+
+    .carouselStage {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) 40px;
+        gap: 8px;
+    }
+
+    .carouselLink {
+        min-height: 190px;
+        aspect-ratio: 4 / 3;
+    }
+
+    .carouselCaption {
+        min-height: 52px;
+        padding: 12px 14px;
+        font-size: 0.9rem;
+    }
+
+    .artworkDetailsOverlay {
+        right: 10px;
+        bottom: 10px;
+        max-width: calc(100% - 20px);
+        font-size: 0.7rem;
+    }
+
+    .videoBadgeCarousel {
+        top: 10px;
+        right: 10px;
+    }
+
+    .carouselThumbnails {
+        margin: 14px 0 0;
     }
 }
 
