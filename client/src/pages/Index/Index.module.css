@@ -36,7 +36,6 @@
     overflow: hidden;
 }
 
-/* Stars container – positioned behind hero-box */
 .stars {
     position: absolute;
     top: 0;
@@ -47,7 +46,6 @@
     z-index: 1;
 }
 
-/* Individual star (generated via JSX, but styled here) */
 .star {
     position: absolute;
     background: #a1ff14;
@@ -56,13 +54,11 @@
     animation: twinkle 3s infinite alternate;
 }
 
-/* Twinkling effect for stars */
 @keyframes twinkle {
     0% { opacity: 0.2; transform: scale(1); }
     100% { opacity: 1; transform: scale(1.2); }
 }
 
-/* Hero box - stays opaque and above stars */
 .hero-box {
     display: flex;
     width: 95%;
@@ -113,7 +109,6 @@
     max-width: 500px;
 }
 
-/* Artwork credit on hero image */
 .artworkCredit {
     position: absolute;
     bottom: 12px;
@@ -130,7 +125,6 @@
     pointer-events: none;
 }
 
-/* ===== BUTTON STYLES ===== */
 .button {
     width: 200px;
     height: 65px;
@@ -180,7 +174,6 @@
     transform: rotate(250deg);
 }
 
-/* ===== HERO IMAGE SECTION ===== */
 .hero-image {
     flex: 1.4;
     position: relative;
@@ -280,145 +273,326 @@
     box-shadow: 0 0 20px #a1ff14;
 }
 
-/* ===== CAROUSEL SLIDER ===== */
-.slider {
-    height: 450px;
-    width: 100%;
-    display: flex;
-    align-items: center;
+/* ==========================================================================
+   === REACT CAROUSEL (full-area clickable) ===
+   ========================================================================== */
+.carouselContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.carousel {
     position: relative;
-    z-index: 10;
+    margin-bottom: 22px;
 }
 
-.slideTrack {
-    display: flex;
-    width: fit-content;
-    animation: scroll 60s linear infinite;
-    gap: 60px;
-    padding: 0 100px;
-    transition: animation-play-state 0.3s;
-}
-
-.slider:hover .slideTrack {
-    animation-play-state: paused;
-}
-
-@keyframes scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-
-.slide {
-    width: 320px;
-    height: 420px;
-    perspective: 1000px;
-}
-
-.cardFrame {
+/* Main slide container */
+.mainSlideWrapper {
     position: relative;
-    width: 100%;
-    height: 100%;
-    background: #0d1117;
-    border-radius: 20px;
-    border: 1px solid #30363d;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer;
+    border-radius: 24px;
+    background: #0d1117;
+    border: 1px solid rgba(161, 255, 20, 0.3);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
 }
 
-.cardFrame img,
-.cardFrame video {
+/* Each slide becomes a positioned container */
+.carouselSlide {
+    display: none;
+    position: relative;
+}
+
+.carouselSlide.activeSlide {
+    display: block;
+}
+
+/* The link covers the entire slide area (including black bars) */
+.carouselLink {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 400px;           /* fixed height – adjust as desired */
+    background: #000;
+    text-decoration: none;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* The image fills the link area without distortion */
+.carouselLink img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    filter: brightness(0.7);
-    transition: 0.4s;
-    pointer-events: none;
+    object-fit: cover;     /* fills the whole clickable area */
+    display: block;
 }
 
-.cardFrame:hover {
-    transform: translateY(-20px) scale(1.05);
-    border-color: #a1ff14;
-    box-shadow: 0 0 30px rgba(161, 255, 20, 0.3);
-}
 
-.cardFrame:hover img,
-.cardFrame:hover video {
-    filter: brightness(1.1);
-}
 
-.holographicOverlay {
+
+/* Overlays – positioned relative to the link, clicks pass through */
+.artworkDetailsOverlay,
+.videoBadgeCarousel {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 55%, transparent 60%);
-    background-size: 200% 100%;
+    pointer-events: none;    /* clicks go straight to the link */
     z-index: 2;
-    transition: 0.6s;
 }
 
-.cardFrame:hover .holographicOverlay {
-    background-position: -150% 0;
-}
-
-.cardInfo {
-    position: absolute;
-    bottom: 0; left: 0; width: 100%;
-    padding: 25px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
-    z-index: 3;
-}
-
-.cardInfo h4 {
-    color: #fff;
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.cardInfo span {
-    color: #a1ff14;
+.artworkDetailsOverlay {
+    bottom: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 500;
+    color: #a1ff14;
+    border: 1px solid rgba(161, 255, 20, 0.5);
+    font-family: monospace;
+    letter-spacing: 0.5px;
 }
 
-/* ===== VIDEO BADGE ===== */
-.videoBadge {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
+.videoBadgeCarousel {
+    bottom: 60px;
+    right: 16px;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
     border-radius: 16px;
     padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
     color: #a1ff14;
     border: 1px solid rgba(161, 255, 20, 0.5);
-    z-index: 5;
+}
+
+/* Caption (title) – placed outside the link, below the image */
+.carouselCaption {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(13,17,23,0.95), #0a0c10);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Thumbnails – unchanged */
+.carouselThumbnails {
+    list-style: none;
+    padding: 0;
+    margin: 20px -10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.carouselThumbnails li {
+    flex: 0 0 calc(100% / 6 - 20px);
+    max-width: calc(100% / 6 - 20px);
+    margin: 0 10px;
+}
+
+.thumbButton {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    aspect-ratio: 1 / 1;
+}
+
+.thumbButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbButton:hover {
+    transform: scale(1.02);
+}
+
+.activeThumb {
+    box-shadow: 0 0 0 3px #a1ff14;
+}
+
+.thumbVideoBadge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 12px;
+    padding: 2px 5px;
+    color: #a1ff14;
+    font-size: 0.7rem;
+    backdrop-filter: blur(2px);
     pointer-events: none;
 }
 
-.videoBadge svg {
-    fill: #a1ff14;
-    width: 12px;
-    height: 12px;
+/* Responsive */
+@media (max-width: 768px) {
+    .carouselThumbnails li {
+        flex: 0 0 calc(100% / 3 - 16px);
+        max-width: calc(100% / 3 - 16px);
+        margin: 0 8px;
+    }
+    .carouselLink {
+        height: 250px;
+    }
 }
 
-.videoDuration {
+/* ===== "SEE MORE" BUTTON ===== */
+.viewGalleryWrapper {
+    text-align: center;
+    margin-top: 40px;
+    position: relative;
+    z-index: 10;
+}
+
+.seeMoreBtn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 13rem;
+    height: 3rem;
+    background-size: 300% 300%;
+    cursor: pointer;
+    backdrop-filter: blur(1rem);
+    border-radius: 5rem;
+    transition: 0.5s;
+    animation: gradient_301 5s ease infinite;
+    border: double 4px transparent;
+    background-image: linear-gradient(#212121, #212121),
+        linear-gradient(137.48deg, #a1ff14 10%, #33cc66 45%, #00ccaa 67%, #a1ff14 87%);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    text-decoration: none;
+    margin: 0 auto;
+    position: relative;
+}
+
+.seeMoreBtn strong {
+    z-index: 2;
     font-family: monospace;
-    letter-spacing: 0.5px;
-    font-size: 0.7rem;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: #ffffff;
+    text-shadow: 0 0 4px #a1ff14;
+}
+
+.btnStarsContainer {
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transition: 0.5s;
+    backdrop-filter: blur(1rem);
+    border-radius: 5rem;
+}
+
+.btnStars {
+    position: relative;
+    background: transparent;
+    width: 200rem;
+    height: 200rem;
+}
+
+.btnStars::after {
+    content: "";
+    position: absolute;
+    top: -10rem;
+    left: -100rem;
+    width: 100%;
+    height: 100%;
+    animation: animStarRotate 90s linear infinite;
+    background-image: radial-gradient(#ffffff 1px, transparent 1%);
+    background-size: 50px 50px;
+}
+
+.btnStars::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 170%;
+    height: 500%;
+    animation: animStar 60s linear infinite;
+    background-image: radial-gradient(#ffffff 1px, transparent 1%);
+    background-size: 50px 50px;
+    opacity: 0.5;
+}
+
+.btnGlow {
+    position: absolute;
+    display: flex;
+    width: 12rem;
+}
+
+.btnGlowCircle {
+    width: 100%;
+    height: 30px;
+    filter: blur(2rem);
+    animation: pulse_3011 4s infinite;
+    z-index: -1;
+}
+
+.btnGlowCircle:nth-of-type(1) { background: rgba(161, 255, 20, 0.636); }
+.btnGlowCircle:nth-of-type(2) { background: rgba(51, 204, 102, 0.704); }
+
+.seeMoreBtn:hover .btnStarsContainer {
+    z-index: 1;
+    background-color: #212121;
+}
+.seeMoreBtn:hover {
+    transform: scale(1.1);
+}
+.seeMoreBtn:active {
+    border: double 4px #a1ff14;
+    animation: none;
+}
+.seeMoreBtn:active .btnGlowCircle {
+    background: #a1ff14;
+}
+
+@keyframes animStar {
+    from { transform: translateY(0); }
+    to { transform: translateY(-135rem); }
+}
+@keyframes animStarRotate {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0); }
+}
+@keyframes gradient_301 {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes pulse_3011 {
+    0% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
+    100% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
 }
 
 /* ===== LOADER & ERROR STATES ===== */
+.archiveStatus {
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(161, 255, 20, 0.18);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(161, 255, 20, 0.08), transparent 36%), rgba(13, 17, 23, 0.76);
+    box-shadow: 0 24px 50px rgba(0,0,0,0.38);
+    margin: 0 20px;
+}
+
 .loader {
     color: #a1ff14;
     text-align: center;
     font-size: 1.2rem;
     padding: 2rem;
-    width: 100%;
     animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -427,7 +601,6 @@
     text-align: center;
     font-size: 1rem;
     padding: 2rem;
-    width: 100%;
     background: rgba(255, 107, 107, 0.1);
     border-radius: 12px;
     border: 1px solid rgba(255, 107, 107, 0.3);
@@ -438,14 +611,6 @@
     text-align: center;
     font-size: 1rem;
     padding: 2rem;
-    width: 100%;
-}
-
-.cardLink {
-    text-decoration: none;
-    display: block;
-    width: 100%;
-    height: 100%;
 }
 
 @keyframes pulse {
@@ -484,7 +649,6 @@
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: 500;
-    letter-spacing: 0.3px;
 }
 
 .toastClose {
@@ -494,33 +658,22 @@
     font-size: 1rem;
     cursor: pointer;
     padding: 0 0 0 6px;
-    transition: transform 0.2s;
 }
 
 .toastClose:hover {
     transform: scale(1.1);
-    color: #ffffff;
+    color: #fff;
 }
 
 @keyframes toastSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes fadeOut {
-    to {
-        opacity: 0;
-        visibility: hidden;
-    }
+    to { opacity: 0; visibility: hidden; }
 }
 
-/* Responsive adjustments */
+/* ===== RESPONSIVE (general) ===== */
 @media (max-width: 768px) {
     .hero-box {
         height: auto;

@@ -21,6 +21,7 @@ const Index = ({ user }) => {
   const [videoDurations, setVideoDurations] = useState({});
   const [showWelcome, setShowWelcome] = useState(false);
   const userName = user?.name || localStorage.getItem('name');
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Show toast only when user just logged in (flag set)
   useEffect(() => {
@@ -140,78 +141,109 @@ const Index = ({ user }) => {
         </div>
       </section>
 
-      {/* ===== RECENT WORKS GALLERY (3D VAULT) ===== */}
-      <section className={styles.galleryPreviewSection}>
-        <div className={styles.perspectiveGridFloor}></div>
-        <div className={styles.perspectiveGridCeiling}></div>
-        <div className={styles.horizonGlow}></div>
+{/* ===== RECENT WORKS – REACT CAROUSEL (state-driven, fully clickable) ===== */}
+<section className={styles.galleryPreviewSection}>
+  <div className={styles.perspectiveGridFloor}></div>
+  <div className={styles.perspectiveGridCeiling}></div>
+  <div className={styles.horizonGlow}></div>
 
-        <div className={styles.sectionHeader}>
-          <span className={styles.neonLabel}>Artisan Archive</span>
-          <h2>Recent Submissions</h2>
-          <div className={styles.neonDivider}></div>
+  <div className={styles.sectionHeader}>
+    <span className={styles.neonLabel}>Artisan Archive</span>
+    <h2>Recent Submissions</h2>
+    <div className={styles.neonDivider}></div>
+  </div>
+
+  {loading ? (
+    <div className={styles.archiveStatus}>
+      <div className={styles.loader}>Accessing Database...</div>
+    </div>
+  ) : error ? (
+    <div className={styles.archiveStatus}>
+      <div className={styles.errorMessage}>{error}</div>
+    </div>
+  ) : recentWorks.length === 0 ? (
+    <div className={styles.archiveStatus}>
+      <div className={styles.emptyState}>No artworks available yet. Check back soon!</div>
+    </div>
+  ) : (
+    <div className={styles.carouselContainer}>
+      <div className={styles.carousel}>
+        {/* Main slide */}
+        <div className={styles.mainSlideWrapper}>
+          {recentWorks.slice(0, 6).map((work, idx) => (
+            <div
+              key={work._id}
+              className={`${styles.carouselSlide} ${currentSlide === idx ? styles.activeSlide : ''}`}
+            >
+<Link to={`/gallery/${work._id}`} className={styles.carouselLink}>
+  <img
+    src={work.poster ? `${API_BASE}${work.poster}` : `${API_BASE}${work.image}`}
+    alt={work.title}
+    onError={handleImageError}
+  />
+  {isVideoArtwork(work) && (
+    <div className={styles.videoBadgeCarousel}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+    </div>
+  )}
+  <div className={styles.artworkDetailsOverlay}>
+    work by: {work.artistName}
+  </div>
+</Link>
+              <div className={styles.carouselCaption}>
+                {work.title}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className={styles.slider}>
-          <div className={styles.slideTrack}>
-            {loading ? (
-              <div className={styles.loader}>Accessing Database...</div>
-            ) : error ? (
-              <div className={styles.errorMessage}>{error}</div>
-            ) : recentWorks.length === 0 ? (
-              <div className={styles.emptyState}>No artworks available yet. Check back soon!</div>
-            ) : (
-              duplicateWorks.map((work, idx) => {
-                const duplicateFlag = idx >= recentWorks.length ? 1 : 0;
-                const uniqueKey = `${work._id}-dup${duplicateFlag}`;
-                return (
-                  <div key={uniqueKey} className={styles.slide}>
-                    <Link to={`/gallery/${work._id}`} className={styles.cardLink}>
-                      <div className={styles.cardFrame}>
-                        <div className={styles.holographicOverlay}></div>
-                        {isVideoArtwork(work) ? (
-                          <>
-                            <video
-                              src={`${API_BASE}${work.image}`}
-                              poster={work.poster ? `${API_BASE}${work.poster}` : null}
-                              muted
-                              loop
-                              preload="metadata"
-                              onLoadedMetadata={(e) => handleVideoMetadataLoaded(work._id, e.target.duration)}
-                              onMouseEnter={(e) => e.target.play()}
-                              onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
-                              aria-label={`Video preview: ${work.title}`}
-                            />
-                            <div className={styles.videoBadge}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3" />
-                              </svg>
-                              <span className={styles.videoDuration}>
-                                {formatDuration(videoDurations[work._id] || work.duration)}
-                              </span>
-                            </div>
-                          </>
-                        ) : (
-                          <img
-                            src={`${API_BASE}${work.image}`}
-                            alt={work.title}
-                            loading="lazy"
-                            onError={handleImageError}
-                          />
-                        )}
-                        <div className={styles.cardInfo}>
-                          <h4>{work.title}</h4>
-                          <span>{work.artistName}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                );
-              })
-            )}
+        {/* Thumbnails */}
+        <ul className={styles.carouselThumbnails}>
+          {recentWorks.slice(0, 6).map((work, idx) => {
+            const thumbUrl = work.thumbnail
+              ? `${API_BASE}${work.thumbnail}`
+              : work.poster
+              ? `${API_BASE}${work.poster}`
+              : `${API_BASE}${work.image}`;
+            return (
+              <li key={work._id}>
+                <button
+                  className={`${styles.thumbButton} ${currentSlide === idx ? styles.activeThumb : ''}`}
+                  onClick={() => setCurrentSlide(idx)}
+                >
+                  <img src={thumbUrl} alt={`Thumbnail for ${work.title}`} onError={handleImageError} />
+                  {isVideoArtwork(work) && (
+                    <div className={styles.thumbVideoBadge}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* "See more" button */}
+      <div className={styles.viewGalleryWrapper}>
+        <Link to="/gallery" className={styles.seeMoreBtn}>
+          <strong>SEE MORE</strong>
+          <div className={styles.btnStarsContainer}>
+            <div className={styles.btnStars}></div>
           </div>
-        </div>
-      </section>
+          <div className={styles.btnGlow}>
+            <div className={styles.btnGlowCircle}></div>
+            <div className={styles.btnGlowCircle}></div>
+          </div>
+        </Link>
+      </div>
+    </div>
+  )}
+</section>
     </div>
   );
 };
