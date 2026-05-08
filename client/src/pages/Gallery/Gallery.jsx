@@ -185,6 +185,8 @@ const Gallery = () => {
 
     // --- Comment functions ---
     const fetchComments = useCallback(async (artworkId) => {
+        setComments([]);
+        setCommentLikeStates({});
         try {
             const res = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments`);
             if (res.ok) {
@@ -406,6 +408,19 @@ const Gallery = () => {
         const artistId = typeof artwork.uploadedBy === 'object' ? artwork.uploadedBy._id : artwork.uploadedBy;
         closeModal();
         navigate(`/profile/${artistId}`);
+    };
+
+    const getCommentAuthorId = (comment) => {
+        const author = comment?.user;
+        if (!author) return '';
+        return typeof author === 'object' ? author._id || author.id || '' : author;
+    };
+
+    const goToCommentAuthorProfile = (comment) => {
+        const authorId = getCommentAuthorId(comment);
+        if (!authorId) return;
+        closeModal();
+        navigate(`/profile/${authorId}`);
     };
 
     const getArtistId = (artwork) => {
@@ -746,12 +761,31 @@ const Gallery = () => {
                                         )}
                                         {comments.map(comment => (
                                             <div key={comment._id} className={styles.commentItem}>
-                                                <div className={styles.commentAvatar}>
-                                                    <img src={getAvatarUrl(comment.user?.avatar)} alt="" />
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className={styles.commentAvatar}
+                                                    onClick={() => goToCommentAuthorProfile(comment)}
+                                                    aria-label={`View ${(comment.user?.name || comment.user?.username || 'comment author')}'s profile`}
+                                                    disabled={!getCommentAuthorId(comment)}
+                                                >
+                                                    <img
+                                                        src={getAvatarUrl(comment.user?.avatar)}
+                                                        alt=""
+                                                        onError={(event) => {
+                                                            event.target.src = PROFILE_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </button>
                                                 <div className={styles.commentContent}>
                                                     <div className={styles.commentMeta}>
-                                                        <strong>{comment.user?.name || 'Anonymous'}</strong>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.commentAuthorLink}
+                                                            onClick={() => goToCommentAuthorProfile(comment)}
+                                                            disabled={!getCommentAuthorId(comment)}
+                                                        >
+                                                            {comment.user?.name || comment.user?.username || 'Anonymous'}
+                                                        </button>
                                                         <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                     <p className={styles.commentText}>{comment.content}</p>

@@ -8,6 +8,7 @@ const uploadRoutes = require("./server/routes/artwork");
 const notificationRoutes = require("./server/routes/notifications");
 const collectionRoutes = require("./server/routes/collections");
 const adminRoutes = require("./server/routes/admin");
+const commentRoutes = require("./server/routes/comments");
 const connectDB = require("./server/config/db");
 const Settings = require("./server/models/Settings");
 
@@ -73,6 +74,7 @@ console.log("Express is serving avatars from:", avatarsPath);
 app.use("/avatars", express.static(avatarsPath));
 
 app.use("/api/artworks", uploadRoutes);
+app.use("/api", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/collections", collectionRoutes);
 app.use("/api/admin", adminRoutes);
