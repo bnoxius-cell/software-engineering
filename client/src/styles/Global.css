@@ -1,12 +1,3 @@
-/*
- * =========================================
- * Scrollbar styling
- * =========================================
- *
- * Removed the app-wide custom blue scrollbar so the browser returns to
- * its default grey scrollbar appearance.
- */
-
 /* ===== 1. CSS VARIABLES (THE THEME) ===== */
 :root {
     /* Colors */
