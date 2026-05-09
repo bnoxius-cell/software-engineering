@@ -24,30 +24,23 @@ const UserManager = () => {
     });
     const [isCreateCollapsed, setIsCreateCollapsed] = useState(true);
     const [isCreateAdminCollapsed, setIsCreateAdminCollapsed] = useState(true);
-    const [successMessage, setSuccessMessage] = useState(''); // NEW: for undo feedback
+    const [successMessage, setSuccessMessage] = useState('');
     const ITEMS_PER_PAGE = 10;
 
-    // UNDO state: track last status change
     const [lastAction, setLastAction] = useState(null);
 
-    // Create user form state
     const [formData, setFormData] = useState({
         name: "", email: "", password: "", role: "Student"
     });
 
-    // Create admin user form state (only for admins)
     const [adminFormData, setAdminFormData] = useState({
         name: "", email: "", password: ""
     });
 
-    // Edit user modal state
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [editForm, setEditForm] = useState({
-        name: '',
-        email: '',
-        role: '',
-        password: ''
+        name: '', email: '', role: '', password: ''
     });
     const [editAvatarFile, setEditAvatarFile] = useState(null);
     const [editAvatarPreview, setEditAvatarPreview] = useState('');
@@ -58,17 +51,16 @@ const UserManager = () => {
     const normalizedRole = role ? role.toLowerCase().trim() : "";
     const isAdmin = normalizedRole === "admin";
     const isFaculty = normalizedRole === "faculty";
+    const currentUserId = localStorage.getItem("userId");
 
     const createUserRef = useRef(null);
 
-    // Auto-clear success message after 4 seconds
     useEffect(() => {
         if (!successMessage) return;
         const timer = setTimeout(() => setSuccessMessage(''), 4000);
         return () => clearTimeout(timer);
     }, [successMessage]);
 
-    // Fetch users
     const fetchUsers = async () => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -89,12 +81,10 @@ const UserManager = () => {
         fetchUsers();
     }, []);
 
-    // Stats calculations
     const activeUsers = users.filter(u => u.status?.toLowerCase() === 'active').length;
     const pendingUsers = users.filter(u => u.status?.toLowerCase() === 'pending').length;
     const suspendedUsers = users.filter(u => u.status?.toLowerCase() === 'suspended').length;
 
-    // Filter and pagination
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
             user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,7 +99,6 @@ const UserManager = () => {
         currentPage * ITEMS_PER_PAGE
     );
 
-    // ---- Create user handlers ----
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         if (error) setError('');
@@ -121,7 +110,6 @@ const UserManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem("token");
         try {
             const payload = { ...formData, status: 'pending' };
             await axios.post(`${API_BASE}/api/auth/register`, payload);
@@ -134,7 +122,6 @@ const UserManager = () => {
         }
     };
 
-    // ---- Create admin user handlers ----
     const handleAdminChange = (e) => {
         setAdminFormData({ ...adminFormData, [e.target.name]: e.target.value });
         if (adminError) setAdminError('');
@@ -162,15 +149,11 @@ const UserManager = () => {
         }
     };
 
-    // ---- Status change handlers (with confirmation) ----
     const handleStatusChange = async (userId, newStatus, actionName) => {
         const token = localStorage.getItem("token");
-        // Find current user to get previous status
         const user = users.find(u => u._id === userId);
         if (!user) return;
-
         const previousStatus = user.status;
-
         try {
             const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
                 method: 'PUT',
@@ -181,9 +164,9 @@ const UserManager = () => {
                 body: JSON.stringify({ status: newStatus })
             });
             if (res.ok) {
-                fetchUsers();
-                // Store last action for undo
+                await fetchUsers();
                 setLastAction({
+                    type: 'status',
                     userId,
                     previousStatus,
                     newStatus,
@@ -199,45 +182,6 @@ const UserManager = () => {
         }
     };
 
-    // UNDO last action
-    const undoLastAction = async () => {
-        if (!lastAction) return;
-
-        const { userId, previousStatus, userName, actionName } = lastAction;
-        const token = localStorage.getItem("token");
-
-        try {
-            const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ status: previousStatus })
-            });
-
-            if (res.ok) {
-                await fetchUsers();
-                setLastAction(null);
-                setSuccessMessage(`Undo successful: "${userName}" reverted to ${previousStatus}.`);
-            } else {
-                setError(`Failed to undo ${actionName}.`);
-            }
-        } catch (err) {
-            console.error("Undo error:", err);
-            setError("Could not undo last action.");
-        }
-    };
-
-    const confirmStatusChange = (userId, newStatus, actionName, message) => {
-        confirmAction(
-            `${actionName} User`,
-            message,
-            () => handleStatusChange(userId, newStatus, actionName)
-        );
-    };
-
-    // ---- Edit user handlers ----
     const openEditModal = (user) => {
         setEditingUser(user);
         setEditForm({
@@ -271,6 +215,11 @@ const UserManager = () => {
         }
         setUpdatingUser(true);
         setEditError('');
+        const previousData = {
+            name: editingUser.name,
+            email: editingUser.email,
+            role: editingUser.role
+        };
         const token = localStorage.getItem("token");
         try {
             const updateData = {
@@ -293,7 +242,6 @@ const UserManager = () => {
                 const errData = await updateRes.json();
                 throw new Error(errData.message || "Failed to update user");
             }
-
             if (editAvatarFile) {
                 const avatarFormData = new FormData();
                 avatarFormData.append('avatar', editAvatarFile);
@@ -303,9 +251,21 @@ const UserManager = () => {
                     body: avatarFormData
                 });
             }
-
             setShowEditModal(false);
-            fetchUsers();
+            await fetchUsers();
+            setLastAction({
+                type: 'edit',
+                userId: editingUser._id,
+                previousData,
+                newData: {
+                    name: editForm.name.trim(),
+                    email: editForm.email.trim(),
+                    role: editForm.role
+                },
+                userName: editingUser.name,
+                actionName: 'Edit'
+            });
+            setSuccessMessage(`User "${editingUser.name}" updated. You can undo the changes.`);
         } catch (err) {
             setEditError(err.message);
         } finally {
@@ -313,7 +273,55 @@ const UserManager = () => {
         }
     };
 
-    // ---- CSV export with confirmation ----
+    const undoLastAction = async () => {
+        if (!lastAction) return;
+        const token = localStorage.getItem("token");
+        try {
+            if (lastAction.type === 'status') {
+                const { userId, previousStatus, userName, actionName } = lastAction;
+                const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: previousStatus })
+                });
+                if (res.ok) {
+                    await fetchUsers();
+                    setLastAction(null);
+                    setSuccessMessage(`Undo successful: "${userName}" reverted to ${previousStatus}.`);
+                } else {
+                    setError(`Failed to undo ${actionName}.`);
+                }
+            } else if (lastAction.type === 'edit') {
+                const { userId, previousData, userName } = lastAction;
+                const updateRes = await fetch(`${API_BASE}/api/auth/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(previousData)
+                });
+                if (updateRes.ok) {
+                    await fetchUsers();
+                    setLastAction(null);
+                    setSuccessMessage(`Undo successful: "${userName}" reverted to previous information.`);
+                } else {
+                    setError(`Failed to undo edit.`);
+                }
+            }
+        } catch (err) {
+            console.error("Undo error:", err);
+            setError("Could not undo last action.");
+        }
+    };
+
+    const confirmStatusChange = (userId, newStatus, actionName, message) => {
+        confirmAction(`${actionName} User`, message, () => handleStatusChange(userId, newStatus, actionName));
+    };
+
     const exportCSV = () => {
         confirmAction(
             "Export filtered users?",
@@ -340,7 +348,6 @@ const UserManager = () => {
         );
     };
 
-    // ---- Confirmation dialog ----
     const confirmAction = (title, message, onConfirm) => {
         setConfirmDialog({ isOpen: true, title, message, onConfirm });
     };
@@ -349,10 +356,25 @@ const UserManager = () => {
         setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
     };
 
-    // Scroll to create user form
     const scrollToCreateUser = () => {
         setIsCreateCollapsed(false);
         createUserRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const canPerformStatusAction = (targetUser) => {
+        if (targetUser._id === currentUserId) return false;
+        if (targetUser.role === 'Admin') return false;
+        if (isAdmin) return true;
+        if (isFaculty && targetUser.role === 'Student') return true;
+        return false;
+    };
+
+    const canEditUser = (targetUser) => {
+        if (targetUser._id === currentUserId) return false;
+        if (targetUser.role === 'Admin') return false;
+        if (isAdmin) return true;
+        if (isFaculty && targetUser.role === 'Student') return true;
+        return false;
     };
 
     return (
@@ -363,88 +385,38 @@ const UserManager = () => {
                 <main className="main-view">
                     <Topbar title="User Manager" />
 
-                    {/* Success / Error Messages */}
                     {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
                     {error && <div className={styles.errorMessage}>{error}</div>}
 
-                    {/* Stats Cards */}
                     <section className={styles.statsGrid}>
-                        <div className={styles.statCard}>
-                            <h3>Total Users</h3>
-                            <p className={styles.statNumber}>{totalUsers}</p>
-                        </div>
-                        <div className={styles.statCard}>
-                            <h3>Active Users</h3>
-                            <p className={styles.statNumber}>{activeUsers}</p>
-                        </div>
-                        <div className={styles.statCard}>
-                            <h3>Pending Requests</h3>
-                            <p className={styles.statNumber}>{pendingUsers}</p>
-                        </div>
-                        <div className={styles.statCard}>
-                            <h3>Suspended Users</h3>
-                            <p className={styles.statNumber}>{suspendedUsers}</p>
-                        </div>
+                        <div className={styles.statCard}><h3>Total Users</h3><p className={styles.statNumber}>{totalUsers}</p></div>
+                        <div className={styles.statCard}><h3>Active Users</h3><p className={styles.statNumber}>{activeUsers}</p></div>
+                        <div className={styles.statCard}><h3>Pending Requests</h3><p className={styles.statNumber}>{pendingUsers}</p></div>
+                        <div className={styles.statCard}><h3>Suspended Users</h3><p className={styles.statNumber}>{suspendedUsers}</p></div>
                     </section>
 
-                    {/* Create New User Button (above search/filter) */}
                     <section className={styles.createUserButtonRow}>
-                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={scrollToCreateUser}>
-                            ➕ Create New User
-                        </button>
+                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={scrollToCreateUser}>➕ Create New User</button>
                     </section>
 
-                    {/* Search / Filter / Refresh / Undo */}
                     <section className={styles.actionSection}>
                         <div className={styles.searchContainer}>
-                            <input
-                                type="text"
-                                className={styles.searchInput}
-                                placeholder="Search by name or email..."
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            />
-                            <select
-                                className={styles.filterSelect}
-                                value={roleFilter}
-                                onChange={(e) => {
-                                    setRoleFilter(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            >
+                            <input type="text" className={styles.searchInput} placeholder="Search by name or email..."
+                                value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
+                            <select className={styles.filterSelect} value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
                                 <option value="all">All Roles</option>
                                 <option value="admin">Admin</option>
                                 <option value="student">Student</option>
                                 <option value="faculty">Faculty</option>
                             </select>
-                            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={fetchUsers}>
-                                Refresh
-                            </button>
-                            {/* Undo Last Action Button */}
-                            <button
-                                className={`${styles.btn} ${styles.btnUndo}`}
-                                onClick={() => {
-                                    if (lastAction) {
-                                        confirmAction(
-                                            "Undo Last Action",
-                                            `Revert "${lastAction.actionName}" for ${lastAction.userName}?`,
-                                            undoLastAction
-                                        );
-                                    } else {
-                                        alert("No action to undo.");
-                                    }
-                                }}
-                                disabled={!lastAction}
-                            >
-                                ↩️ Undo Last Action
-                            </button>
+                            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={fetchUsers}>Refresh</button>
+                            <button className={`${styles.btn} ${styles.btnUndo}`} onClick={() => {
+                                if (lastAction) confirmAction("Undo Last Action", `Revert "${lastAction.actionName}" for ${lastAction.userName}?`, undoLastAction);
+                                else alert("No action to undo.");
+                            }} disabled={!lastAction}>↩️ Undo Last Action</button>
                         </div>
                     </section>
 
-                    {/* User Table */}
                     <section className={styles.panel}>
                         <div className={styles.tableHeader}>
                             <h2 className={styles.panelTitle}>All Users ({filteredUsers.length} / {totalUsers})</h2>
@@ -460,37 +432,20 @@ const UserManager = () => {
                             <table className={styles.userTable}>
                                 <thead>
                                     <tr>
-                                        <th>Avatar</th>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Joined Date</th>
-                                        <th>Actions</th>
+                                        <th>Avatar</th><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined Date</th><th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {paginatedUsers.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "#8b949e" }}>
-                                                No users found.
-                                            </td>
-                                        </tr>
+                                        <tr><td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "#8b949e" }}>No users found.</td></tr>
                                     ) : (
                                         paginatedUsers.map((user) => {
                                             const currentStatus = user.status ? user.status.toLowerCase() : 'pending';
-                                            const canEdit = isAdmin || (isFaculty && user.role === 'Student');
+                                            const canEdit = canEditUser(user);
+                                            const canStatus = canPerformStatusAction(user);
                                             return (
-                                                <tr
-                                                    key={user._id}
-                                                    onClick={() => canEdit && openEditModal(user)}
-                                                    style={{ cursor: canEdit ? 'pointer' : 'default' }}
-                                                    className={styles.clickableRow}
-                                                >
-                                                    <td>
-                                                        <img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.avatarImg} />
-                                                    </td>
+                                                <tr key={user._id} onClick={() => canEdit && openEditModal(user)} style={{ cursor: canEdit ? 'pointer' : 'default' }} className={styles.clickableRow}>
+                                                    <td><img src={getAvatarUrl(user.avatar)} alt={user.name} className={styles.avatarImg} /></td>
                                                     <td className={styles.userId}>{user._id.substring(0, 8)}...</td>
                                                     <td className={styles.userName}>{user.name}</td>
                                                     <td style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</td>
@@ -503,29 +458,14 @@ const UserManager = () => {
                                                     <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                                                     <td className={styles.actionTd} onClick={(e) => e.stopPropagation()}>
                                                         <div className={styles.rowActions}>
-                                                            {currentStatus === 'pending' && user.role !== 'Admin' && (
-                                                                <button
-                                                                    className={`${styles.btnLink} ${styles.btnApprove}`}
-                                                                    onClick={() => confirmStatusChange(user._id, 'Active', 'Approve', `Are you sure you want to approve "${user.name}"?`)}
-                                                                >
-                                                                    Approve
-                                                                </button>
+                                                            {canStatus && currentStatus === 'pending' && (
+                                                                <button className={`${styles.btnLink} ${styles.btnApprove}`} onClick={() => confirmStatusChange(user._id, 'Active', 'Approve', `Approve "${user.name}"?`)}>Approve</button>
                                                             )}
-                                                            {currentStatus === 'active' && user.role !== 'Admin' && (
-                                                                <button
-                                                                    className={`${styles.btnLink} ${styles.btnSuspend}`}
-                                                                    onClick={() => confirmStatusChange(user._id, 'Suspended', 'Suspend', `Suspending "${user.name}" will prevent them from logging in. Are you sure?`)}
-                                                                >
-                                                                    Suspend
-                                                                </button>
+                                                            {canStatus && currentStatus === 'active' && (
+                                                                <button className={`${styles.btnLink} ${styles.btnSuspend}`} onClick={() => confirmStatusChange(user._id, 'Suspended', 'Suspend', `Suspend "${user.name}"?`)}>Suspend</button>
                                                             )}
-                                                            {currentStatus === 'suspended' && user.role !== 'Admin' && (
-                                                                <button
-                                                                    className={`${styles.btnLink} ${styles.btnRestore}`}
-                                                                    onClick={() => confirmStatusChange(user._id, 'Active', 'Restore', `Restore "${user.name}"?`)}
-                                                                >
-                                                                    Restore
-                                                                </button>
+                                                            {canStatus && currentStatus === 'suspended' && (
+                                                                <button className={`${styles.btnLink} ${styles.btnRestore}`} onClick={() => confirmStatusChange(user._id, 'Active', 'Restore', `Restore "${user.name}"?`)}>Restore</button>
                                                             )}
                                                             {canEdit && (
                                                                 <button className={styles.btnLink} onClick={() => openEditModal(user)}>Edit</button>
@@ -537,45 +477,25 @@ const UserManager = () => {
                                         })
                                     )}
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
 
-                        {/* Pagination + CSV export */}
                         <div className={styles.paginationBar}>
                             <div className={styles.paginationButtons}>
-                                <button
-                                    className={`${styles.paginationBtn} ${currentPage === 1 ? styles.disabled : ''}`}
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Previous
-                                </button>
-                                <span className={styles.pageInfo}>
-                                    Page {currentPage} of {totalPages || 1}
-                                </span>
-                                <button
-                                    className={`${styles.paginationBtn} ${currentPage === totalPages ? styles.disabled : ''}`}
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                </button>
+                                <button className={`${styles.paginationBtn} ${currentPage === 1 ? styles.disabled : ''}`} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+                                <span className={styles.pageInfo}>Page {currentPage} of {totalPages || 1}</span>
+                                <button className={`${styles.paginationBtn} ${currentPage === totalPages ? styles.disabled : ''}`} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
                             </div>
                             <div className={styles.exportWrapper}>
-                                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={exportCSV}>
-                                    Export CSV
-                                </button>
+                                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={exportCSV}>Export CSV</button>
                                 <span className={styles.exportNote}>Exports filtered users as CSV</span>
                             </div>
                         </div>
                     </section>
 
-                    {/* Collapsible Create User Form (regular) */}
+                    {/* Collapsible Create User Form */}
                     <div className={styles.createCollapsible} ref={createUserRef}>
-                        <button
-                            className={styles.createToggle}
-                            onClick={() => setIsCreateCollapsed(!isCreateCollapsed)}
-                        >
+                        <button className={styles.createToggle} onClick={() => setIsCreateCollapsed(!isCreateCollapsed)}>
                             {isCreateCollapsed ? "➕ Create New User" : "➖ Hide Create User Form"}
                         </button>
                         {!isCreateCollapsed && (
@@ -583,14 +503,8 @@ const UserManager = () => {
                                 <h2 className={styles.formHeader}>Create New User</h2>
                                 {error && <p className={styles.errorMsg}>{error}</p>}
                                 <form onSubmit={handleSubmit}>
-                                    <div className={styles.formGroup}>
-                                        <label>Full Name</label>
-                                        <input type="text" name="name" value={formData.name} onChange={handleChange} className={styles.inputField} required />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Email</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className={styles.inputField} required />
-                                    </div>
+                                    <div className={styles.formGroup}><label>Full Name</label><input type="text" name="name" value={formData.name} onChange={handleChange} className={styles.inputField} required /></div>
+                                    <div className={styles.formGroup}><label>Email</label><input type="email" name="email" value={formData.email} onChange={handleChange} className={styles.inputField} required /></div>
                                     <div className={styles.formGroup}>
                                         <label>Role</label>
                                         <select name="role" value={formData.role} onChange={handleChange} className={styles.inputField} required>
@@ -599,10 +513,7 @@ const UserManager = () => {
                                             {isAdmin && <option value="Admin">Admin</option>}
                                         </select>
                                     </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Initial Password</label>
-                                        <input type="password" name="password" value={formData.password} onChange={handleChange} className={styles.inputField} required />
-                                    </div>
+                                    <div className={styles.formGroup}><label>Initial Password</label><input type="password" name="password" value={formData.password} onChange={handleChange} className={styles.inputField} required /></div>
                                     <div className={styles.formActions}>
                                         <button type="button" onClick={resetForm} className={`${styles.btn} ${styles.btnSecondary}`}>Clear</button>
                                         <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create User</button>
@@ -612,13 +523,9 @@ const UserManager = () => {
                         )}
                     </div>
 
-                    {/* Collapsible Create Admin Form (only for admins) */}
                     {isAdmin && (
                         <div className={styles.createCollapsible}>
-                            <button
-                                className={styles.createToggle}
-                                onClick={() => setIsCreateAdminCollapsed(!isCreateAdminCollapsed)}
-                            >
+                            <button className={styles.createToggle} onClick={() => setIsCreateAdminCollapsed(!isCreateAdminCollapsed)}>
                                 {isCreateAdminCollapsed ? "👑 Create New Admin User" : "➖ Hide Create Admin Form"}
                             </button>
                             {!isCreateAdminCollapsed && (
@@ -626,18 +533,9 @@ const UserManager = () => {
                                     <h2 className={styles.formHeader}>Create New Admin Account</h2>
                                     {adminError && <p className={styles.errorMsg}>{adminError}</p>}
                                     <form onSubmit={handleAdminSubmit}>
-                                        <div className={styles.formGroup}>
-                                            <label>Full Name</label>
-                                            <input type="text" name="name" value={adminFormData.name} onChange={handleAdminChange} className={styles.inputField} required />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label>Email</label>
-                                            <input type="email" name="email" value={adminFormData.email} onChange={handleAdminChange} className={styles.inputField} required />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label>Initial Password</label>
-                                            <input type="password" name="password" value={adminFormData.password} onChange={handleAdminChange} className={styles.inputField} required />
-                                        </div>
+                                        <div className={styles.formGroup}><label>Full Name</label><input type="text" name="name" value={adminFormData.name} onChange={handleAdminChange} className={styles.inputField} required /></div>
+                                        <div className={styles.formGroup}><label>Email</label><input type="email" name="email" value={adminFormData.email} onChange={handleAdminChange} className={styles.inputField} required /></div>
+                                        <div className={styles.formGroup}><label>Initial Password</label><input type="password" name="password" value={adminFormData.password} onChange={handleAdminChange} className={styles.inputField} required /></div>
                                         <div className={styles.formActions}>
                                             <button type="button" onClick={resetAdminForm} className={`${styles.btn} ${styles.btnSecondary}`}>Clear</button>
                                             <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create Admin</button>
@@ -650,59 +548,35 @@ const UserManager = () => {
                 </main>
             </div>
 
-            {/* Edit User Modal (unchanged) */}
+            {/* Edit User Modal */}
             {showEditModal && editingUser && (
                 <div className={styles.modalOverlay} onClick={() => setShowEditModal(false)}>
                     <div className={styles.editUserModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3>Edit User</h3>
-                            <button className={styles.closeBtn} onClick={() => setShowEditModal(false)}>&times;</button>
-                        </div>
+                        <div className={styles.modalHeader}><h3>Edit User</h3><button className={styles.closeBtn} onClick={() => setShowEditModal(false)}>&times;</button></div>
                         {editError && <div className={styles.modalError}>{editError}</div>}
                         <div className={styles.editUserContent}>
                             <div className={styles.avatarSection}>
                                 <img src={editAvatarPreview} alt="Avatar" className={styles.editAvatar} />
-                                <label className={styles.uploadAvatarBtn}>
-                                    Change Avatar
-                                    <input type="file" accept="image/*" onChange={handleEditAvatarChange} style={{ display: 'none' }} />
-                                </label>
+                                <label className={styles.uploadAvatarBtn}>Change Avatar<input type="file" accept="image/*" onChange={handleEditAvatarChange} style={{ display: 'none' }} /></label>
                             </div>
-                            <div className={styles.formGroup}>
-                                <label>Full Name</label>
-                                <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={styles.inputField} />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label>Email</label>
-                                <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className={styles.inputField} />
-                            </div>
+                            <div className={styles.formGroup}><label>Full Name</label><input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={styles.inputField} /></div>
+                            <div className={styles.formGroup}><label>Email</label><input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className={styles.inputField} /></div>
                             <div className={styles.formGroup}>
                                 <label>Role</label>
-                                <select
-                                    value={editForm.role}
-                                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                                    className={`${styles.inputField} ${styles.selectWithArrow}`}
-                                >
-                                    <option value="Student">Student</option>
-                                    <option value="Faculty">Faculty</option>
-                                    {isAdmin && <option value="Admin">Admin</option>}
+                                <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className={`${styles.inputField} ${styles.selectWithArrow}`}>
+                                    <option value="Student">Student</option><option value="Faculty">Faculty</option>{isAdmin && <option value="Admin">Admin</option>}
                                 </select>
                             </div>
-                            <div className={styles.formGroup}>
-                                <label>New Password (leave empty to keep unchanged)</label>
-                                <input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className={styles.inputField} />
-                            </div>
+                            <div className={styles.formGroup}><label>New Password (leave empty to keep unchanged)</label><input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className={styles.inputField} /></div>
                             <div className={styles.modalActions}>
                                 <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowEditModal(false)}>Cancel</button>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleUpdateUser} disabled={updatingUser}>
-                                    {updatingUser ? 'Saving...' : 'Save Changes'}
-                                </button>
+                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleUpdateUser} disabled={updatingUser}>{updatingUser ? 'Saving...' : 'Save Changes'}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Confirmation Modal */}
             {confirmDialog.isOpen && (
                 <div className={styles.modalOverlay} onClick={closeConfirm}>
                     <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>

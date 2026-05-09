@@ -29,6 +29,10 @@ const Works = () => {
   });
   const ITEMS_PER_PAGE = 10;
 
+  // --- UNDO state ---
+  const [lastAction, setLastAction] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+
   // Comments for the viewed artwork
   const [currentComments, setCurrentComments] = useState([]);
 
@@ -39,6 +43,9 @@ const Works = () => {
   const [selectedAuthorName, setSelectedAuthorName] = useState("");
   const authorDropdownRef = useRef(null);
 
+  // Loading state for users (needed for permission checks)
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
   const filteredUsers = authorSearch.trim() === ""
     ? []
     : users.filter(user =>
@@ -48,6 +55,13 @@ const Works = () => {
 
   const searchInputRef = useRef(null);
   const uploadToggleRef = useRef(null);
+
+  // Auto-clear success message after 4 seconds
+  useEffect(() => {
+    if (!successMessage) return;
+    const timer = setTimeout(() => setSuccessMessage(""), 4000);
+    return () => clearTimeout(timer);
+  }, [successMessage]);
 
   // Fetch artworks
   const fetchWorks = () => {
@@ -63,18 +77,23 @@ const Works = () => {
       .catch((err) => console.error("Failed to load works:", err));
   };
 
-  // Fetch all users for the author dropdown
+  // Fetch all users for the author dropdown and permission checks
   const fetchUsers = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
+    setIsLoadingUsers(true);
     fetch(`${API_BASE}/api/auth/`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
         setUsers(data.users || []);
+        setIsLoadingUsers(false);
       })
-      .catch((err) => console.error("Failed to fetch users:", err));
+      .catch((err) => {
+        console.error("Failed to fetch users:", err);
+        setIsLoadingUsers(false);
+      });
   };
 
   useEffect(() => {
@@ -109,10 +128,25 @@ const Works = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Helper to check if current user is admin
-  const isAdmin = () => {
+  // Permission helpers
+  const getCurrentUserRole = () => {
     const role = localStorage.getItem("role");
-    return role && role.toLowerCase().trim() === "admin";
+    return role ? role.toLowerCase().trim() : "";
+  };
+  const isAdmin = () => getCurrentUserRole() === "admin";
+  const isFaculty = () => getCurrentUserRole() === "faculty";
+
+  // Determine if the current user can modify a given work
+  const canModifyWork = (work) => {
+    if (isAdmin()) return true;
+    if (!isFaculty()) return false;
+    // If users are still loading, deny modification to prevent UI flicker
+    if (isLoadingUsers) return false;
+    // For faculty: cannot modify works posted by an admin
+    if (!work.authorId) return true; // fallback: allow if no authorId (legacy)
+    const authorUser = users.find(u => u._id === work.authorId);
+    if (authorUser && authorUser.role === "Admin") return false;
+    return true;
   };
 
   // Fetch comments for a single artwork
@@ -131,9 +165,12 @@ const Works = () => {
     }
   };
 
-  // Status changes
-  const handleStatusChange = async (workId, newStatus) => {
+  // Status changes with undo support
+  const handleStatusChange = async (workId, newStatus, actionName) => {
     const token = localStorage.getItem("token");
+    const work = works.find(w => w._id === workId);
+    if (!work) return;
+    const previousStatus = work.status;
     try {
       const res = await fetch(`${API_BASE}/api/artworks/${workId}/status`, {
         method: "PUT",
@@ -143,26 +180,46 @@ const Works = () => {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) fetchWorks();
-      else alert("Failed to update status.");
+      if (res.ok) {
+        await fetchWorks();
+        setLastAction({
+          type: "status",
+          workId,
+          previousStatus,
+          newStatus,
+          workTitle: work.title,
+          actionName,
+        });
+        setSuccessMessage(`Action "${actionName}" completed. You can undo it.`);
+      } else {
+        alert("Failed to update status.");
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }
   };
 
+  // Edit handlers with undo
   const handleEdit = (work) => {
+    if (!canModifyWork(work)) {
+      alert("You do not have permission to edit this artwork (posted by admin).");
+      return;
+    }
     setEditingWork(work);
     setIsEditModalOpen(true);
   };
+
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditingWork(null);
   };
+
   const handleView = (work) => {
     setViewingWork(work);
     setIsViewModalOpen(true);
     fetchCommentsForArtwork(work._id);
   };
+
   const closeViewModal = () => {
     setIsViewModalOpen(false);
     setViewingWork(null);
@@ -173,6 +230,13 @@ const Works = () => {
     e.preventDefault();
     const token = localStorage.getItem("token");
     const formData = new FormData(e.target);
+    // Store previous data for undo
+    const previousData = {
+      title: editingWork.title,
+      medium: editingWork.medium,
+      description: editingWork.description,
+      status: editingWork.status,
+    };
     try {
       const res = await fetch(`${API_BASE}/api/artworks/${editingWork._id}`, {
         method: "PUT",
@@ -180,14 +244,74 @@ const Works = () => {
         body: formData,
       });
       if (res.ok) {
+        await fetchWorks();
+        setLastAction({
+          type: "edit",
+          workId: editingWork._id,
+          previousData,
+          newData: {
+            title: formData.get("title"),
+            medium: formData.get("medium"),
+            description: formData.get("description"),
+            status: formData.get("status"),
+          },
+          workTitle: editingWork.title,
+          actionName: "Edit",
+        });
+        setSuccessMessage(`Work "${editingWork.title}" updated. You can undo the changes.`);
         closeEditModal();
-        fetchWorks();
       } else {
         const errData = await res.json();
         alert(`Failed to update artwork: ${errData.message}`);
       }
     } catch (error) {
       console.error("Error updating artwork:", error);
+    }
+  };
+
+  // Undo last action
+  const undoLastAction = async () => {
+    if (!lastAction) return;
+    const token = localStorage.getItem("token");
+    try {
+      if (lastAction.type === "status") {
+        const { workId, previousStatus, workTitle, actionName } = lastAction;
+        const res = await fetch(`${API_BASE}/api/artworks/${workId}/status`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: previousStatus }),
+        });
+        if (res.ok) {
+          await fetchWorks();
+          setLastAction(null);
+          setSuccessMessage(`Undo successful: "${workTitle}" reverted to ${previousStatus}.`);
+        } else {
+          setSuccessMessage(`Failed to undo ${actionName}.`);
+        }
+      } else if (lastAction.type === "edit") {
+        const { workId, previousData, workTitle } = lastAction;
+        const updateRes = await fetch(`${API_BASE}/api/artworks/${workId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(previousData),
+        });
+        if (updateRes.ok) {
+          await fetchWorks();
+          setLastAction(null);
+          setSuccessMessage(`Undo successful: "${workTitle}" reverted to previous version.`);
+        } else {
+          setSuccessMessage(`Failed to undo edit.`);
+        }
+      }
+    } catch (err) {
+      console.error("Undo error:", err);
+      setSuccessMessage("Could not undo last action.");
     }
   };
 
@@ -239,7 +363,6 @@ const Works = () => {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
-            // Refresh comments list for the current artwork
             if (viewingWork) fetchCommentsForArtwork(viewingWork._id);
           } else {
             const err = await res.json();
@@ -315,80 +438,97 @@ const Works = () => {
     );
   };
 
-  const handleSingleRemove = (workId) => {
+  const handleSingleRemove = (work) => {
+    if (!canModifyWork(work)) {
+      alert("You do not have permission to remove this artwork (posted by admin).");
+      return;
+    }
     confirmAction(
       "Remove Artwork",
       "This artwork will be marked as rejected and hidden from public view. It can be restored by an admin at any time. Are you sure?",
-      () => handleStatusChange(workId, "rejected")
+      () => handleStatusChange(work._id, "rejected", "Remove")
     );
   };
 
-  const renderRow = (work) => (
-    <tr key={work._id} className={styles.tableRow}>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        {isVideoArtwork(work) ? (
-          <div className={styles.thumbnailVideo}>
-            <video
+  const renderRow = (work) => {
+    const userCanModify = canModifyWork(work);
+    return (
+      <tr key={work._id} className={styles.tableRow}>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          {isVideoArtwork(work) ? (
+            <div className={styles.thumbnailVideo}>
+              <video
+                src={`${API_BASE}${work.image}`}
+                poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
+                muted
+                preload="metadata"
+              />
+            </div>
+          ) : (
+            <img
               src={`${API_BASE}${work.image}`}
-              poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
-              muted
-              preload="metadata"
+              alt={work.title}
+              className={styles.thumbnailImg}
             />
-          </div>
-        ) : (
-          <img
-            src={`${API_BASE}${work.image}`}
-            alt={work.title}
-            className={styles.thumbnailImg}
-          />
-        )}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
-        {work.title}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
-          {work.status}
-        </span>
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        {new Date(work.createdAt).toLocaleDateString()}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
-      <td className={styles["action-btns"]} onClick={(e) => e.stopPropagation()}>
-        {(work.status === "archived" || work.status === "rejected") && (
-          <button
-            className={styles["action-btn"]}
-            style={{ backgroundColor: "#28a745", color: "white", border: "none" }}
-            onClick={() => handleStatusChange(work._id, "published")}
-          >
-            Restore
-          </button>
-        )}
-        {work.status === "draft" && (
-          <button
-            className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
-            onClick={() => handleStatusChange(work._id, "published")}
-          >
-            Publish
-          </button>
-        )}
-        <button className={styles["action-btn"]} onClick={() => handleEdit(work)}>
-          Edit
-        </button>
-        <button
-          className={styles["action-btn"]}
-          style={{ backgroundColor: "#dc3545", color: "white", border: "none" }}
-          onClick={() => handleSingleRemove(work._id)}
-          title="Artwork can be restored later"
-        >
-          Remove
-        </button>
-      </td>
-    </tr>
-  );
+          )}
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
+          {work.title}
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
+            {work.status}
+          </span>
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          {new Date(work.createdAt).toLocaleDateString()}
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
+        <td className={styles["action-btns"]} onClick={(e) => e.stopPropagation()}>
+          {isLoadingUsers ? (
+            <span style={{ fontSize: "0.75rem", color: "#8b949e" }}>Loading...</span>
+          ) : userCanModify ? (
+            <>
+              {(work.status === "archived" || work.status === "rejected") && (
+                <button
+                  className={styles["action-btn"]}
+                  style={{ backgroundColor: "#28a745", color: "white", border: "none" }}
+                  onClick={() => handleStatusChange(work._id, "published", "Restore")}
+                >
+                  Restore
+                </button>
+              )}
+              {work.status === "draft" && (
+                <button
+                  className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
+                  onClick={() => handleStatusChange(work._id, "published", "Publish")}
+                >
+                  Publish
+                </button>
+              )}
+              <button className={styles["action-btn"]} onClick={() => handleEdit(work)}>
+                Edit
+              </button>
+              <button
+                className={styles["action-btn"]}
+                style={{ backgroundColor: "#dc3545", color: "white", border: "none" }}
+                onClick={() => handleSingleRemove(work)}
+                title="Artwork can be restored later"
+              >
+                Remove
+              </button>
+            </>
+          ) : (
+            <span className={styles["no-permission"]} style={{ fontSize: "0.75rem", color: "#8b949e" }}>
+              Read only
+            </span>
+          )}
+        </td>
+      </tr>
+    );
+  };
 
   const publishedCount = works.filter((w) => w.status === "published").length;
   const monthlyCount = works.filter((w) => {
@@ -404,6 +544,9 @@ const Works = () => {
         <Sidebar activePage="works" />
         <main className="main-view">
           <Topbar title="Works Manager" />
+
+          {/* Success Message */}
+          {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
           {/* Stats Cards */}
           <section className={styles["stats-grid"]}>
@@ -421,7 +564,7 @@ const Works = () => {
             </div>
           </section>
 
-          {/* Search, Filters, Refresh */}
+          {/* Search, Filters, Refresh, Undo */}
           <section className={styles["action-section"]}>
             <div className={styles["search-container"]}>
               <input
@@ -465,10 +608,97 @@ const Works = () => {
               <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={fetchWorks}>
                 Refresh
               </button>
+              <button
+                className={`${styles.btn} ${styles["btn-undo"]}`}
+                onClick={() => {
+                  if (lastAction) {
+                    confirmAction(
+                      "Undo Last Action",
+                      `Revert "${lastAction.actionName}" for "${lastAction.workTitle}"?`,
+                      undoLastAction
+                    );
+                  } else {
+                    alert("No action to undo.");
+                  }
+                }}
+                disabled={!lastAction}
+              >
+                ↩️ Undo Last Action
+              </button>
             </div>
           </section>
 
-          {/* Collapsible Upload Form */}
+          {/* Works Table */}
+          <section className={styles["works-section"]}>
+            <div className={styles["section-header"]}>
+              <h2>All Artworks ({filteredWorks.length})</h2>
+              <div className={styles["table-actions-help"]}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1ff14" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                <span>Actions: Edit ✏️ | Publish ✅ | Restore 🔄 | Remove 🗑️ (Faculty cannot modify admin works)</span>
+              </div>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table className={styles.worksTable}>
+                <thead>
+                  <tr>
+                    <th>Work</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Medium</th>
+                    <th>Status</th>
+                    <th>Upload Date</th>
+                    <th>Views</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedWorks.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
+                        No artworks found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedWorks.map(renderRow)
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination + CSV export */}
+            <div className={styles["pagination-bar"]}>
+              <div className={styles["pagination-buttons"]}>
+                <button
+                  className={`${styles["pagination-btn"]} ${currentPage === 1 ? styles.disabled : ""}`}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <span className={styles["page-info"]}>
+                  Page {currentPage} of {totalPages || 1}
+                </span>
+                <button
+                  className={`${styles["pagination-btn"]} ${currentPage === totalPages || totalPages === 0 ? styles.disabled : ""}`}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Next
+                </button>
+              </div>
+              <div className={styles["export-wrapper"]}>
+                <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={exportCSV}>
+                  Export CSV
+                </button>
+                <span className={styles["export-note"]}>Exports filtered artworks as CSV</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Collapsible Upload Form – moved below the works table */}
           <div className={styles["upload-collapsible"]}>
             <button
               ref={uploadToggleRef}
@@ -601,76 +831,6 @@ const Works = () => {
               </div>
             )}
           </div>
-
-          {/* Works Table */}
-          <section className={styles["works-section"]}>
-            <div className={styles["section-header"]}>
-              <h2>All Artworks ({filteredWorks.length})</h2>
-              <div className={styles["table-actions-help"]}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1ff14" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span>Actions: Edit ✏️ | Publish ✅ | Restore 🔄 | Remove 🗑️ (can be restored later)</span>
-              </div>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table className={styles.worksTable}>
-                <thead>
-                  <tr>
-                    <th>Work</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Medium</th>
-                    <th>Status</th>
-                    <th>Upload Date</th>
-                    <th>Views</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedWorks.length === 0 ? (
-                    <tr>
-                      <td colSpan="8" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>
-                        No artworks found.
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedWorks.map(renderRow)
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination + CSV export */}
-            <div className={styles["pagination-bar"]}>
-              <div className={styles["pagination-buttons"]}>
-                <button
-                  className={`${styles["pagination-btn"]} ${currentPage === 1 ? styles.disabled : ""}`}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span className={styles["page-info"]}>
-                  Page {currentPage} of {totalPages || 1}
-                </span>
-                <button
-                  className={`${styles["pagination-btn"]} ${currentPage === totalPages || totalPages === 0 ? styles.disabled : ""}`}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                >
-                  Next
-                </button>
-              </div>
-              <div className={styles["export-wrapper"]}>
-                <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={exportCSV}>
-                  Export CSV
-                </button>
-                <span className={styles["export-note"]}>Exports filtered artworks as CSV</span>
-              </div>
-            </div>
-          </section>
         </main>
       </div>
 
@@ -743,15 +903,17 @@ const Works = () => {
 
                 <div className={styles["form-actions"]} style={{ marginTop: "2rem" }}>
                   <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={closeViewModal}>Close</button>
-                  <button
-                    className={`${styles.btn} ${styles["btn-primary"]}`}
-                    onClick={() => {
-                      closeViewModal();
-                      handleEdit(viewingWork);
-                    }}
-                  >
-                    Edit Artwork
-                  </button>
+                  {!isLoadingUsers && canModifyWork(viewingWork) && (
+                    <button
+                      className={`${styles.btn} ${styles["btn-primary"]}`}
+                      onClick={() => {
+                        closeViewModal();
+                        handleEdit(viewingWork);
+                      }}
+                    >
+                      Edit Artwork
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

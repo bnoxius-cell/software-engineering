@@ -73,10 +73,9 @@ const Requests = () => {
   const [lastAction, setLastAction] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(initialConfirmDialog);
 
-  // Determine if current user is admin (to restrict auto-approve)
   const role = localStorage.getItem("role");
   const isAdmin = role && role.toLowerCase().trim() === "admin";
-  const canUseAutoApprove = isAdmin; // only admin can see/use auto-approve
+  const canUseAutoApprove = isAdmin;
 
   const getToken = useCallback(() => localStorage.getItem("token"), []);
 
@@ -559,10 +558,8 @@ const Requests = () => {
     }
   };
 
-  // Auto-approve effect: only runs for admin users
   useEffect(() => {
     const runAutoApprove = async () => {
-      // Skip auto-approve for non-admin users
       if (!isAdmin) return;
       if (isLoading || isSubmitting) return;
 
@@ -616,7 +613,7 @@ const Requests = () => {
     isSubmitting,
     processAccountBatch,
     processArtworkBatch,
-    isAdmin, // added dependency to re-run if admin status changes
+    isAdmin,
   ]);
 
   const currentSelectionCount =
@@ -647,7 +644,6 @@ const Requests = () => {
           setAutoApproveArtworks((current) => !current);
           return;
         }
-
         setAutoApproveAccounts((current) => !current);
       },
     });
@@ -785,7 +781,6 @@ const Requests = () => {
                 >
                   Approve All
                 </button>
-                {/* Auto Approve button is only shown for admin users */}
                 {canUseAutoApprove && (
                   <button
                     type="button"

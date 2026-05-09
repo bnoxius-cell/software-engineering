@@ -715,3 +715,38 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+.successMessage {
+    background-color: rgba(63, 185, 80, 0.15);
+    border: 1px solid #3fb950;
+    color: #3fb950;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.errorMessage {
+    background-color: rgba(248, 81, 73, 0.15);
+    border: 1px solid #f85149;
+    color: #f85149;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.btnUndo {
+    background-color: rgba(161, 255, 20, 0.1);
+    border: 1px solid #a1ff14;
+    color: #a1ff14;
+}
+.btnUndo:hover:not(:disabled) {
+    background-color: rgba(161, 255, 20, 0.3);
+    box-shadow: 0 0 8px rgba(161, 255, 20, 0.4);
+}
+.btnUndo:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

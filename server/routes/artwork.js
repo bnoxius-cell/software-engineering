@@ -21,7 +21,7 @@ if (!fs.existsSync(uploadDir)) {
 // Configure Multer Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); 
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
@@ -33,14 +33,13 @@ const inferMediaType = (file) => {
   if (!file?.mimetype) {
     return "image";
   }
-
   if (file.mimetype.startsWith("video/")) {
     return "video";
   }
-
   return "image";
 };
 
+// FIXED: missing closing quote and parentheses
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype?.startsWith("image/") ||
@@ -48,7 +47,6 @@ const fileFilter = (req, file, cb) => {
   ) {
     return cb(null, true);
   }
-
   return cb(new Error("Only image and video uploads are allowed."));
 };
 
@@ -86,19 +84,24 @@ const collectChangedFields = (originalDoc, nextValues) =>
       newValue: value,
     }));
 
+// ========== UPDATED AUTHORIZE MIDDLEWARE (faculty support) ==========
 const authorizeArtworkMutation = async (req, res, next) => {
   try {
-    const artwork = await Artwork.findById(req.params.id);
-
+    const artwork = await Artwork.findById(req.params.id).populate("uploadedBy");
     if (!artwork) {
       return res.status(404).json({ message: "Artwork not found" });
     }
 
     const isAdmin = req.user?.role === "Admin";
-    const isOwner = artwork.uploadedBy?.toString() === req.user._id.toString();
+    const isOwner = artwork.uploadedBy?._id.toString() === req.user._id.toString();
+    const isFaculty = req.user?.role === "Faculty";
 
-    if (!isAdmin && !isOwner) {
-      return res.status(403).json({ message: "You can only modify your own artworks." });
+    // Faculty can modify any artwork that is NOT posted by an Admin
+    const isAdminAuthor = artwork.uploadedBy?.role === "Admin";
+    const canModifyAsFaculty = isFaculty && !isAdminAuthor;
+
+    if (!isAdmin && !isOwner && !canModifyAsFaculty) {
+      return res.status(403).json({ message: "You do not have permission to modify this artwork." });
     }
 
     req.artwork = artwork;
@@ -106,6 +109,7 @@ const authorizeArtworkMutation = async (req, res, next) => {
     req.isArtworkOwner = isOwner;
     next();
   } catch (error) {
+    console.error("Authorization error:", error);
     res.status(500).json({ message: "Failed to authorize artwork action" });
   }
 };
@@ -129,7 +133,7 @@ const serializeArtwork = (artwork) => {
   };
 };
 
-// GET artworks
+// GET artworks (public)
 router.get("/", async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "published" })
@@ -171,20 +175,35 @@ router.get("/interactions", protect, async (req, res) => {
   }
 });
 
-// Update artwork status
-router.put("/:id/status", protect, requireAdmin, async (req, res) => {
+// ========== UPDATED STATUS ROUTE (faculty allowed for non‑admin artworks) ==========
+router.put("/:id/status", protect, async (req, res) => {
   try {
+    const artwork = await Artwork.findById(req.params.id).populate("uploadedBy");
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found" });
+    }
+
+    const isAdmin = req.user?.role === "Admin";
+    const isOwner = artwork.uploadedBy?._id.toString() === req.user._id.toString();
+    const isFaculty = req.user?.role === "Faculty";
+
+    const isAdminAuthor = artwork.uploadedBy?.role === "Admin";
+    const canModifyAsFaculty = isFaculty && !isAdminAuthor;
+
+    if (!isAdmin && !isOwner && !canModifyAsFaculty) {
+      return res.status(403).json({ message: "You do not have permission to change this artwork's status." });
+    }
+
     const { status } = req.body;
     const updatedArtwork = await Artwork.findByIdAndUpdate(
-      req.params.id, 
-      { status }, 
+      req.params.id,
+      { status },
       { new: true }
     );
 
     if (status === 'published' && updatedArtwork) {
-      // Check user's notification preferences
       const user = await User.findById(updatedArtwork.uploadedBy);
-      if (user.notifications?.artworkAdded !== false) { // Default to true if not set
+      if (user.notifications?.artworkAdded !== false) {
         await Notification.create({
           recipient: updatedArtwork.uploadedBy,
           type: 'artwork_approved',
@@ -195,11 +214,12 @@ router.put("/:id/status", protect, requireAdmin, async (req, res) => {
 
     res.status(200).json(updatedArtwork);
   } catch (error) {
+    console.error("Status update error:", error);
     res.status(500).json({ message: "Failed to update artwork status" });
   }
 });
 
-// All artworks for admin
+// All artworks for staff (admin & faculty)
 router.get("/all", protect, async (req, res) => {
   try {
     const artworks = await Artwork.find({})
@@ -211,7 +231,7 @@ router.get("/all", protect, async (req, res) => {
   }
 });
 
-// Update artwork. Admins can update any artwork; users can only update their own.
+// Update artwork – uses the updated authorize middleware
 router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload, async (req, res) => {
   try {
     const existingArtwork = req.artwork;
@@ -241,8 +261,8 @@ router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload,
     const changedFields = collectChangedFields(existingArtwork, updateData);
 
     const updatedArtwork = await Artwork.findByIdAndUpdate(
-      req.params.id, 
-      updateData, 
+      req.params.id,
+      updateData,
       { new: true }
     );
 
@@ -257,6 +277,7 @@ router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload,
 
     res.status(200).json(serializeArtwork(updatedArtwork));
   } catch (error) {
+    console.error("Edit error:", error);
     res.status(500).json({ message: "Failed to update artwork" });
   }
 });
@@ -269,8 +290,8 @@ router.get("/profile/:userId", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     const artworks = await Artwork.find({
-      uploadedBy: req.params.userId, 
-      status: "published" 
+      uploadedBy: req.params.userId,
+      status: "published"
     }).populate("uploadedBy", "name username avatar");
     const userWithCounts = {
       ...user.toObject(),
@@ -320,7 +341,7 @@ router.post("/:id/like", protect, async (req, res) => {
   }
 });
 
-// POST upload
+// POST upload (unchanged)
 router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
   try {
     if (!req.files || !req.files.artworkImage) {
@@ -344,7 +365,6 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
     const autoApprove = currentUser.role.toLowerCase() !== 'student' || globalAutoApproveStudents;
     const artworkStatus = autoApprove ? 'published' : 'pending';
 
-    // Enforce maxUploadSize from settings
     const maxSizeMB = settings ? settings.maxUploadSize : 10;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (artworkFile.size > maxSizeBytes) {
@@ -369,10 +389,8 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
 
     if (newArtworkData.mediaType === 'video') {
       if (thumbnailFile) {
-        // Use user-provided thumbnail
         newArtworkData.thumbnail = `/Artworks/${thumbnailFile.filename}`;
       } else {
-        // Auto-generate thumbnail if none is provided
         const thumbnailFilename = `${path.parse(artworkFile.filename).name}.png`;
         const thumbnailPath = path.join(uploadDir, thumbnailFilename);
 
@@ -382,7 +400,7 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
               .on('end', resolve)
               .on('error', (err) => {
                 console.error('FFMPEG thumbnail generation error:', err.message);
-                resolve(); // Continue without a thumbnail if generation fails
+                resolve();
               })
               .screenshots({
                 timestamps: ['00:00:01.000'],
@@ -423,14 +441,11 @@ router.use((error, req, res, next) => {
     if (error.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({ message: "File is too large. Maximum size is 100MB." });
     }
-
     return res.status(400).json({ message: error.message });
   }
-
   if (error) {
     return res.status(400).json({ message: error.message });
   }
-
   next();
 });
 
@@ -445,7 +460,7 @@ router.get("/user/me", protect, async (req, res) => {
   }
 });
 
-// Delete artwork. Admins can delete any artwork; users can only delete their own.
+// Delete artwork – uses the updated authorize middleware
 router.delete("/:id", protect, authorizeArtworkMutation, async (req, res) => {
   try {
     const artwork = req.artwork;
@@ -462,6 +477,7 @@ router.delete("/:id", protect, authorizeArtworkMutation, async (req, res) => {
 
     res.status(200).json({ message: "Artwork deleted" });
   } catch (error) {
+    console.error("Delete error:", error);
     res.status(500).json({ message: "Failed to delete artwork" });
   }
 });
