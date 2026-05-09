@@ -2,8 +2,34 @@ import React from 'react';
 import styles from './About.module.css';
 
 const About = () => {
+  // Generate static stars (80 random positions) – improves background depth
+  const stars = Array.from({ length: 80 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: Math.random() * 2 + 1,
+    delay: Math.random() * 5,
+  }));
+
   return (
     <div className={styles.aboutWrapper}>
+      {/* Animated starfield background */}
+      <div className={styles.starsContainer}>
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            className={styles.star}
+            style={{
+              left: `${star.left}%`,
+              top: `${star.top}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              animationDelay: `${star.delay}s`,
+            }}
+          />
+        ))}
+      </div>
+
       <div className={styles.container}>
         <header className={styles.pageHeader}>
           <h1>About EMC Artisan</h1>

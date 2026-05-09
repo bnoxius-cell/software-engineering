@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Topbar.module.css";
 import artisanLogo from "../assets/images/artisanLogo.png";
-import { Link } from 'react-router-dom';
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -11,6 +10,7 @@ const Topbar = ({ title }) => {
         const storedAvatar = localStorage.getItem('avatar');
         return storedAvatar ? getAvatarUrl(storedAvatar) : '/assets/images/profile_icon.png';
     });
+    const [userName, setUserName] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -20,10 +20,15 @@ const Topbar = ({ title }) => {
             })
                 .then((res) => res.ok ? res.json() : null)
                 .then((data) => {
-                    if (data?.avatar) {
-                        const resolved = getAvatarUrl(data.avatar);
-                        setAvatar(resolved);
-                        localStorage.setItem('avatar', data.avatar);
+                    if (data) {
+                        if (data.avatar) {
+                            const resolved = getAvatarUrl(data.avatar);
+                            setAvatar(resolved);
+                            localStorage.setItem('avatar', data.avatar);
+                        }
+                        if (data.name) {
+                            setUserName(data.name);
+                        }
                     }
                 })
                 .catch(() => {});
@@ -48,21 +53,24 @@ const Topbar = ({ title }) => {
     }, []);
 
     return (
-        <>
-            <header className={styles.stickyHeader}>
-                <div className={styles.brand}>
-                    <img src={artisanLogo} alt="Artisan Logo" className={styles.brandImg} />
-                    <h1>{title}</h1>
-                </div>
-                <Link to="/profile" className={styles.profileLink}>
-                    <img className={styles.avatar} src={avatar} alt="Admin Profile" onError={(e) => {
+        <header className={styles.stickyHeader}>
+            <div className={styles.brand}>
+                <img src={artisanLogo} alt="Artisan Logo" className={styles.brandImg} />
+                <h1>{title}</h1>
+            </div>
+            <div className={styles.userInfo}>
+                <span className={styles.userName}>{userName || 'Admin'}</span>
+                <img
+                    className={styles.avatar}
+                    src={avatar}
+                    alt="Profile"
+                    onError={(e) => {
                         e.target.src = '/assets/images/profile_icon.png';
-                    }} />
-                </Link>
-            </header>
-        </>
+                    }}
+                />
+            </div>
+        </header>
     );
 };
 
 export default Topbar;
-

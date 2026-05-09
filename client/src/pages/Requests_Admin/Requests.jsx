@@ -73,6 +73,11 @@ const Requests = () => {
   const [lastAction, setLastAction] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(initialConfirmDialog);
 
+  // Determine if current user is admin (to restrict auto-approve)
+  const role = localStorage.getItem("role");
+  const isAdmin = role && role.toLowerCase().trim() === "admin";
+  const canUseAutoApprove = isAdmin; // only admin can see/use auto-approve
+
   const getToken = useCallback(() => localStorage.getItem("token"), []);
 
   const fetchRequests = useCallback(async () => {
@@ -554,8 +559,11 @@ const Requests = () => {
     }
   };
 
+  // Auto-approve effect: only runs for admin users
   useEffect(() => {
     const runAutoApprove = async () => {
+      // Skip auto-approve for non-admin users
+      if (!isAdmin) return;
       if (isLoading || isSubmitting) return;
 
       if (autoApproveArtworks && artworkRequests.length > 0) {
@@ -608,6 +616,7 @@ const Requests = () => {
     isSubmitting,
     processAccountBatch,
     processArtworkBatch,
+    isAdmin, // added dependency to re-run if admin status changes
   ]);
 
   const currentSelectionCount =
@@ -707,30 +716,30 @@ const Requests = () => {
             {error && <p className={styles.errorMessage}>{error}</p>}
 
             <div className={styles.bulkToolbar}>
-<label className={styles.selectAllToggle}>
-  <label className={`${styles["ios-checkbox"]} ${styles.green}`}>
-    <input
-      type="checkbox"
-      checked={allVisibleSelected}
-      onChange={toggleSelectAllCurrentView}
-      disabled={isSubmitting || isLoading}
-    />
-    <div className={styles["checkbox-wrapper"]}>
-      <div className={styles["checkbox-bg"]}></div>
-      <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
-        <path
-          className={styles["check-path"]}
-          d="M4 12L10 18L20 6"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  </label>
-  <span>Select all</span>
-</label>
+              <label className={styles.selectAllToggle}>
+                <label className={`${styles["ios-checkbox"]} ${styles.green}`}>
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAllCurrentView}
+                    disabled={isSubmitting || isLoading}
+                  />
+                  <div className={styles["checkbox-wrapper"]}>
+                    <div className={styles["checkbox-bg"]}></div>
+                    <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
+                      <path
+                        className={styles["check-path"]}
+                        d="M4 12L10 18L20 6"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </label>
+                <span>Select all</span>
+              </label>
 
               <div className={styles.bulkInfo}>
                 <span>{currentSelectionCount} selected</span>
@@ -776,16 +785,19 @@ const Requests = () => {
                 >
                   Approve All
                 </button>
-                <button
-                  type="button"
-                  className={`${styles.inlineAction} ${
-                    currentAutoApproveEnabled ? styles.autoApproveActive : ""
-                  }`}
-                  onClick={toggleAutoApproveCurrentView}
-                  disabled={isSubmitting}
-                >
-                  {currentAutoApproveEnabled ? "Auto Approve On" : "Auto Approve Off"}
-                </button>
+                {/* Auto Approve button is only shown for admin users */}
+                {canUseAutoApprove && (
+                  <button
+                    type="button"
+                    className={`${styles.inlineAction} ${
+                      currentAutoApproveEnabled ? styles.autoApproveActive : ""
+                    }`}
+                    onClick={toggleAutoApproveCurrentView}
+                    disabled={isSubmitting}
+                  >
+                    {currentAutoApproveEnabled ? "Auto Approve On" : "Auto Approve Off"}
+                  </button>
+                )}
                 <button
                   type="button"
                   className={styles.inlineAction}
@@ -837,28 +849,28 @@ const Requests = () => {
                           className={styles.clickableRow}
                           onClick={() => openArtworkReview(request)}
                         >
-<td onClick={(e) => e.stopPropagation()}>
-  <label className={`${styles["ios-checkbox"]} ${styles.red} ${styles.tableCheckbox}`}>
-    <input
-      type="checkbox"
-      checked={selectedArtworkIds.includes(request._id)}
-      onChange={() => toggleArtworkSelection(request._id)}
-    />
-    <div className={styles["checkbox-wrapper"]}>
-      <div className={styles["checkbox-bg"]}></div>
-      <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
-        <path
-          className={styles["check-path"]}
-          d="M4 12L10 18L20 6"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  </label>
-</td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <label className={`${styles["ios-checkbox"]} ${styles.red} ${styles.tableCheckbox}`}>
+                              <input
+                                type="checkbox"
+                                checked={selectedArtworkIds.includes(request._id)}
+                                onChange={() => toggleArtworkSelection(request._id)}
+                              />
+                              <div className={styles["checkbox-wrapper"]}>
+                                <div className={styles["checkbox-bg"]}></div>
+                                <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    className={styles["check-path"]}
+                                    d="M4 12L10 18L20 6"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            </label>
+                          </td>
                           <td>{request.title}</td>
                           <td>{request.artistName || "Unknown Artist"}</td>
                           <td>{request.medium || "Not provided"}</td>
@@ -914,28 +926,28 @@ const Requests = () => {
                           className={styles.clickableRow}
                           onClick={() => openAccountReview(request)}
                         >
-<td onClick={(e) => e.stopPropagation()}>
-  <label className={`${styles["ios-checkbox"]} ${styles.red} ${styles.tableCheckbox}`}>
-    <input
-      type="checkbox"
-      checked={selectedAccountIds.includes(request._id)}
-      onChange={() => toggleAccountSelection(request._id)}
-    />
-    <div className={styles["checkbox-wrapper"]}>
-      <div className={styles["checkbox-bg"]}></div>
-      <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
-        <path
-          className={styles["check-path"]}
-          d="M4 12L10 18L20 6"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  </label>
-</td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <label className={`${styles["ios-checkbox"]} ${styles.red} ${styles.tableCheckbox}`}>
+                              <input
+                                type="checkbox"
+                                checked={selectedAccountIds.includes(request._id)}
+                                onChange={() => toggleAccountSelection(request._id)}
+                              />
+                              <div className={styles["checkbox-wrapper"]}>
+                                <div className={styles["checkbox-bg"]}></div>
+                                <svg className={styles["checkbox-icon"]} viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    className={styles["check-path"]}
+                                    d="M4 12L10 18L20 6"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            </label>
+                          </td>
                           <td>{request.name}</td>
                           <td>{request.email}</td>
                           <td>
@@ -1173,7 +1185,7 @@ const Requests = () => {
                   >
                     <option value="Student">Student</option>
                     <option value="Faculty">Faculty</option>
-                    <option value="Admin">Admin</option>
+                    {isAdmin && <option value="Admin">Admin</option>}
                   </select>
                 </div>
 

@@ -1,3 +1,12 @@
+/* ===== PAGE CONTENT WRAPPER (centres and limits width) ===== */
+.pageContent {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 1rem;
+}
+
+
 /* ===== STATS GRID (same as Works) ===== */
 .statsGrid {
     display: grid;
@@ -86,20 +95,26 @@
     padding-right: 2.2rem;
 }
 
-/* ===== USER TABLE ===== */
+/* ===== USER TABLE (fixed layout – prevents stretching) ===== */
 .userTable {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin-top: 1rem;
+}
+
+.statusCell {
+    white-space: nowrap;
 }
 
 .userTable th,
 .userTable td {
     vertical-align: middle;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0.5rem;
     text-align: left;
     border-bottom: 1px solid rgba(55, 65, 81, 1);
     color: #e5e7eb;
+    word-break: break-word;
 }
 
 .userTable th {
@@ -110,12 +125,52 @@
     letter-spacing: 0.05em;
 }
 
-/* Avatar column */
-.userTable td:first-child {
-    width: 60px;
+/* Column widths – adjust percentages as needed */
+.userTable th:nth-child(1),
+.userTable td:nth-child(1) {
+    width: 70px;
     text-align: center;
 }
 
+.userTable th:nth-child(2),
+.userTable td:nth-child(2) {
+    width: 10%;
+}
+
+.userTable th:nth-child(3),
+.userTable td:nth-child(3) {
+    text-align: center;
+    
+}
+
+.userTable td:nth-child(4) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.userTable td:nth-child(5),
+.userTable th:nth-child(5) {
+    text-align: center;
+}
+
+.userTable td:nth-child(6),
+.userTable th:nth-child(6) {
+    text-align: center;
+}
+
+.userTable td:nth-child(7),
+.userTable th:nth-child(7) {
+    text-align: center;
+}
+
+.userTable th:nth-child(8),
+.userTable td:nth-child(8) {
+    width: 260px;
+    text-align: center;
+}
+
+/* Avatar image inside the first column */
 .avatarImg {
     width: 32px;
     height: 32px;
@@ -123,7 +178,7 @@
     object-fit: cover;
 }
 
-/* ID column */
+/* ID column styling */
 .userId {
     font-family: monospace;
     color: #8b949e;
@@ -135,16 +190,7 @@
     font-weight: 600;
 }
 
-/* Actions column – fixed width, no wrapping, centered */
-.userTable th:last-child,
-.userTable td:last-child {
-    white-space: nowrap;
-    width: 1%;
-    min-width: 280px;
-    text-align: center;
-}
-
-/* Action buttons container */
+/* Action buttons container – centred, no wrap */
 .rowActions {
     display: flex;
     gap: 0.5rem;
@@ -169,7 +215,7 @@
     color: #a1ff14;
 }
 
-/* Status‑specific action buttons */
+/* Status‑specific button colours */
 .btnApprove {
     border-color: rgba(63, 185, 80, 0.5);
     color: #3fb950;
@@ -630,4 +676,42 @@
     background-position: right 0.75rem center;
     background-size: 1rem;
     padding-right: 2.2rem;
+}
+
+/* Success message styling */
+.successMessage {
+    background-color: rgba(63, 185, 80, 0.15);
+    border: 1px solid #3fb950;
+    color: #3fb950;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Error message styling (if missing) */
+.errorMessage {
+    background-color: rgba(248, 81, 73, 0.15);
+    border: 1px solid #f85149;
+    color: #f85149;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* Undo button specific style (green theme) */
+.btnUndo {
+    background-color: rgba(161, 255, 20, 0.1);
+    border: 1px solid #a1ff14;
+    color: #a1ff14;
+}
+.btnUndo:hover:not(:disabled) {
+    background-color: rgba(161, 255, 20, 0.3);
+    box-shadow: 0 0 8px rgba(161, 255, 20, 0.4);
+}
+.btnUndo:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

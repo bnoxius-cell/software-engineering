@@ -60,11 +60,10 @@ router.post('/artworks/:artworkId/comments', protect, async (req, res) => {
         artwork.comments.push(newComment);
         await artwork.save();
 
-        // Fetch the newly added comment and populate user data to return back to frontend
+        // Fetch the newly added comment and populate user data
         const updatedArtwork = await Artwork.findById(req.params.artworkId)
             .populate('comments.user', 'name username avatar');
         
-        // The newly added comment will be the last one in the array
         const addedComment = updatedArtwork.comments[updatedArtwork.comments.length - 1];
 
         res.status(201).json(serializeComment({
@@ -127,6 +126,38 @@ router.post('/comments/:commentId/like', protect, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error liking comment' });
+    }
+});
+
+// DELETE a comment (admin only)
+router.delete('/comments/:commentId', protect, async (req, res) => {
+    try {
+        const userId = req.user._id || req.user.id;
+        const userRole = req.user.role;
+        // Only allow admins to delete comments
+        if (userRole !== 'Admin') {
+            return res.status(403).json({ message: 'Only admins can delete comments' });
+        }
+
+        const { commentId } = req.params;
+        const artwork = await Artwork.findOne({ 'comments._id': commentId });
+        if (!artwork) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        const comment = artwork.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        // Remove the comment using Mongoose's pull
+        artwork.comments.pull({ _id: commentId });
+        await artwork.save();
+
+        res.status(200).json({ message: 'Comment deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error deleting comment' });
     }
 });
 

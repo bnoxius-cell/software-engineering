@@ -9,7 +9,7 @@ const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
 const Collection = require("../models/Collection");
 const ffmpeg = require('fluent-ffmpeg');
-const { protect, requireAdmin } = require("../middleware/auth");
+const { protect, requireAdmin, requireStaff } = require("../middleware/auth");
 
 // Set up the upload directory
 const uploadDir = path.join(__dirname, "../../public/Artworks");
@@ -141,7 +141,7 @@ router.get("/", async (req, res) => {
 });
 
 // ADMIN pending artworks
-router.get("/admin/pending", protect, requireAdmin, async (req, res) => {
+router.get("/admin/pending", protect, requireStaff, async (req, res) => {
   try {
     const artworks = await Artwork.find({ status: "pending" })
       .populate("uploadedBy", "name username avatar");

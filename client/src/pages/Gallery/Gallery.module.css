@@ -146,9 +146,6 @@
     margin-bottom: 0.25rem;
 }
 
-.masonryGrid:has(.artCard:hover) .artCard:not(:hover) {
-    filter: brightness(0.4) grayscale(0.3);
-}
 
 .masonryGrid .artCard:hover {
     transform: scale(1.03);

@@ -33,15 +33,38 @@
     object-fit: contain;
 }
 
-.profileLink {
-    display: inline-block; 
-    text-decoration: none; 
-    transition: transform 0.3s ease;
+/* User info area (name + avatar) */
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.profileLink:hover { transform: scale(1.05); }
+.userName {
+    color: #fff;
+    background: linear-gradient(120deg, #ffffff 0%, #a1ff14 35%, #ffffff 70%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+}
 
-/* Fixes the giant profile picture */
+@keyframes shine {
+    0% {
+        background-position: 0% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+/* Avatar styling */
 .avatar {
     width: 50px; 
     height: 50px; 
@@ -49,6 +72,11 @@
     border: 2px solid rgb(161, 255, 20);
     padding: 2px; 
     object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.02);
 }
 
 /* Toolbar & Buttons */
@@ -102,4 +130,7 @@
 @media (max-width: 768px) {
     .stickyHeader { position: relative; box-shadow: none; }
     .brandImg { height: 32px; }
+    .userName { font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+    .avatar { width: 40px; height: 40px; }
+    .userInfo { gap: 0.5rem; }
 }

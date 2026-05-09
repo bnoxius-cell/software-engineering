@@ -24,7 +24,11 @@ const UserManager = () => {
     });
     const [isCreateCollapsed, setIsCreateCollapsed] = useState(true);
     const [isCreateAdminCollapsed, setIsCreateAdminCollapsed] = useState(true);
+    const [successMessage, setSuccessMessage] = useState(''); // NEW: for undo feedback
     const ITEMS_PER_PAGE = 10;
+
+    // UNDO state: track last status change
+    const [lastAction, setLastAction] = useState(null);
 
     // Create user form state
     const [formData, setFormData] = useState({
@@ -56,6 +60,13 @@ const UserManager = () => {
     const isFaculty = normalizedRole === "faculty";
 
     const createUserRef = useRef(null);
+
+    // Auto-clear success message after 4 seconds
+    useEffect(() => {
+        if (!successMessage) return;
+        const timer = setTimeout(() => setSuccessMessage(''), 4000);
+        return () => clearTimeout(timer);
+    }, [successMessage]);
 
     // Fetch users
     const fetchUsers = async () => {
@@ -154,6 +165,12 @@ const UserManager = () => {
     // ---- Status change handlers (with confirmation) ----
     const handleStatusChange = async (userId, newStatus, actionName) => {
         const token = localStorage.getItem("token");
+        // Find current user to get previous status
+        const user = users.find(u => u._id === userId);
+        if (!user) return;
+
+        const previousStatus = user.status;
+
         try {
             const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
                 method: 'PUT',
@@ -163,10 +180,52 @@ const UserManager = () => {
                 },
                 body: JSON.stringify({ status: newStatus })
             });
-            if (res.ok) fetchUsers();
-            else alert(`Failed to ${actionName} user.`);
+            if (res.ok) {
+                fetchUsers();
+                // Store last action for undo
+                setLastAction({
+                    userId,
+                    previousStatus,
+                    newStatus,
+                    userName: user.name,
+                    actionName
+                });
+                setSuccessMessage(`Action "${actionName}" completed. You can undo it.`);
+            } else {
+                alert(`Failed to ${actionName} user.`);
+            }
         } catch (error) {
             console.error("Error updating user status:", error);
+        }
+    };
+
+    // UNDO last action
+    const undoLastAction = async () => {
+        if (!lastAction) return;
+
+        const { userId, previousStatus, userName, actionName } = lastAction;
+        const token = localStorage.getItem("token");
+
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/${userId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: previousStatus })
+            });
+
+            if (res.ok) {
+                await fetchUsers();
+                setLastAction(null);
+                setSuccessMessage(`Undo successful: "${userName}" reverted to ${previousStatus}.`);
+            } else {
+                setError(`Failed to undo ${actionName}.`);
+            }
+        } catch (err) {
+            console.error("Undo error:", err);
+            setError("Could not undo last action.");
         }
     };
 
@@ -304,6 +363,10 @@ const UserManager = () => {
                 <main className="main-view">
                     <Topbar title="User Manager" />
 
+                    {/* Success / Error Messages */}
+                    {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+                    {error && <div className={styles.errorMessage}>{error}</div>}
+
                     {/* Stats Cards */}
                     <section className={styles.statsGrid}>
                         <div className={styles.statCard}>
@@ -331,7 +394,7 @@ const UserManager = () => {
                         </button>
                     </section>
 
-                    {/* Search / Filter / Refresh */}
+                    {/* Search / Filter / Refresh / Undo */}
                     <section className={styles.actionSection}>
                         <div className={styles.searchContainer}>
                             <input
@@ -359,6 +422,24 @@ const UserManager = () => {
                             </select>
                             <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={fetchUsers}>
                                 Refresh
+                            </button>
+                            {/* Undo Last Action Button */}
+                            <button
+                                className={`${styles.btn} ${styles.btnUndo}`}
+                                onClick={() => {
+                                    if (lastAction) {
+                                        confirmAction(
+                                            "Undo Last Action",
+                                            `Revert "${lastAction.actionName}" for ${lastAction.userName}?`,
+                                            undoLastAction
+                                        );
+                                    } else {
+                                        alert("No action to undo.");
+                                    }
+                                }}
+                                disabled={!lastAction}
+                            >
+                                ↩️ Undo Last Action
                             </button>
                         </div>
                     </section>
@@ -399,8 +480,7 @@ const UserManager = () => {
                                     ) : (
                                         paginatedUsers.map((user) => {
                                             const currentStatus = user.status ? user.status.toLowerCase() : 'pending';
-                                            const isCurrentUserAdmin = user.role === 'Admin';
-                                            const canEdit = isAdmin || (!isCurrentUserAdmin && !isFaculty);
+                                            const canEdit = isAdmin || (isFaculty && user.role === 'Student');
                                             return (
                                                 <tr
                                                     key={user._id}
@@ -413,7 +493,7 @@ const UserManager = () => {
                                                     </td>
                                                     <td className={styles.userId}>{user._id.substring(0, 8)}...</td>
                                                     <td className={styles.userName}>{user.name}</td>
-                                                    <td>{user.email}</td>
+                                                    <td style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</td>
                                                     <td><Badge variant={user.role}>{user.role || 'Student'}</Badge></td>
                                                     <td>
                                                         <Badge variant={currentStatus === 'pending' ? 'Pending' : currentStatus === 'active' ? 'Active' : 'Suspended'}>
@@ -460,7 +540,7 @@ const UserManager = () => {
                             </table>
                         </div>
 
-                        {/* Pagination + CSV export (bottom right) */}
+                        {/* Pagination + CSV export */}
                         <div className={styles.paginationBar}>
                             <div className={styles.paginationButtons}>
                                 <button
@@ -570,7 +650,7 @@ const UserManager = () => {
                 </main>
             </div>
 
-            {/* Edit User Modal */}
+            {/* Edit User Modal (unchanged) */}
             {showEditModal && editingUser && (
                 <div className={styles.modalOverlay} onClick={() => setShowEditModal(false)}>
                     <div className={styles.editUserModal} onClick={(e) => e.stopPropagation()}>

@@ -9,7 +9,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const Works = () => {
   const [works, setWorks] = useState([]);
-  const [users, setUsers] = useState([]);        // full list of users for author search
+  const [users, setUsers] = useState([]);
   const [totalWorks, setTotalWorks] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -29,6 +29,9 @@ const Works = () => {
   });
   const ITEMS_PER_PAGE = 10;
 
+  // Comments for the viewed artwork
+  const [currentComments, setCurrentComments] = useState([]);
+
   // Author search dropdown state
   const [authorSearch, setAuthorSearch] = useState("");
   const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false);
@@ -36,7 +39,6 @@ const Works = () => {
   const [selectedAuthorName, setSelectedAuthorName] = useState("");
   const authorDropdownRef = useRef(null);
 
-  // Filter users based on search text
   const filteredUsers = authorSearch.trim() === ""
     ? []
     : users.filter(user =>
@@ -107,7 +109,29 @@ const Works = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Status changes (approve/publish/restore/reject)
+  // Helper to check if current user is admin
+  const isAdmin = () => {
+    const role = localStorage.getItem("role");
+    return role && role.toLowerCase().trim() === "admin";
+  };
+
+  // Fetch comments for a single artwork
+  const fetchCommentsForArtwork = async (artworkId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentComments(data);
+      } else {
+        setCurrentComments([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch comments:", err);
+      setCurrentComments([]);
+    }
+  };
+
+  // Status changes
   const handleStatusChange = async (workId, newStatus) => {
     const token = localStorage.getItem("token");
     try {
@@ -137,10 +161,12 @@ const Works = () => {
   const handleView = (work) => {
     setViewingWork(work);
     setIsViewModalOpen(true);
+    fetchCommentsForArtwork(work._id);
   };
   const closeViewModal = () => {
     setIsViewModalOpen(false);
     setViewingWork(null);
+    setCurrentComments([]);
   };
 
   const handleEditSubmit = async (e) => {
@@ -165,12 +191,11 @@ const Works = () => {
     }
   };
 
-  // Upload new artwork (always published, no status dropdown)
+  // Upload new artwork (always published)
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
     const formData = new FormData(e.target);
-    // Append the selected author ID
     if (!selectedAuthorId) {
       alert("Please select an author.");
       return;
@@ -178,7 +203,6 @@ const Works = () => {
     formData.append("authorId", selectedAuthorId);
     formData.append("status", "published");
 
-    // The file input name is "artworkImage" as per backend multer config
     try {
       const res = await fetch(`${API_BASE}/api/artworks`, {
         method: "POST",
@@ -200,6 +224,33 @@ const Works = () => {
       console.error("Upload error:", error);
       alert("Server error while uploading.");
     }
+  };
+
+  // Delete comment (admin only)
+  const handleDeleteComment = async (commentId) => {
+    const token = localStorage.getItem("token");
+    confirmAction(
+      "Delete Comment",
+      "Are you sure you want to permanently delete this comment? This action cannot be undone.",
+      async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/comments/${commentId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            // Refresh comments list for the current artwork
+            if (viewingWork) fetchCommentsForArtwork(viewingWork._id);
+          } else {
+            const err = await res.json();
+            alert(err.message || "Failed to delete comment.");
+          }
+        } catch (error) {
+          console.error("Delete comment error:", error);
+          alert("Server error while deleting comment.");
+        }
+      }
+    );
   };
 
   // Filter logic
@@ -230,7 +281,6 @@ const Works = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Confirmation helper
   const confirmAction = (title, message, onConfirm) => {
     setConfirmDialog({ isOpen: true, title, message, onConfirm });
   };
@@ -238,7 +288,6 @@ const Works = () => {
     setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
   };
 
-  // CSV export
   const exportCSV = () => {
     confirmAction(
       "Export filtered artworks?",
@@ -419,7 +468,7 @@ const Works = () => {
             </div>
           </section>
 
-          {/* Collapsible Upload Form with searchable author dropdown */}
+          {/* Collapsible Upload Form */}
           <div className={styles["upload-collapsible"]}>
             <button
               ref={uploadToggleRef}
@@ -625,7 +674,7 @@ const Works = () => {
         </main>
       </div>
 
-      {/* View, Edit, and Confirmation modals (unchanged) */}
+      {/* View Modal (with comments) */}
       {isViewModalOpen && viewingWork && (
         <div className={styles.modalOverlay} onClick={closeViewModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -661,6 +710,37 @@ const Works = () => {
                     {viewingWork.description || <span style={{ color: "gray", fontStyle: "italic" }}>No description provided.</span>}
                   </div>
                 </div>
+
+                {/* Comments Section */}
+                <div className={styles.modalCommentsSection}>
+                  <h4>Comments ({currentComments.length})</h4>
+                  <div className={styles.modalCommentsList}>
+                    {currentComments.length === 0 ? (
+                      <p className={styles.noModalComments}>No comments yet.</p>
+                    ) : (
+                      currentComments.map((comment) => (
+                        <div key={comment._id} className={styles.modalCommentItem}>
+                          <div className={styles.modalCommentHeader}>
+                            <strong>{comment.user?.name || "Anonymous"}</strong>
+                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                            {isAdmin() && (
+                              <button
+                                type="button"
+                                className={styles.deleteCommentBtn}
+                                onClick={() => handleDeleteComment(comment._id)}
+                                title="Delete comment"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                          <p className={styles.modalCommentText}>{comment.content}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
                 <div className={styles["form-actions"]} style={{ marginTop: "2rem" }}>
                   <button className={`${styles.btn} ${styles["btn-secondary"]}`} onClick={closeViewModal}>Close</button>
                   <button
@@ -679,6 +759,7 @@ const Works = () => {
         </div>
       )}
 
+      {/* Edit Modal */}
       {isEditModalOpen && editingWork && (
         <div className={styles.modalOverlay} onClick={closeEditModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -742,6 +823,7 @@ const Works = () => {
         </div>
       )}
 
+      {/* Confirmation Modal */}
       {confirmDialog.isOpen && (
         <div className={styles.modalOverlay} onClick={closeConfirm}>
           <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>

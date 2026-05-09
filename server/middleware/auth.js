@@ -43,4 +43,11 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
-module.exports = { protect, requireAdmin };
+const requireStaff = (req, res, next) => {
+    if (!req.user || !["Admin", "Faculty"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Admin or faculty access required." });
+    }
+    next();
+};
+
+module.exports = { protect, requireAdmin, requireStaff };

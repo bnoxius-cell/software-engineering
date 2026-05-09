@@ -1,165 +1,237 @@
+/* ===== GLOBAL PAGE STYLES ===== */
 .aboutWrapper {
+  position: relative;
   min-height: 100vh;
   padding: 100px 2rem 4rem 2rem;
-  background-color: transparent; /* Let your main app background show through */
-  width: 100%;
+  background: radial-gradient(ellipse at bottom, #0a0a0a 0%, #000000 100%);
+  overflow: hidden;
   color: #e5e7eb;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* ===== STARFIELD (animated) ===== */
+.starsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  background: #a1ff14;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: twinkle 3s infinite alternate;
+  box-shadow: 0 0 4px rgba(161, 255, 20, 0.6);
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ===== MAIN CONTAINER ===== */
 .container {
-  max-width: 1400px; /* Nice and wide for desktop */
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
 
+/* ===== HEADER SECTION ===== */
 .pageHeader {
   text-align: center;
   margin-bottom: 4rem;
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .pageHeader h1 {
   font-size: 3rem;
   font-weight: 800;
-  color: #ffffff;
+  background: linear-gradient(135deg, #ffffff, #a1ff14);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
   margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(161, 255, 20, 0.3);
 }
 
 .pageHeader p {
   font-size: 1.2rem;
   color: #9ca3af;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-/* THE MAGIC SPREAD-OUT GRID */
+/* ===== 3‑COLUMN CARD GRID ===== */
 .infoSection {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Forces 3 side-by-side columns */
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   margin-bottom: 5rem;
 }
 
+/* ===== GLASS CARD WITH NEON BORDER & GLOW ===== */
 .glassCard {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(17, 24, 39, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border: 1px solid rgba(161, 255, 20, 0.2);
+  border-radius: 24px;
   padding: 2.5rem;
-  transition: transform 0.3s ease, border-color 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  animation: fadeSlideUp 0.6s ease-out backwards;
+  animation-delay: calc(var(--order, 0) * 0.1s);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated gradient border on hover */
+.glassCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(161, 255, 20, 0), rgba(161, 255, 20, 0.6), rgba(161, 255, 20, 0));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.glassCard:hover::before {
+  opacity: 1;
 }
 
 .glassCard:hover {
-  transform: translateY(-4px);
-  border-color: rgba(161, 255, 20, 0.3);
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(161, 255, 20, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(161, 255, 20, 0.3);
 }
 
+/* Staggered animation for cards */
+.infoSection .glassCard:nth-child(1) { --order: 1; }
+.infoSection .glassCard:nth-child(2) { --order: 2; }
+.infoSection .glassCard:nth-child(3) { --order: 3; }
+
+/* ===== CARD HEADER ===== */
 .cardHeader {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .icon {
-  font-size: 2rem;
-  background: rgba(161, 255, 20, 0.1);
-  padding: 0.5rem;
-  border-radius: 12px;
+  font-size: 2.2rem;
+  background: rgba(161, 255, 20, 0.15);
+  padding: 0.7rem;
+  border-radius: 18px;
+  box-shadow: 0 0 12px rgba(161, 255, 20, 0.2);
+  transition: all 0.3s;
+}
+
+.glassCard:hover .icon {
+  transform: scale(1.1);
+  background: rgba(161, 255, 20, 0.25);
 }
 
 .glassCard h2 {
   font-size: 1.5rem;
   color: #a1ff14;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .glassCard p {
   line-height: 1.7;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: #d1d5db;
   margin: 0;
-  flex: 1; /* Pushes content evenly */
 }
 
-.teamSection h2 {
-  text-align: center;
-  font-size: 2.2rem;
-  color: #ffffff;
-  margin-bottom: 3rem;
-}
-
-.teamGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 developers side-by-side */
-  gap: 2rem;
-}
-
-.teamCard {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.teamCard:hover {
-  transform: translateY(-5px);
-  border-color: rgba(161, 255, 20, 0.3);
-}
-
-.avatar {
-  width: 120px;
-  height: 120px;
+/* ===== FLOATING GLOW ORB (ambient effect) ===== */
+.aboutWrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  right: -5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(161, 255, 20, 0.15), transparent 70%);
   border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 1.5rem;
-  border: 3px solid rgba(161, 255, 20, 0.5);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+  animation: floatOrb 12s ease-in-out infinite;
 }
 
-.teamCard h3 {
-  color: #ffffff;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.3rem;
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, -40px) scale(1.1); }
 }
 
-.teamCard p {
-  color: #a1ff14;
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Social Links */
-.socialLinks {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.2rem;
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.socialIcon {
-  color: #9ca3af;
-  transition: color 0.2s ease, transform 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.socialIcon:hover {
-  color: #a1ff14;
-  transform: translateY(-2px);
-}
-
-/* Mobile Responsiveness */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
-  .infoSection { grid-template-columns: repeat(2, 1fr); }
-  .teamGrid { grid-template-columns: repeat(2, 1fr); }
+  .infoSection {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
+
 @media (max-width: 768px) {
-  .infoSection { grid-template-columns: 1fr; }
-  .teamGrid { grid-template-columns: 1fr; }
+  .aboutWrapper {
+    padding: 80px 1.5rem 3rem 1.5rem;
+  }
+  .infoSection {
+    grid-template-columns: 1fr;
+  }
+  .pageHeader h1 {
+    font-size: 2.2rem;
+  }
+  .glassCard {
+    padding: 1.8rem;
+  }
+  .glassCard h2 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .aboutWrapper::after {
+    width: 200px;
+    height: 200px;
+    bottom: 5%;
+    right: -20%;
+  }
 }
