@@ -29,21 +29,16 @@ const Works = () => {
   });
   const ITEMS_PER_PAGE = 10;
 
-  // --- UNDO state ---
   const [lastAction, setLastAction] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-
-  // Comments for the viewed artwork
   const [currentComments, setCurrentComments] = useState([]);
 
-  // Author search dropdown state
   const [authorSearch, setAuthorSearch] = useState("");
   const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false);
   const [selectedAuthorId, setSelectedAuthorId] = useState("");
   const [selectedAuthorName, setSelectedAuthorName] = useState("");
   const authorDropdownRef = useRef(null);
 
-  // Loading state for users (needed for permission checks)
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
   const filteredUsers = authorSearch.trim() === ""
@@ -56,14 +51,12 @@ const Works = () => {
   const searchInputRef = useRef(null);
   const uploadToggleRef = useRef(null);
 
-  // Auto-clear success message after 4 seconds
   useEffect(() => {
     if (!successMessage) return;
     const timer = setTimeout(() => setSuccessMessage(""), 4000);
     return () => clearTimeout(timer);
   }, [successMessage]);
 
-  // Fetch artworks
   const fetchWorks = () => {
     const token = localStorage.getItem("token");
     fetch(`${API_BASE}/api/artworks/all`, {
@@ -77,7 +70,6 @@ const Works = () => {
       .catch((err) => console.error("Failed to load works:", err));
   };
 
-  // Fetch all users for the author dropdown and permission checks
   const fetchUsers = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -101,7 +93,6 @@ const Works = () => {
     fetchUsers();
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (authorDropdownRef.current && !authorDropdownRef.current.contains(event.target)) {
@@ -112,7 +103,6 @@ const Works = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key === "k") {
@@ -128,28 +118,28 @@ const Works = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Permission helpers
   const getCurrentUserRole = () => {
     const role = localStorage.getItem("role");
     return role ? role.toLowerCase().trim() : "";
   };
   const isAdmin = () => getCurrentUserRole() === "admin";
   const isFaculty = () => getCurrentUserRole() === "faculty";
+  const currentUserId = localStorage.getItem("userId");
 
-  // Determine if the current user can modify a given work
-  const canModifyWork = (work) => {
-    if (isAdmin()) return true;
-    if (!isFaculty()) return false;
-    // If users are still loading, deny modification to prevent UI flicker
-    if (isLoadingUsers) return false;
-    // For faculty: cannot modify works posted by an admin
-    if (!work.authorId) return true; // fallback: allow if no authorId (legacy)
-    const authorUser = users.find(u => u._id === work.authorId);
-    if (authorUser && authorUser.role === "Admin") return false;
-    return true;
-  };
+const canModifyWork = (work) => {
+  if (isAdmin()) return true;
+  if (!isFaculty()) return false;
+  if (isLoadingUsers) return false;
+  if (!work.uploadedBy) return false;          // Use `uploadedBy`, not `authorId`
 
-  // Fetch comments for a single artwork
+  const authorUser = users.find(u => u._id === work.uploadedBy);
+  if (!authorUser) return false;
+
+  const isSelf = work.uploadedBy === currentUserId;
+  const isStudentAuthor = authorUser.role === "Student";
+  return isSelf || isStudentAuthor;
+};
+
   const fetchCommentsForArtwork = async (artworkId) => {
     try {
       const res = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments`);
@@ -165,7 +155,6 @@ const Works = () => {
     }
   };
 
-  // Status changes with undo support
   const handleStatusChange = async (workId, newStatus, actionName) => {
     const token = localStorage.getItem("token");
     const work = works.find(w => w._id === workId);
@@ -199,10 +188,9 @@ const Works = () => {
     }
   };
 
-  // Edit handlers with undo
   const handleEdit = (work) => {
     if (!canModifyWork(work)) {
-      alert("You do not have permission to edit this artwork (posted by admin).");
+      alert("You do not have permission to edit this artwork.");
       return;
     }
     setEditingWork(work);
@@ -230,7 +218,6 @@ const Works = () => {
     e.preventDefault();
     const token = localStorage.getItem("token");
     const formData = new FormData(e.target);
-    // Store previous data for undo
     const previousData = {
       title: editingWork.title,
       medium: editingWork.medium,
@@ -269,7 +256,6 @@ const Works = () => {
     }
   };
 
-  // Undo last action
   const undoLastAction = async () => {
     if (!lastAction) return;
     const token = localStorage.getItem("token");
@@ -315,7 +301,6 @@ const Works = () => {
     }
   };
 
-  // Upload new artwork (always published)
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -350,7 +335,6 @@ const Works = () => {
     }
   };
 
-  // Delete comment (admin only)
   const handleDeleteComment = async (commentId) => {
     const token = localStorage.getItem("token");
     confirmAction(
@@ -376,7 +360,6 @@ const Works = () => {
     );
   };
 
-  // Filter logic
   const filteredWorks = works.filter((work) => {
     if (work.status === "pending") return false;
     const matchesSearch =
@@ -438,97 +421,87 @@ const Works = () => {
     );
   };
 
-  const handleSingleRemove = (work) => {
-    if (!canModifyWork(work)) {
-      alert("You do not have permission to remove this artwork (posted by admin).");
-      return;
-    }
-    confirmAction(
-      "Remove Artwork",
-      "This artwork will be marked as rejected and hidden from public view. It can be restored by an admin at any time. Are you sure?",
-      () => handleStatusChange(work._id, "rejected", "Remove")
-    );
-  };
+const renderRow = (work) => {
+  const userCanModify = canModifyWork(work);
+  const currentStatus = work.status;
 
-  const renderRow = (work) => {
-    const userCanModify = canModifyWork(work);
-    return (
-      <tr key={work._id} className={styles.tableRow}>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-          {isVideoArtwork(work) ? (
-            <div className={styles.thumbnailVideo}>
-              <video
-                src={`${API_BASE}${work.image}`}
-                poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
-                muted
-                preload="metadata"
-              />
-            </div>
-          ) : (
-            <img
+  let actionBtn = null;
+  if (currentStatus === "draft") {
+    actionBtn = {
+      label: "Publish",
+      action: () => handleStatusChange(work._id, "published", "Publish"),
+    };
+  } else if (currentStatus === "published") {
+    actionBtn = {
+      label: "Remove",
+      action: () => handleStatusChange(work._id, "rejected", "Remove"),
+    };
+  } else if (currentStatus === "rejected" || currentStatus === "archived") {
+    actionBtn = {
+      label: "Restore",
+      action: () => handleStatusChange(work._id, "published", "Restore"),
+    };
+  }
+
+  return (
+    <tr key={work._id} className={styles.tableRow}>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+        {isVideoArtwork(work) ? (
+          <div className={styles.thumbnailVideo}>
+            <video
               src={`${API_BASE}${work.image}`}
-              alt={work.title}
-              className={styles.thumbnailImg}
+              poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
+              muted
+              preload="metadata"
             />
-          )}
-        </td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
-          {work.title}
-        </td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-          <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
-            {work.status}
-          </span>
-        </td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-          {new Date(work.createdAt).toLocaleDateString()}
-        </td>
-        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
-        <td className={styles["action-btns"]} onClick={(e) => e.stopPropagation()}>
-          {isLoadingUsers ? (
-            <span style={{ fontSize: "0.75rem", color: "#8b949e" }}>Loading...</span>
-          ) : userCanModify ? (
+          </div>
+        ) : (
+          <img
+            src={`${API_BASE}${work.image}`}
+            alt={work.title}
+            className={styles.thumbnailImg}
+          />
+        )}
+      </td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
+        {work.title}
+      </td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+        <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
+          {work.status}
+        </span>
+      </td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+        {new Date(work.createdAt).toLocaleDateString()}
+      </td>
+      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
+      <td className={styles.actionTd} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.rowActions}>
+          {userCanModify && (
             <>
-              {(work.status === "archived" || work.status === "rejected") && (
-                <button
-                  className={styles["action-btn"]}
-                  style={{ backgroundColor: "#28a745", color: "white", border: "none" }}
-                  onClick={() => handleStatusChange(work._id, "published", "Restore")}
-                >
-                  Restore
-                </button>
-              )}
-              {work.status === "draft" && (
-                <button
-                  className={`${styles["action-btn"]} ${styles["btn-primary"]}`}
-                  onClick={() => handleStatusChange(work._id, "published", "Publish")}
-                >
-                  Publish
-                </button>
-              )}
-              <button className={styles["action-btn"]} onClick={() => handleEdit(work)}>
+              <button className={`${styles.btnLink} ${styles.btnEdit}`} onClick={() => handleEdit(work)}>
                 Edit
               </button>
-              <button
-                className={styles["action-btn"]}
-                style={{ backgroundColor: "#dc3545", color: "white", border: "none" }}
-                onClick={() => handleSingleRemove(work)}
-                title="Artwork can be restored later"
-              >
-                Remove
-              </button>
+              {actionBtn && (
+                <button
+                  className={`${styles.btnLink} ${
+                    actionBtn.label === "Publish" ? styles.btnPublish :
+                    actionBtn.label === "Remove" ? styles.btnRemove : styles.btnRestore
+                  }`}
+                  onClick={actionBtn.action}
+                >
+                  {actionBtn.label}
+                </button>
+              )}
             </>
-          ) : (
-            <span className={styles["no-permission"]} style={{ fontSize: "0.75rem", color: "#8b949e" }}>
-              Read only
-            </span>
           )}
-        </td>
-      </tr>
-    );
-  };
+        </div>
+      </td>
+    </tr>
+  );
+};
 
   const publishedCount = works.filter((w) => w.status === "published").length;
   const monthlyCount = works.filter((w) => {
@@ -545,10 +518,8 @@ const Works = () => {
         <main className="main-view">
           <Topbar title="Works Manager" />
 
-          {/* Success Message */}
           {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
-          {/* Stats Cards */}
           <section className={styles["stats-grid"]}>
             <div className={styles["stat-card"]}>
               <h3>Total Works</h3>
@@ -564,7 +535,6 @@ const Works = () => {
             </div>
           </section>
 
-          {/* Search, Filters, Refresh, Undo */}
           <section className={styles["action-section"]}>
             <div className={styles["search-container"]}>
               <input
@@ -628,7 +598,6 @@ const Works = () => {
             </div>
           </section>
 
-          {/* Works Table */}
           <section className={styles["works-section"]}>
             <div className={styles["section-header"]}>
               <h2>All Artworks ({filteredWorks.length})</h2>
@@ -637,7 +606,7 @@ const Works = () => {
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 16v-4M12 8h.01" />
                 </svg>
-                <span>Actions: Edit ✏️ | Publish ✅ | Restore 🔄 | Remove 🗑️ (Faculty cannot modify admin works)</span>
+                <span>Actions: Edit ✏️ | Publish ✅ | Remove 🗑️ | Restore 🔄</span>
               </div>
             </div>
             <div style={{ overflowX: "auto" }}>
@@ -668,7 +637,6 @@ const Works = () => {
               </table>
             </div>
 
-            {/* Pagination + CSV export */}
             <div className={styles["pagination-bar"]}>
               <div className={styles["pagination-buttons"]}>
                 <button
@@ -698,7 +666,6 @@ const Works = () => {
             </div>
           </section>
 
-          {/* Collapsible Upload Form – moved below the works table */}
           <div className={styles["upload-collapsible"]}>
             <button
               ref={uploadToggleRef}
@@ -711,6 +678,7 @@ const Works = () => {
               <div className={styles["form-container"]}>
                 <h2 className={styles["form-header"]}>Upload an artwork</h2>
                 <form onSubmit={handleUploadSubmit} encType="multipart/form-data">
+                  {/* Form fields – unchanged */}
                   <div className={styles["form-group"]}>
                     <label>Work Title</label>
                     <input type="text" name="title" required />
@@ -834,7 +802,7 @@ const Works = () => {
         </main>
       </div>
 
-      {/* View Modal (with comments) */}
+      {/* View Modal */}
       {isViewModalOpen && viewingWork && (
         <div className={styles.modalOverlay} onClick={closeViewModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -871,7 +839,6 @@ const Works = () => {
                   </div>
                 </div>
 
-                {/* Comments Section */}
                 <div className={styles.modalCommentsSection}>
                   <h4>Comments ({currentComments.length})</h4>
                   <div className={styles.modalCommentsList}>

@@ -39,7 +39,6 @@ const inferMediaType = (file) => {
   return "image";
 };
 
-// FIXED: missing closing quote and parentheses
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype?.startsWith("image/") ||
@@ -96,7 +95,6 @@ const authorizeArtworkMutation = async (req, res, next) => {
     const isOwner = artwork.uploadedBy?._id.toString() === req.user._id.toString();
     const isFaculty = req.user?.role === "Faculty";
 
-    // Faculty can modify any artwork that is NOT posted by an Admin
     const isAdminAuthor = artwork.uploadedBy?.role === "Admin";
     const canModifyAsFaculty = isFaculty && !isAdminAuthor;
 
@@ -175,7 +173,7 @@ router.get("/interactions", protect, async (req, res) => {
   }
 });
 
-// ========== UPDATED STATUS ROUTE (faculty allowed for non‑admin artworks) ==========
+// ========== UPDATED STATUS ROUTE (with notifications for remove/restore) ==========
 router.put("/:id/status", protect, async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id).populate("uploadedBy");
@@ -194,6 +192,7 @@ router.put("/:id/status", protect, async (req, res) => {
       return res.status(403).json({ message: "You do not have permission to change this artwork's status." });
     }
 
+    const oldStatus = artwork.status;
     const { status } = req.body;
     const updatedArtwork = await Artwork.findByIdAndUpdate(
       req.params.id,
@@ -201,14 +200,29 @@ router.put("/:id/status", protect, async (req, res) => {
       { new: true }
     );
 
-    if (status === 'published' && updatedArtwork) {
-      const user = await User.findById(updatedArtwork.uploadedBy);
-      if (user.notifications?.artworkAdded !== false) {
-        await Notification.create({
-          recipient: updatedArtwork.uploadedBy,
-          type: 'artwork_approved',
-          message: `Your artwork "${updatedArtwork.title}" has been approved and published!`,
-        });
+    // Send notification for status changes if actor is not the owner
+    if (!isOwner && updatedArtwork) {
+      const actionerName = req.user.name || req.user.username || "An administrator";
+      let notificationMessage = "";
+
+      if (status === 'published' && oldStatus !== 'published') {
+        notificationMessage = `${actionerName} has ${oldStatus === 'rejected' || oldStatus === 'archived' ? 'restored' : 'approved'} your artwork "${updatedArtwork.title}".`;
+      } else if (status === 'rejected') {
+        notificationMessage = `${actionerName} has removed your artwork "${updatedArtwork.title}". It is now hidden from public view.`;
+      } else if (status === 'archived') {
+        notificationMessage = `${actionerName} has archived your artwork "${updatedArtwork.title}".`;
+      }
+
+      if (notificationMessage) {
+        const user = await User.findById(updatedArtwork.uploadedBy);
+        if (user.notifications?.artworkAdded !== false) {
+          await Notification.create({
+            recipient: updatedArtwork.uploadedBy,
+            type: 'info_modified',
+            message: notificationMessage,
+            details: { oldStatus, newStatus: status }
+          });
+        }
       }
     }
 
@@ -231,7 +245,7 @@ router.get("/all", protect, async (req, res) => {
   }
 });
 
-// Update artwork – uses the updated authorize middleware
+// ========== UPDATED EDIT ROUTE (with notification for non-owner edits) ==========
 router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload, async (req, res) => {
   try {
     const existingArtwork = req.artwork;
@@ -266,13 +280,21 @@ router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload,
       { new: true }
     );
 
-    if (isAdmin && changedFields.length > 0 && !isOwner) {
-      await Notification.create({
-        recipient: updatedArtwork.uploadedBy,
-        type: 'info_modified',
-        message: `Admin updated your artwork details for "${updatedArtwork.title}".`,
-        details: { updatedFields: changedFields }
-      });
+    // Send notification if the editor is NOT the owner (admin or faculty)
+    if (!isOwner && changedFields.length > 0) {
+      const actionerName = req.user.name || req.user.username || "An administrator";
+      const fieldNames = changedFields.map(f => f.label).join(", ");
+      const message = `${actionerName} updated your artwork "${updatedArtwork.title}" (fields: ${fieldNames}).`;
+
+      const user = await User.findById(updatedArtwork.uploadedBy);
+      if (user.notifications?.artworkAdded !== false) {
+        await Notification.create({
+          recipient: updatedArtwork.uploadedBy,
+          type: 'info_modified',
+          message: message,
+          details: { updatedFields: changedFields }
+        });
+      }
     }
 
     res.status(200).json(serializeArtwork(updatedArtwork));
