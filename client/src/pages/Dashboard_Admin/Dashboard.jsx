@@ -80,8 +80,8 @@ const Dashboard = ({ user }) => {
                         </p>
                     </section>
 
-                    {/* Stats Cards */}
-                    <section className={styles.statsGrid}>
+                    {/* Stats Cards - data-tut="stats-cards" */}
+                    <section className={styles.statsGrid} data-tut="stats-cards">
                         <div className={styles.statCard}>
                             <h3>Total Users</h3>
                             <p className={styles.statNumber}>{totalUsers}</p>
@@ -96,53 +96,53 @@ const Dashboard = ({ user }) => {
                         </div>
                     </section>
 
-                    {/* Recent Users Table */}
-                    <section className={styles.panel}>
-                        <h2 className={styles.panelTitle}>Recent User Activity</h2>
-                        <div style={{ overflowX: "auto" }}>
-                            <table className="userTable">
-                                <thead>
-                                    <tr>
-                                        <th>Avatar</th>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Date Joined</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentUsers.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>No recent users</td>
-                                        </tr>
-                                    ) : (
-                                        recentUsers.map((user) => (
-                                            <tr key={user._id}>
-                                                <td>
-                                                    <img
-                                                        src={getAvatarUrl(user.avatar)}
-                                                        alt={user.name}
-                                                        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
-                                                    />
-                                                </td>
-                                                <td>{user.name}</td>
-                                                <td>{user.role}</td>
-                                                <td>
-                                                    <Badge variant={user.status || "pending"}>
-                                                        {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Pending"}
-                                                    </Badge>
-                                                </td>
-                                                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+{/* Recent Users Table */}
+<section className={styles.panel} data-tut="recent-users-table">
+    <h2 className={styles.panelTitle}>Recent User Activity</h2>
+    <div style={{ overflowX: "auto" }}>
+        <table className="userTable">
+            <thead>
+                <tr>
+                    <th>Avatar</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Date Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {recentUsers.length === 0 ? (
+                    <tr>
+                        <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "gray" }}>No recent users</td>
+                    </tr>
+                ) : (
+                    recentUsers.map((user) => (
+                        <tr key={user._id}>
+                            <td>
+                                <img
+                                    src={getAvatarUrl(user.avatar)}
+                                    alt={user.name}
+                                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                />
+                            </td>
+                            <td>{user.name}</td>
+                            <td>{user.role}</td>
+                            <td>
+                                <Badge variant={user.status || "pending"}>
+                                    {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Pending"}
+                                </Badge>
+                            </td>
+                            <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    ))
+                )}
+            </tbody>
+        </table>
+    </div>
+</section>
 
-                    {/* NEW: Recent Works Table */}
-                    <section className={styles.panel}>
+                    {/* Recent Works Table - data-tut="works-table" */}
+                    <section className={styles.panel} data-tut="works-table">
                         <h2 className={styles.panelTitle}>Recent Artwork Submissions</h2>
                         <div style={{ overflowX: "auto" }}>
                             <table className="userTable">
@@ -194,11 +194,11 @@ const Dashboard = ({ user }) => {
                                                     </Badge>
                                                  </td>
                                                 <td>{new Date(work.createdAt).toLocaleDateString()}</td>
-                                            </tr>
+                                             </tr>
                                         ))
                                     )}
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
                     </section>
                 </main>

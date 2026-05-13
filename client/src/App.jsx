@@ -24,6 +24,8 @@ import Requests from './pages/Requests_Admin/Requests'
 import AdminSettings from './pages/Settings_Admin/AdminSettings'
 import Maintenance from './pages/Maintenance/Maintenance'
 
+import { TutorialProvider } from './context/TutorialContext'
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
@@ -42,7 +44,6 @@ function App() {
                     })
                     setUser(res.data);
                 } catch {
-
                     setError("Failed to fetch user data");
                     localStorage.removeItem('token');
                 }  
@@ -88,32 +89,34 @@ function App() {
     }
 
     return (
-        <Router>
-            <Routes>
-                <Route element={<MainLayout />}>
-                    <Route path="/" element={<Index user={user} error={error} />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/gallery" element={<Gallery />} />
-                    <Route path="/gallery/:artworkId" element={<Gallery />} />
-                    <Route path="/upload" element={<Upload />} />
-                    <Route path="/login" element={<Login setUser={setUser}  />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile" element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />} />
-                    <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
-                </Route>
+        <TutorialProvider>
+            <Router>
+                <Routes>
+                    <Route element={<MainLayout />}>
+                        <Route path="/" element={<Index user={user} error={error} />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/gallery" element={<Gallery />} />
+                        <Route path="/gallery/:artworkId" element={<Gallery />} />
+                        <Route path="/upload" element={<Upload />} />
+                        <Route path="/login" element={<Login setUser={setUser}  />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/notifications" element={<Notifications />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/profile" element={user ? <Navigate to={`/profile/${user._id || user.id}`} replace /> : <Profile currentUser={user} />} />
+                        <Route path="/profile/:userId" element={<Profile currentUser={user} />} />
+                    </Route>
 
-                <Route element={<AdminLayout />}>
-                    <Route path="/user" element={ <UserManager setUser={setUser} />} />
-                    <Route path="/dashboard" element={<Dashboard user={user} />} />
-                    <Route path="/works" element={<Works />} />
-                    <Route path="/requests" element={<Requests />} />
-                    <Route path="/admin/settings" element={<AdminSettings />} />
-                </Route>
-            </Routes>
-        </Router>
+                    <Route element={<AdminLayout />}>
+                        <Route path="/user" element={ <UserManager setUser={setUser} />} />
+                        <Route path="/dashboard" element={<Dashboard user={user} />} />
+                        <Route path="/works" element={<Works />} />
+                        <Route path="/requests" element={<Requests />} />
+                        <Route path="/admin/settings" element={<AdminSettings />} />
+                    </Route>
+                </Routes>
+            </Router>
+        </TutorialProvider>
     );
 }
 

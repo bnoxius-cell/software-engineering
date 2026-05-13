@@ -688,7 +688,8 @@ const Requests = () => {
               </button>
             </div>
 
-            <div className={styles.viewToggle}>
+            {/* data-tut="request-tabs" */}
+            <div className={styles.viewToggle} data-tut="request-tabs">
               <button
                 type="button"
                 className={`${styles.toggleButton} ${
@@ -711,7 +712,8 @@ const Requests = () => {
 
             {error && <p className={styles.errorMessage}>{error}</p>}
 
-            <div className={styles.bulkToolbar}>
+            {/* data-tut="bulk-actions" */}
+            <div className={styles.bulkToolbar} data-tut="bulk-actions">
               <label className={styles.selectAllToggle}>
                 <label className={`${styles["ios-checkbox"]} ${styles.green}`}>
                   <input
@@ -793,9 +795,11 @@ const Requests = () => {
                     {currentAutoApproveEnabled ? "Auto Approve On" : "Auto Approve Off"}
                   </button>
                 )}
+                {/* data-tut="undo-last" */}
                 <button
                   type="button"
                   className={styles.inlineAction}
+                  data-tut="undo-last"
                   onClick={() =>
                     openConfirmDialog({
                       title: "Undo last action?",
@@ -817,7 +821,8 @@ const Requests = () => {
             {isLoading ? (
               <div className={styles.emptyState}>Loading requests...</div>
             ) : activeView === "artworks" ? (
-              <div className={styles.tableWrap}>
+              /* data-tut="requests-table" */
+              <div className={styles.tableWrap} data-tut="requests-table">
                 <table>
                   <thead>
                     <tr>
@@ -894,7 +899,8 @@ const Requests = () => {
                 </table>
               </div>
             ) : (
-              <div className={styles.tableWrap}>
+              /* data-tut="requests-table" */
+              <div className={styles.tableWrap} data-tut="requests-table">
                 <table>
                   <thead>
                     <tr>

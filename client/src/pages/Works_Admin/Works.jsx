@@ -126,19 +126,19 @@ const Works = () => {
   const isFaculty = () => getCurrentUserRole() === "faculty";
   const currentUserId = localStorage.getItem("userId");
 
-const canModifyWork = (work) => {
-  if (isAdmin()) return true;
-  if (!isFaculty()) return false;
-  if (isLoadingUsers) return false;
-  if (!work.uploadedBy) return false;          // Use `uploadedBy`, not `authorId`
+  const canModifyWork = (work) => {
+    if (isAdmin()) return true;
+    if (!isFaculty()) return false;
+    if (isLoadingUsers) return false;
+    if (!work.uploadedBy) return false;
 
-  const authorUser = users.find(u => u._id === work.uploadedBy);
-  if (!authorUser) return false;
+    const authorUser = users.find(u => u._id === work.uploadedBy);
+    if (!authorUser) return false;
 
-  const isSelf = work.uploadedBy === currentUserId;
-  const isStudentAuthor = authorUser.role === "Student";
-  return isSelf || isStudentAuthor;
-};
+    const isSelf = work.uploadedBy === currentUserId;
+    const isStudentAuthor = authorUser.role === "Student";
+    return isSelf || isStudentAuthor;
+  };
 
   const fetchCommentsForArtwork = async (artworkId) => {
     try {
@@ -421,87 +421,87 @@ const canModifyWork = (work) => {
     );
   };
 
-const renderRow = (work) => {
-  const userCanModify = canModifyWork(work);
-  const currentStatus = work.status;
+  const renderRow = (work) => {
+    const userCanModify = canModifyWork(work);
+    const currentStatus = work.status;
 
-  let actionBtn = null;
-  if (currentStatus === "draft") {
-    actionBtn = {
-      label: "Publish",
-      action: () => handleStatusChange(work._id, "published", "Publish"),
-    };
-  } else if (currentStatus === "published") {
-    actionBtn = {
-      label: "Remove",
-      action: () => handleStatusChange(work._id, "rejected", "Remove"),
-    };
-  } else if (currentStatus === "rejected" || currentStatus === "archived") {
-    actionBtn = {
-      label: "Restore",
-      action: () => handleStatusChange(work._id, "published", "Restore"),
-    };
-  }
+    let actionBtn = null;
+    if (currentStatus === "draft") {
+      actionBtn = {
+        label: "Publish",
+        action: () => handleStatusChange(work._id, "published", "Publish"),
+      };
+    } else if (currentStatus === "published") {
+      actionBtn = {
+        label: "Remove",
+        action: () => handleStatusChange(work._id, "rejected", "Remove"),
+      };
+    } else if (currentStatus === "rejected" || currentStatus === "archived") {
+      actionBtn = {
+        label: "Restore",
+        action: () => handleStatusChange(work._id, "published", "Restore"),
+      };
+    }
 
-  return (
-    <tr key={work._id} className={styles.tableRow}>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        {isVideoArtwork(work) ? (
-          <div className={styles.thumbnailVideo}>
-            <video
+    return (
+      <tr key={work._id} className={styles.tableRow}>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          {isVideoArtwork(work) ? (
+            <div className={styles.thumbnailVideo}>
+              <video
+                src={`${API_BASE}${work.image}`}
+                poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
+                muted
+                preload="metadata"
+              />
+            </div>
+          ) : (
+            <img
               src={`${API_BASE}${work.image}`}
-              poster={work.thumbnail ? `${API_BASE}${work.thumbnail}` : undefined}
-              muted
-              preload="metadata"
+              alt={work.title}
+              className={styles.thumbnailImg}
             />
-          </div>
-        ) : (
-          <img
-            src={`${API_BASE}${work.image}`}
-            alt={work.title}
-            className={styles.thumbnailImg}
-          />
-        )}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
-        {work.title}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
-          {work.status}
-        </span>
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
-        {new Date(work.createdAt).toLocaleDateString()}
-      </td>
-      <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
-      <td className={styles.actionTd} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.rowActions}>
-          {userCanModify && (
-            <>
-              <button className={`${styles.btnLink} ${styles.btnEdit}`} onClick={() => handleEdit(work)}>
-                Edit
-              </button>
-              {actionBtn && (
-                <button
-                  className={`${styles.btnLink} ${
-                    actionBtn.label === "Publish" ? styles.btnPublish :
-                    actionBtn.label === "Remove" ? styles.btnRemove : styles.btnRestore
-                  }`}
-                  onClick={actionBtn.action}
-                >
-                  {actionBtn.label}
-                </button>
-              )}
-            </>
           )}
-        </div>
-      </td>
-    </tr>
-  );
-};
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer", fontWeight: "600" }}>
+          {work.title}
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.artistName}</td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.medium}</td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          <span className={`${styles["status-badge"]} ${styles[`status-${work.status}`]}`}>
+            {work.status}
+          </span>
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>
+          {new Date(work.createdAt).toLocaleDateString()}
+        </td>
+        <td onClick={() => handleView(work)} style={{ cursor: "pointer" }}>{work.views || 0}</td>
+        <td className={styles.actionTd} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.rowActions}>
+            {userCanModify && (
+              <>
+                <button className={`${styles.btnLink} ${styles.btnEdit}`} onClick={() => handleEdit(work)}>
+                  Edit
+                </button>
+                {actionBtn && (
+                  <button
+                    className={`${styles.btnLink} ${
+                      actionBtn.label === "Publish" ? styles.btnPublish :
+                      actionBtn.label === "Remove" ? styles.btnRemove : styles.btnRestore
+                    }`}
+                    onClick={actionBtn.action}
+                  >
+                    {actionBtn.label}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   const publishedCount = works.filter((w) => w.status === "published").length;
   const monthlyCount = works.filter((w) => {
@@ -520,7 +520,8 @@ const renderRow = (work) => {
 
           {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
-          <section className={styles["stats-grid"]}>
+          {/* data-tut="stats-cards" – stats grid section */}
+          <section className={styles["stats-grid"]} data-tut="stats-cards">
             <div className={styles["stat-card"]}>
               <h3>Total Works</h3>
               <p className={styles["stat-number"]}>{totalWorks}</p>
@@ -535,7 +536,8 @@ const renderRow = (work) => {
             </div>
           </section>
 
-          <section className={styles["action-section"]}>
+          {/* data-tut="search-filters" – search, filters, refresh, undo */}
+          <section className={styles["action-section"]} data-tut="search-filters">
             <div className={styles["search-container"]}>
               <input
                 ref={searchInputRef}
@@ -609,7 +611,8 @@ const renderRow = (work) => {
                 <span>Actions: Edit ✏️ | Publish ✅ | Remove 🗑️ | Restore 🔄</span>
               </div>
             </div>
-            <div style={{ overflowX: "auto" }}>
+            {/* data-tut="works-table" – table container */}
+            <div style={{ overflowX: "auto" }} data-tut="works-table">
               <table className={styles.worksTable}>
                 <thead>
                   <tr>
@@ -666,10 +669,12 @@ const renderRow = (work) => {
             </div>
           </section>
 
+          {/* data-tut="upload-work" – upload toggle button */}
           <div className={styles["upload-collapsible"]}>
             <button
               ref={uploadToggleRef}
               className={styles["upload-toggle"]}
+              data-tut="upload-work"
               onClick={() => setIsUploadCollapsed(!isUploadCollapsed)}
             >
               {isUploadCollapsed ? "➕ Upload New Artwork (Ctrl+U)" : "➖ Hide Upload Form"}
@@ -678,7 +683,6 @@ const renderRow = (work) => {
               <div className={styles["form-container"]}>
                 <h2 className={styles["form-header"]}>Upload an artwork</h2>
                 <form onSubmit={handleUploadSubmit} encType="multipart/form-data">
-                  {/* Form fields – unchanged */}
                   <div className={styles["form-group"]}>
                     <label>Work Title</label>
                     <input type="text" name="title" required />

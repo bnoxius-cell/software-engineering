@@ -1,243 +1,362 @@
-/* ===== MAIN CONTAINER ===== */
-.settingsLayout {
-    display: flex;
-    max-width: 1100px;
-    margin: 100px auto 50px auto; 
-    
-    /* THE FIX: Hard-coded height so the box never stretches or shrinks */
-    height: 700px; 
-    
-    background-color: #0D1117; 
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    overflow: hidden;
-    color: #c9d1d9;
+/* ===== STANDARD BACKGROUND EFFECT (same as Notifications) ===== */
+.background-fx {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: radial-gradient(circle at 20% 30%, rgba(10, 15, 25, 0.8), #0a0c12);
+  pointer-events: none;
 }
 
-/* ===== LEFT SIDEBAR ===== */
+/* ===== MAIN LAYOUT ===== */
+.settingsLayout {
+  display: flex;
+  min-height: 85vh;
+  max-width: 1200px;
+  margin: 80px auto;
+  background: rgba(15, 20, 28, 0.88);
+  border: 1px solid rgba(161, 255, 20, 0.15);
+  border-radius: 24px;
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+}
+
+/* ===== LEFT SIDEBAR (scrollable) ===== */
 .sidebar {
-    width: 280px;
-    height: 100%; /* Respects the 700px parent height */
-    background-color: #161b22; 
-    border-right: 1px solid #30363d;
-    padding: 2rem 1rem;
-    overflow-y: auto; /* Scrollable if you add many tabs later */
+  width: 260px;
+  background: rgba(10, 15, 20, 0.8);
+  border-right: 1px solid rgba(161, 255, 20, 0.1);
+  padding: 2rem 1rem;
+  overflow-y: auto;
 }
 
 .sidebarTitle {
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    padding-left: 1rem;
+  color: #a1ff14;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
 }
 
 .navMenu {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .navItem {
-    background: transparent;
-    border: none;
-    color: #8b949e;
-    text-align: left;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
+  border: none;
+  background: transparent;
+  color: #b0b8c5;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 0.95rem;
 }
 
 .navItem:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #c9d1d9;
+  background: rgba(161, 255, 20, 0.08);
+  color: white;
 }
 
-/* The Neon Active State */
 .active {
-    background-color: rgba(161, 255, 20, 0.1) !important;
-    color: #a1ff14 !important;
-    border-left: 3px solid #a1ff14;
-    border-radius: 0 6px 6px 0;
+  background: rgba(161, 255, 20, 0.12);
+  color: #a1ff14;
 }
 
 .divider {
-    height: 1px;
-    background-color: #30363d;
-    margin: 1rem 0;
+  height: 1px;
+  background: rgba(161, 255, 20, 0.2);
+  margin: 0.75rem 0 1rem;
 }
 
-/* ===== RIGHT CONTENT AREA ===== */
+/* ===== RIGHT CONTENT AREA (scrollable) ===== */
 .contentArea {
-    flex: 1;
-    height: 100%; /* Respects the 700px parent height */
-    padding: 3rem 4rem;
-    background-color: #0D1117;
-    overflow-y: auto; /* THE FIX: Internal scrollbar for tall content */
+  flex: 1;
+  padding: 2.5rem;
+  overflow-y: auto;
 }
 
+/* ===== TABS CONTENT ===== */
 .tabContent h2 {
-    color: #fff;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+  color: white;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  font-size: 1.8rem;
 }
 
 .subtext {
-    color: #8b949e;
-    font-size: 0.9rem;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #30363d;
+  color: #9aa6b2;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(161, 255, 20, 0.2);
+  padding-bottom: 1rem;
 }
 
 /* ===== FORM ELEMENTS ===== */
 .formGroup {
-    margin-bottom: 1.5rem;
-    max-width: 500px;
+  margin-bottom: 1.8rem;
+  max-width: 550px;
 }
 
 .formGroup label {
-    display: block;
-    color: #c9d1d9;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+  display: block;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
 }
 
 .input, .textarea {
-    width: 100%;
-    background-color: #010409;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    color: #fff;
-    font-size: 0.95rem;
-    font-family: inherit;
-    transition: all 0.2s;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(161, 255, 20, 0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
 }
 
 .input:focus, .textarea:focus {
-    outline: none;
-    border-color: #a1ff14;
-    box-shadow: 0 0 0 1px #a1ff14;
+  outline: none;
+  border-color: #a1ff14;
+  box-shadow: 0 0 0 2px rgba(161, 255, 20, 0.2);
 }
 
 .saveBtn {
-    margin-top: 1rem;
-    background-color: #a1ff14;
-    color: #000;
-    border: none;
-    padding: 0.8rem 2rem;
-    border-radius: 30px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: 0.3s ease;
+  background: #a1ff14;
+  color: #000;
+  border: none;
+  padding: 0.9rem 2rem;
+  border-radius: 40px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 2px 8px rgba(161, 255, 20, 0.3);
 }
 
-.saveBtn:hover {
-    background-color: #8cde11;
-    transform: translateY(-2px);
+.saveBtn:hover:not(:disabled) {
+  background: #b3ff33;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(161, 255, 20, 0.4);
 }
 
 .saveBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ===== AVATAR SECTION ===== */
 .avatarSection {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .currentAvatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #30363d;
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #a1ff14;
+  box-shadow: 0 0 10px rgba(161, 255, 20, 0.3);
 }
 
 .uploadBtn {
-    background-color: #21262d;
-    color: #c9d1d9;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
+  background: rgba(55, 65, 81, 0.6);
+  color: #e5e7eb;
+  border: 1px solid rgba(161, 255, 20, 0.4);
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 .uploadBtn:hover {
-    background-color: #30363d;
-    border-color: #a1ff14;
+  background: rgba(161, 255, 20, 0.15);
+  border-color: #a1ff14;
 }
 
-/* ===== MESSAGE STYLES ===== */
-.message {
-    padding: 1rem;
-    border-radius: 6px;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
+/* ===== TOGGLE CARDS (for notifications and privacy) ===== */
+.toggleCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(161, 255, 20, 0.1);
+  border-radius: 18px;
+  padding: 1.4rem;
+  margin-bottom: 1rem;
 }
 
-.message.success {
-    background-color: rgba(46, 160, 67, 0.1);
-    border: 1px solid #238636;
-    color: #56d364;
+.toggleTitle {
+  color: white;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
 }
 
-.message.error {
-    background-color: rgba(248, 81, 73, 0.1);
-    border: 1px solid #da3633;
-    color: #f85149;
+.toggleDescription {
+  color: #9aa6b2;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
-/* ===== CHECKBOX STYLES ===== */
-.checkboxLabel {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    cursor: pointer;
-    font-weight: normal;
+/* ===== CUSTOM TOGGLE SWITCH ===== */
+.switch {
+  --switch-width: 46px;
+  --switch-height: 24px;
+  --switch-bg: rgb(131, 131, 131);
+  --switch-checked-bg: #a1ff14;
+  --circle-diameter: 18px;
+
+  position: relative;
+  display: inline-block;
 }
 
-.checkboxLabel input[type="checkbox"] {
-    margin-top: 0.2rem;
-    width: 16px;
-    height: 16px;
-    accent-color: #a1ff14;
+.switch input {
+  display: none;
 }
 
-.checkboxText {
-    color: #c9d1d9;
-    font-size: 0.95rem;
-    font-weight: 500;
+.slider {
+  width: var(--switch-width);
+  height: var(--switch-height);
+  background: var(--switch-bg);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.circle {
+  width: var(--circle-diameter);
+  height: var(--circle-diameter);
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
+}
+
+.cross,
+.checkmark {
+  position: absolute;
+  transition: 0.2s;
+}
+
+.cross {
+  color: gray;
+}
+
+.checkmark {
+  color: #a1ff14;
+  transform: scale(0);
+}
+
+.switch input:checked + .slider {
+  background: var(--switch-checked-bg);
+}
+
+.switch input:checked + .slider .circle {
+  transform: translateX(22px);
+}
+
+.switch input:checked + .slider .cross {
+  transform: scale(0);
+}
+
+.switch input:checked + .slider .checkmark {
+  transform: scale(1);
+}
+
+/* ===== ACCESSIBILITY SELECT ===== */
+.select {
+  background-color: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(161, 255, 20, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: 300px;
+  cursor: pointer;
 }
 
 .checkboxDescription {
-    color: #8b949e;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-    margin-left: 1.75rem;
+  color: #9aa6b2;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
 }
 
-/* ===== LOADING ===== */
+/* ===== MESSAGES ===== */
+.message {
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.success {
+  background: rgba(63, 185, 80, 0.12);
+  color: #7eef8a;
+}
+
+.error {
+  background: rgba(248, 81, 73, 0.12);
+  color: #ff9b93;
+}
+
+/* ===== SCROLLBARS (only appear when needed) ===== */
+.sidebar::-webkit-scrollbar,
+.contentArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.contentArea::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.5);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.contentArea::-webkit-scrollbar-thumb {
+  background: #a1ff14;
+  border-radius: 4px;
+}
+
+/* ===== LOADING STATE ===== */
 .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 400px;
-    color: #c9d1d9;
-    font-size: 1.1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  color: #a1ff14;
+  font-size: 1.2rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .settingsLayout {
+    flex-direction: column;
+    margin: 70px 1rem;
+  }
+  .sidebar {
+    width: 100%;
+  }
+  .toggleCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .contentArea {
+    padding: 1.5rem;
+  }
 }

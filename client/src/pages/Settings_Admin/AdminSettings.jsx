@@ -14,6 +14,7 @@ const AdminSettings = () => {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ text: '', type: '' });
     const [errors, setErrors] = useState({});
+    const [showConfirm, setShowConfirm] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -38,7 +39,6 @@ const AdminSettings = () => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-        // Clear error on change
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -59,10 +59,14 @@ const AdminSettings = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSaveClick = (e) => {
         e.preventDefault();
         if (!validate()) return;
+        setShowConfirm(true);
+    };
 
+    const handleConfirmSave = async () => {
+        setShowConfirm(false);
         try {
             const token = localStorage.getItem('token');
             const payload = {
@@ -79,6 +83,8 @@ const AdminSettings = () => {
         }
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     };
+
+    const closeConfirm = () => setShowConfirm(false);
 
     if (loading) {
         return (
@@ -109,7 +115,13 @@ const AdminSettings = () => {
                         </div>
                     )}
 
-                    <section className={styles.panel}>
+                    {/* IMPORTANT NOTE BANNER (permanent, above the settings panel) */}
+                    <div className={styles.importantNoteBanner}>
+                        ⚠️ Important note: The changes applied here will impact throughout the site.
+                    </div>
+
+                    {/* data-tut="global-settings" */}
+                    <section className={styles.panel} data-tut="global-settings">
                         <div className={styles.panelHeader}>
                             <div>
                                 <h2 className={styles.panelTitle}>Global Settings</h2>
@@ -119,7 +131,7 @@ const AdminSettings = () => {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className={styles.settingsForm}>
+                        <form onSubmit={(e) => e.preventDefault()} className={styles.settingsForm}>
                             <div className={styles.formGroup}>
                                 <label htmlFor="siteName">Platform Name</label>
                                 <input
@@ -145,7 +157,7 @@ const AdminSettings = () => {
                                 />
                             </div>
 
-                            <div className={styles.checkboxGroup}>
+                            <div className={styles.checkboxGroup} data-tut="maintenance-mode">
                                 <label className={styles.iosCheckbox}>
                                     <input
                                         type="checkbox"
@@ -195,8 +207,8 @@ const AdminSettings = () => {
                                 </label>
                             </div>
 
-                            <div className={styles.formActions}>
-                                <button type="submit" className={styles.saveBtn}>
+                            <div className={styles.formActions} data-tut="save-settings">
+                                <button type="button" onClick={handleSaveClick} className={styles.saveBtn}>
                                     Save Settings
                                 </button>
                             </div>
@@ -204,6 +216,24 @@ const AdminSettings = () => {
                     </section>
                 </main>
             </div>
+
+            {/* Confirmation Modal (kept, but the note inside is optional) */}
+            {showConfirm && (
+                <div className={styles.modalOverlay} onClick={closeConfirm}>
+                    <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+                        <h3>Confirm Changes</h3>
+                        <p>Are you sure you want to save these settings?</p>
+                        <div className={styles.confirmActions}>
+                            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeConfirm}>
+                                Cancel
+                            </button>
+                            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleConfirmSave}>
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

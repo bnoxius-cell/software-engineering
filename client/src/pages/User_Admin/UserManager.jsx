@@ -395,28 +395,52 @@ const UserManager = () => {
                         <div className={styles.statCard}><h3>Suspended Users</h3><p className={styles.statNumber}>{suspendedUsers}</p></div>
                     </section>
 
+                    {/* data-tut for "Create New User" button */}
                     <section className={styles.createUserButtonRow}>
-                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={scrollToCreateUser}>➕ Create New User</button>
+                        <button
+                            data-tut="create-user-btn"
+                            className={`${styles.btn} ${styles.btnPrimary}`}
+                            onClick={scrollToCreateUser}
+                        >
+                            ➕ Create New User
+                        </button>
                     </section>
 
-                    <section className={styles.actionSection}>
+                    {/* data-tut for search/filter section */}
+                    <section className={styles.actionSection} data-tut="search-filter-users">
                         <div className={styles.searchContainer}>
-                            <input type="text" className={styles.searchInput} placeholder="Search by name or email..."
-                                value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
-                            <select className={styles.filterSelect} value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
+                            <input
+                                type="text"
+                                className={styles.searchInput}
+                                placeholder="Search by name or email..."
+                                value={searchTerm}
+                                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            />
+                            <select
+                                className={styles.filterSelect}
+                                value={roleFilter}
+                                onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+                            >
                                 <option value="all">All Roles</option>
                                 <option value="admin">Admin</option>
                                 <option value="student">Student</option>
                                 <option value="faculty">Faculty</option>
                             </select>
                             <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={fetchUsers}>Refresh</button>
-                            <button className={`${styles.btn} ${styles.btnUndo}`} onClick={() => {
-                                if (lastAction) confirmAction("Undo Last Action", `Revert "${lastAction.actionName}" for ${lastAction.userName}?`, undoLastAction);
-                                else alert("No action to undo.");
-                            }} disabled={!lastAction}>↩️ Undo Last Action</button>
+                            <button
+                                className={`${styles.btn} ${styles.btnUndo}`}
+                                onClick={() => {
+                                    if (lastAction) confirmAction("Undo Last Action", `Revert "${lastAction.actionName}" for ${lastAction.userName}?`, undoLastAction);
+                                    else alert("No action to undo.");
+                                }}
+                                disabled={!lastAction}
+                            >
+                                ↩️ Undo Last Action
+                            </button>
                         </div>
                     </section>
 
+                    {/* data-tut for users table */}
                     <section className={styles.panel}>
                         <div className={styles.tableHeader}>
                             <h2 className={styles.panelTitle}>All Users ({filteredUsers.length} / {totalUsers})</h2>
@@ -428,7 +452,7 @@ const UserManager = () => {
                                 <span>Actions: Approve ✅ | Suspend ⚠️ | Restore 🔄 | Edit ✏️</span>
                             </div>
                         </div>
-                        <div style={{ overflowX: "auto" }}>
+                        <div style={{ overflowX: "auto" }} data-tut="users-table">
                             <table className={styles.userTable}>
                                 <thead>
                                     <tr>
@@ -477,7 +501,7 @@ const UserManager = () => {
                                         })
                                     )}
                                 </tbody>
-                             </table>
+                            </table>
                         </div>
 
                         <div className={styles.paginationBar}>
@@ -486,8 +510,11 @@ const UserManager = () => {
                                 <span className={styles.pageInfo}>Page {currentPage} of {totalPages || 1}</span>
                                 <button className={`${styles.paginationBtn} ${currentPage === totalPages ? styles.disabled : ''}`} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
                             </div>
+                            {/* data-tut for Export CSV button */}
                             <div className={styles.exportWrapper}>
-                                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={exportCSV}>Export CSV</button>
+                                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={exportCSV} data-tut="export-csv">
+                                    Export CSV
+                                </button>
                                 <span className={styles.exportNote}>Exports filtered users as CSV</span>
                             </div>
                         </div>
