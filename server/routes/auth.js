@@ -60,7 +60,6 @@ router.post("/register", async (req, res) => {
     const { name, email, password, role, status } = req.body;
 
     try {
-        // Check if registration is allowed
         const settings = await Settings.findOne();
         if (settings && settings.allowRegistration === false) {
             return res.status(403).json({ message: "New registrations are currently disabled." });
@@ -87,17 +86,13 @@ router.post("/register", async (req, res) => {
                     ? "Student"
                     : "Student";
 
-        // ========== NEW: Use global auto-approve for student accounts ==========
         const autoApproveStudents = settings ? settings.autoApproveStudents : false;
-        // Student accounts are auto-approved if the setting is true; faculty and admin always require admin approval.
         let userStatus;
         if (userRole === "Student") {
             userStatus = autoApproveStudents ? "active" : "pending";
         } else {
-            // Faculty and Admin accounts always require admin approval
             userStatus = "pending";
         }
-        // =====================================================================
 
         const user = await User.create({
             name,
@@ -131,6 +126,7 @@ router.post("/register", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+
 router.post("/register/admin", protect, requireAdmin, async (req, res) => {
     const { name, email, password, status } = req.body;
 
@@ -191,7 +187,6 @@ router.post("/login", async (req, res) => {
             avatar: userExists.avatar || "",
             token,
         });
-
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
@@ -199,7 +194,7 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", protect, async (req, res) => {
     res.status(200).json(req.user);
-})
+});
 
 router.get("/saved", protect, async (req, res) => {
     try {
@@ -209,7 +204,6 @@ router.get("/saved", protect, async (req, res) => {
                 match: { status: "published" },
             })
             .select("savedArtworks");
-
         res.status(200).json({
             savedArtworks: (user?.savedArtworks || []).filter(Boolean),
         });
@@ -222,25 +216,18 @@ router.post("/saved", protect, async (req, res) => {
     try {
         const { artworkId, saved } = req.body;
         const user = await User.findById(req.user._id || req.user.id);
-
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
         user.savedArtworks = user.savedArtworks || [];
-
         const alreadySaved = user.savedArtworks.some((id) => id.toString() === artworkId);
-
         if (saved && !alreadySaved) {
             user.savedArtworks.push(artworkId);
         }
-
         if (!saved && alreadySaved) {
             user.savedArtworks = user.savedArtworks.filter((id) => id.toString() !== artworkId);
         }
-
         await user.save();
-
         res.status(200).json({
             saved: !!saved,
             savedArtworkIds: user.savedArtworks.map((id) => id.toString()),
@@ -253,8 +240,8 @@ router.post("/saved", protect, async (req, res) => {
 // GET all users
 router.get("/", protect, requireStaff, async (req, res) => {
     try {
-        const users = await User.find({}); // get all users
-        const count = await User.countDocuments({}); // count total
+        const users = await User.find({});
+        const count = await User.countDocuments({});
         res.status(200).json({ users, total: count });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
@@ -263,7 +250,7 @@ router.get("/", protect, requireStaff, async (req, res) => {
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
-}
+};
 
 // Global auto-approve settings for students
 router.get('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
@@ -281,14 +268,12 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
   try {
     let settings = await Settings.findOne();
     const newValue = !(settings ? settings.autoApproveStudents : false);
-    
     if (settings) {
       settings.autoApproveStudents = newValue;
       await settings.save();
     } else {
       settings = await Settings.create({ autoApproveStudents: newValue });
     }
-    
     res.json({ 
       message: `Global student auto-approve ${newValue ? 'ON' : 'OFF'}`,
       autoApproveStudents: newValue 
@@ -298,53 +283,35 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
   }
 });
 
-// Follow/Unfollow user - sends notification to followed user
+// Follow/Unfollow user
 router.post('/follow/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
     const currentUserId = req.user._id || req.user.id;
-
     if (userId === currentUserId.toString()) {
       return res.status(400).json({ message: "Cannot follow yourself" });
     }
-
     const userToFollow = await User.findById(userId).select('followers');
     const currentUser = await User.findById(currentUserId).select('name following');
-
     if (!userToFollow || !currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
-
     currentUser.following = currentUser.following || [];
     userToFollow.followers = userToFollow.followers || [];
-
     const isFollowing = currentUser.following.some(id => id.toString() === userId);
-
     if (isFollowing) {
-      // Unfollow
       currentUser.following = currentUser.following.filter(id => id.toString() !== userId);
       userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUserId.toString());
     } else {
-      // Follow - create notification
       if (!currentUser.following.some(id => id.toString() === userId)) {
         currentUser.following.push(userId);
       }
       if (!userToFollow.followers.some(id => id.toString() === currentUserId.toString())) {
         userToFollow.followers.push(currentUserId);
       }
-      
-      // Skip notification if enum doesn't allow 'new_follower'
-      // await Notification.create({
-      //   recipient: userToFollow._id,
-      //   sender: currentUser._id,
-      //   type: 'info_modified',
-      //   message: `${currentUser.name} started following you`,
-      // });
     }
-
     await currentUser.save();
     await userToFollow.save();
-
     res.status(200).json({
       following: !isFollowing,
       followingCount: currentUser.following.length,
@@ -361,16 +328,11 @@ router.get('/following/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check privacy settings
+    if (!user) return res.status(404).json({ message: "User not found" });
     const currentUserId = req.user._id || req.user.id;
     if (user.privacy?.hideFollowing && currentUserId.toString() !== userId) {
       return res.status(403).json({ message: "Following list is private" });
     }
-
     const following = await User.findById(userId).populate('following', 'name username avatar bio');
     res.status(200).json({ following: following.following });
   } catch (error) {
@@ -383,16 +345,11 @@ router.get('/followers/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check privacy settings
+    if (!user) return res.status(404).json({ message: "User not found" });
     const currentUserId = req.user._id || req.user.id;
     if (user.privacy?.hideFollowers && currentUserId.toString() !== userId) {
       return res.status(403).json({ message: "Followers list is private" });
     }
-
     const followers = await User.findById(userId).populate('followers', 'name username avatar bio');
     res.status(200).json({ followers: followers.followers });
   } catch (error) {
@@ -405,16 +362,12 @@ router.put('/bio', protect, async (req, res) => {
   try {
     const { bio } = req.body;
     const userId = req.user._id || req.user.id;
-    
     const user = await User.findByIdAndUpdate(
       userId,
       { bio: bio || "" },
       { new: true, runValidators: true }
     );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ bio: user.bio });
   } catch (error) {
     console.error("Bio save error:", error);
@@ -427,7 +380,6 @@ router.put('/socials', protect, async (req, res) => {
   try {
     const { socials } = req.body;
     const userId = req.user._id || req.user.id;
-    
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -439,10 +391,7 @@ router.put('/socials', protect, async (req, res) => {
       },
       { new: true, runValidators: true }
     );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ socials: user.socials });
   } catch (error) {
     console.error("Social save error:", error);
@@ -455,7 +404,6 @@ router.put('/privacy', protect, async (req, res) => {
   try {
     const { privacy } = req.body;
     const userId = req.user._id || req.user.id;
-    
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -466,10 +414,7 @@ router.put('/privacy', protect, async (req, res) => {
       },
       { new: true, runValidators: true }
     );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ privacy: user.privacy });
   } catch (error) {
     console.error("Privacy update error:", error);
@@ -477,13 +422,11 @@ router.put('/privacy', protect, async (req, res) => {
   }
 });
 
-
 // Update notification preferences
 router.put('/notifications', protect, async (req, res) => {
   try {
     const { notifications } = req.body;
     const userId = req.user._id || req.user.id;
-    
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -493,10 +436,7 @@ router.put('/notifications', protect, async (req, res) => {
       },
       { new: true, runValidators: true }
     );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ notifications: user.notifications });
   } catch (error) {
     console.error("Notifications update error:", error);
@@ -504,30 +444,25 @@ router.put('/notifications', protect, async (req, res) => {
   }
 });
 
-// Upload avatar
+// Self avatar upload (for the logged-in user)
 router.post('/avatar', protect, avatarUpload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-
     const userId = req.user._id || req.user.id;
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    // Delete old avatar if exists
     if (user.avatar && user.avatar !== "/assets/images/profile_icon.png") {
       const oldAvatarPath = path.join(__dirname, "../../public", user.avatar);
       if (fs.existsSync(oldAvatarPath)) {
         fs.unlinkSync(oldAvatarPath);
       }
     }
-
     user.avatar = `/avatars/${req.file.filename}`;
     await User.findByIdAndUpdate(userId, { avatar: user.avatar });
-
     res.status(200).json({ avatar: user.avatar });
   } catch (error) {
     console.error("Avatar upload error:", error);
@@ -540,21 +475,11 @@ router.put('/profile', protect, async (req, res) => {
   try {
     const { name, bio } = req.body;
     const userId = req.user._id || req.user.id;
-    
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
     if (bio !== undefined) updateFields.bio = bio;
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      updateFields,
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
+    const user = await User.findByIdAndUpdate(userId, updateFields, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ name: user.name, bio: user.bio });
   } catch (error) {
     console.error("Profile update error:", error);
@@ -567,19 +492,13 @@ router.put('/password', protect, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user._id || req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Verify current password
+    if (!user) return res.status(404).json({ message: "User not found" });
     const isMatch = await user.matchPassword(currentPassword);
     if (!isMatch) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
-
     user.password = newPassword;
     await user.save();
-
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error("Password update error:", error);
@@ -587,42 +506,36 @@ router.put('/password', protect, async (req, res) => {
   }
 });
 
+// Admin/staff: edit user details (name, email, role, password)
 router.put("/:id", protect, requireStaff, async (req, res) => {
     try {
         const { name, email, role, password } = req.body;
         const user = await User.findById(req.params.id);
-
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
         if (user.role === "Admin" && req.user.role !== "Admin") {
             return res.status(403).json({ message: "Only admins can edit admin accounts." });
         }
-
         if (email && email !== user.email) {
             const existingUser = await User.findOne({ email });
             if (existingUser && existingUser._id.toString() !== user._id.toString()) {
                 return res.status(400).json({ message: "Email is already in use" });
             }
         }
-
         const changedFields = [];
-
         if (typeof name === "string" && name.trim()) {
             if (user.name !== name.trim()) {
                 changedFields.push({ field: "name", label: prettifyFieldName("name"), newValue: name.trim() });
             }
             user.name = name.trim();
         }
-
         if (typeof email === "string" && email.trim()) {
             if (user.email !== email.trim()) {
                 changedFields.push({ field: "email", label: prettifyFieldName("email"), newValue: email.trim() });
             }
             user.email = email.trim();
         }
-
         if (typeof role === "string" && role.trim()) {
             const normalizedRequestedRole = normalizeRole(role);
             const nextRole =
@@ -631,21 +544,17 @@ router.put("/:id", protect, requireStaff, async (req, res) => {
                     : normalizedRequestedRole === "faculty"
                         ? "Faculty"
                         : "Student";
-
             if (nextRole === "Admin" && req.user.role !== "Admin") {
                 return res.status(403).json({ message: "Only admins can assign the admin role." });
             }
-
             if (user.role === "Admin" && req.user.role !== "Admin") {
                 return res.status(403).json({ message: "Only admins can edit admin accounts." });
             }
-
             if (user.role !== nextRole) {
                 changedFields.push({ field: "role", label: prettifyFieldName("role"), newValue: nextRole });
             }
             user.role = nextRole;
         }
-
         if (typeof password === "string" && password.trim()) {
             if (user.role === "Admin" && req.user.role !== "Admin") {
                 return res.status(403).json({ message: "Only admins can edit admin accounts." });
@@ -653,9 +562,7 @@ router.put("/:id", protect, requireStaff, async (req, res) => {
             changedFields.push({ field: "password", label: prettifyFieldName("password"), newValue: "Updated" });
             user.password = password.trim();
         }
-
         await user.save();
-
         if (changedFields.length > 0) {
             await Notification.create({
                 recipient: user._id,
@@ -664,7 +571,6 @@ router.put("/:id", protect, requireStaff, async (req, res) => {
                 details: { updatedFields: changedFields }
             });
         }
-
         res.status(200).json({
             message: "User request updated successfully",
             user,
@@ -674,28 +580,23 @@ router.put("/:id", protect, requireStaff, async (req, res) => {
     }
 });
 
-// PUT route to update a user's status
+// Update user status (pending/active/suspended)
 router.put('/:id/status', protect, requireStaff, async (req, res) => {
     try {
         const status = req.body.status.toLowerCase(); 
-        
         const validStatuses = ['pending', 'active', 'suspended'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Invalid status value" });
         }
-
         const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
         if (user.role === 'Admin') {
             return res.status(403).json({ message: "Only admins can update admin account status." });
         }
-
         user.status = status;
         await user.save();
-
         if (status === 'active') {
             await Notification.create({
                 recipient: user._id,
@@ -703,31 +604,68 @@ router.put('/:id/status', protect, requireStaff, async (req, res) => {
                 message: "Welcome! Your account has been approved by the administration.",
             });
         }
-
         res.json({ message: `User status updated to ${status}`, user });
-        
     } catch (error) {
         res.status(500).json({ message: "Server error updating status" });
     }
 });
 
-// Toggle user auto-approve uploads
+// Toggle auto-approve uploads for a user
 router.put('/:id/autoapprove', protect, requireAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
         user.autoApproveUploads = !user.autoApproveUploads;
         await user.save();
-
         res.json({ 
             message: `Auto-approve toggled ${user.autoApproveUploads ? 'ON' : 'OFF'}`, 
             autoApproveUploads: user.autoApproveUploads 
         });
     } catch (error) {
         res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Staff-only: update avatar for any user (by ID) – with notification
+router.post('/:id/avatar', protect, requireStaff, avatarUpload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+        const targetUserId = req.params.id;
+        const targetUser = await User.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        // Delete old avatar if exists (and not the default placeholder)
+        if (targetUser.avatar && targetUser.avatar !== "/assets/images/profile_icon.png") {
+            const oldAvatarPath = path.join(__dirname, "../../public", targetUser.avatar);
+            if (fs.existsSync(oldAvatarPath)) {
+                fs.unlinkSync(oldAvatarPath);
+            }
+        }
+        targetUser.avatar = `/avatars/${req.file.filename}`;
+        await targetUser.save();
+
+        // Create notification for the target user (unless admin is updating own avatar)
+        if (req.user._id.toString() !== targetUserId.toString()) {
+            await Notification.create({
+                recipient: targetUser._id,
+                type: 'info_modified',
+                message: `${req.user.name} updated your profile picture.`,
+                details: {
+                    updatedFields: [
+                        { field: "avatar", label: "Profile Picture", newValue: "Updated" }
+                    ]
+                }
+            });
+        }
+        res.status(200).json({ avatar: targetUser.avatar });
+    } catch (error) {
+        console.error("Avatar update for user error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 

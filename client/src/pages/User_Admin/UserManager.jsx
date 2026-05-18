@@ -204,74 +204,83 @@ const UserManager = () => {
         }
     };
 
-    const handleUpdateUser = async () => {
-        if (!editForm.name.trim()) {
-            setEditError("Name is required.");
-            return;
-        }
-        if (!editForm.email.trim()) {
-            setEditError("Email is required.");
-            return;
-        }
-        setUpdatingUser(true);
-        setEditError('');
-        const previousData = {
-            name: editingUser.name,
-            email: editingUser.email,
-            role: editingUser.role
+ const handleUpdateUser = async () => {
+    if (!editForm.name.trim()) {
+        setEditError("Name is required.");
+        return;
+    }
+    if (!editForm.email.trim()) {
+        setEditError("Email is required.");
+        return;
+    }
+    setUpdatingUser(true);
+    setEditError('');
+    const previousData = {
+        name: editingUser.name,
+        email: editingUser.email,
+        role: editingUser.role
+    };
+    const token = localStorage.getItem("token");
+    try {
+        const updateData = {
+            name: editForm.name.trim(),
+            email: editForm.email.trim(),
+            role: editForm.role
         };
-        const token = localStorage.getItem("token");
-        try {
-            const updateData = {
+        if (editForm.password.trim()) {
+            updateData.password = editForm.password.trim();
+        }
+        // Update user details
+        const updateRes = await fetch(`${API_BASE}/api/auth/${editingUser._id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(updateData)
+        });
+        if (!updateRes.ok) {
+            const errData = await updateRes.json();
+            throw new Error(errData.message || "Failed to update user");
+        }
+
+        // Update avatar separately if a new file was selected
+        if (editAvatarFile) {
+            const avatarFormData = new FormData();
+            avatarFormData.append('avatar', editAvatarFile);
+            const avatarRes = await fetch(`${API_BASE}/api/auth/${editingUser._id}/avatar`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: avatarFormData
+            });
+            if (!avatarRes.ok) {
+                console.warn("Avatar update failed, but user details were saved.");
+            } else {
+                // Optionally update the local avatar preview or fetch user list again
+            }
+        }
+
+        setShowEditModal(false);
+        await fetchUsers();
+        setLastAction({
+            type: 'edit',
+            userId: editingUser._id,
+            previousData,
+            newData: {
                 name: editForm.name.trim(),
                 email: editForm.email.trim(),
                 role: editForm.role
-            };
-            if (editForm.password.trim()) {
-                updateData.password = editForm.password.trim();
-            }
-            const updateRes = await fetch(`${API_BASE}/api/auth/${editingUser._id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(updateData)
-            });
-            if (!updateRes.ok) {
-                const errData = await updateRes.json();
-                throw new Error(errData.message || "Failed to update user");
-            }
-            if (editAvatarFile) {
-                const avatarFormData = new FormData();
-                avatarFormData.append('avatar', editAvatarFile);
-                await fetch(`${API_BASE}/api/auth/avatar`, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` },
-                    body: avatarFormData
-                });
-            }
-            setShowEditModal(false);
-            await fetchUsers();
-            setLastAction({
-                type: 'edit',
-                userId: editingUser._id,
-                previousData,
-                newData: {
-                    name: editForm.name.trim(),
-                    email: editForm.email.trim(),
-                    role: editForm.role
-                },
-                userName: editingUser.name,
-                actionName: 'Edit'
-            });
-            setSuccessMessage(`User "${editingUser.name}" updated. You can undo the changes.`);
-        } catch (err) {
-            setEditError(err.message);
-        } finally {
-            setUpdatingUser(false);
-        }
-    };
+            },
+            userName: editingUser.name,
+            actionName: 'Edit'
+        });
+        setSuccessMessage(`User "${editingUser.name}" updated. You can undo the changes.`);
+    } catch (err) {
+        setEditError(err.message);
+    } finally {
+        setUpdatingUser(false);
+    }
+};
 
     const undoLastAction = async () => {
         if (!lastAction) return;
