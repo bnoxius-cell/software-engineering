@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Topbar.module.css";
-import artisanLogo from "../assets/images/artisanLogo.png";
+import artisanLogoOnly from "../assets/images/artisanLogoOnly.png";
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -55,7 +55,7 @@ const Topbar = ({ title }) => {
     return (
         <header className={styles.stickyHeader}>
             <div className={styles.brand}>
-                <img src={artisanLogo} alt="Artisan Logo" className={styles.brandImg} />
+                <img src={artisanLogoOnly} alt="Artisan Logo" className={styles.brandImg} />
                 <h1>{title}</h1>
             </div>
             <div className={styles.userInfo}>
