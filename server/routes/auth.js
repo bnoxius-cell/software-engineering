@@ -283,7 +283,7 @@ router.put('/settings/autoapprove', protect, requireAdmin, async (req, res) => {
   }
 });
 
-// Follow/Unfollow user
+// Follow/Unfollow user – returns counts of ACTIVE followers/following
 router.post('/follow/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -312,10 +312,21 @@ router.post('/follow/:userId', protect, async (req, res) => {
     }
     await currentUser.save();
     await userToFollow.save();
+
+    // Count only active followers/following
+    const followingCount = await User.countDocuments({
+      _id: { $in: currentUser.following },
+      status: 'active'
+    });
+    const followerCount = await User.countDocuments({
+      _id: { $in: userToFollow.followers },
+      status: 'active'
+    });
+
     res.status(200).json({
       following: !isFollowing,
-      followingCount: currentUser.following.length,
-      followerCount: userToFollow.followers.length
+      followingCount,
+      followerCount
     });
   } catch (error) {
     console.error('Follow error:', error);
@@ -323,7 +334,7 @@ router.post('/follow/:userId', protect, async (req, res) => {
   }
 });
 
-// Get following list
+// Get following list – only active users
 router.get('/following/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -333,14 +344,18 @@ router.get('/following/:userId', protect, async (req, res) => {
     if (user.privacy?.hideFollowing && currentUserId.toString() !== userId) {
       return res.status(403).json({ message: "Following list is private" });
     }
-    const following = await User.findById(userId).populate('following', 'name username avatar bio');
+    const following = await User.findById(userId).populate({
+      path: 'following',
+      match: { status: 'active' },
+      select: 'name username avatar bio'
+    });
     res.status(200).json({ following: following.following });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// Get followers list
+// Get followers list – only active users
 router.get('/followers/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -350,7 +365,11 @@ router.get('/followers/:userId', protect, async (req, res) => {
     if (user.privacy?.hideFollowers && currentUserId.toString() !== userId) {
       return res.status(403).json({ message: "Followers list is private" });
     }
-    const followers = await User.findById(userId).populate('followers', 'name username avatar bio');
+    const followers = await User.findById(userId).populate({
+      path: 'followers',
+      match: { status: 'active' },
+      select: 'name username avatar bio'
+    });
     res.status(200).json({ followers: followers.followers });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -666,6 +685,39 @@ router.post('/:id/avatar', protect, requireStaff, avatarUpload.single('avatar'),
     } catch (error) {
         console.error("Avatar update for user error:", error);
         res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+// Delete user (admin only) – cleans up references from other users' following/followers
+router.delete('/:id', protect, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userToDelete = await User.findById(userId);
+        if (!userToDelete) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (userToDelete.role === 'Admin') {
+            return res.status(403).json({ message: "Cannot delete admin accounts." });
+        }
+
+        // Remove this user from all other users' following and followers arrays
+        await User.updateMany(
+            { following: userId },
+            { $pull: { following: userId } }
+        );
+        await User.updateMany(
+            { followers: userId },
+            { $pull: { followers: userId } }
+        );
+
+        // Optionally, delete the user's artworks, notifications, etc.
+        // For now, delete the user document
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Delete user error:", error);
+        res.status(500).json({ message: "Server error" });
     }
 });
 

@@ -304,7 +304,7 @@ router.put("/:id", protect, authorizeArtworkMutation, artworkAndThumbnailUpload,
   }
 });
 
-// Profile artworks
+// Profile artworks - FIXED to count only active users in following/followers
 router.get("/profile/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("-password");
@@ -315,13 +315,25 @@ router.get("/profile/:userId", async (req, res) => {
       uploadedBy: req.params.userId,
       status: "published"
     }).populate("uploadedBy", "name username avatar");
+
+    // Count only active users in following and followers arrays
+    const followingCount = await User.countDocuments({
+      _id: { $in: user.following || [] },
+      status: 'active'
+    });
+    const followerCount = await User.countDocuments({
+      _id: { $in: user.followers || [] },
+      status: 'active'
+    });
+
     const userWithCounts = {
       ...user.toObject(),
-      followingCount: (user.following || []).length,
-      followerCount: (user.followers || []).length
+      followingCount,
+      followerCount
     };
     res.status(200).json({ user: userWithCounts, artworks: artworks.map(serializeArtwork) });
   } catch (error) {
+    console.error("Profile fetch error:", error);
     res.status(500).json({ message: "Failed to fetch profile artworks" });
   }
 });
