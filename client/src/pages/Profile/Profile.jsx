@@ -7,6 +7,9 @@ import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
 import { getAvatarUrl } from '../../utils/avatar';
 import { ARTWORK_CATEGORIES } from '../../constants/artworkCategories';
+import PendingApprovalModal from '../../components/PendingApprovalModal/PendingApprovalModal';
+
+import '../../styles/mainstarsbackground.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -17,10 +20,23 @@ const formatDuration = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const Profile = ({ currentUser }) => {
+const StarsBackground = () => (
+  <div className="starsContainer">
+    <div className="stars"></div>
+    <div className="stars2"></div>
+    <div className="stars3"></div>
+  </div>
+);
+
+const Profile = ({ currentUser: propCurrentUser }) => {
     const { userId } = useParams();
     const navigate = useNavigate();
-    
+
+    // If currentUser prop is not provided, we'll fetch it ourselves
+    const [fetchedCurrentUser, setFetchedCurrentUser] = useState(null);
+    const [isFetchingCurrentUser, setIsFetchingCurrentUser] = useState(true);
+    const currentUser = propCurrentUser || fetchedCurrentUser;
+
     const [activeTab, setActiveTab] = useState('portfolio');
     const [profileUser, setProfileUser] = useState(null);
     const [artworks, setArtworks] = useState([]);
@@ -38,14 +54,11 @@ const Profile = ({ currentUser }) => {
     const [showCreateCollection, setShowCreateCollection] = useState(false);
     const [newCollectionName, setNewCollectionName] = useState('');
     const [newCollectionDesc, setNewCollectionDesc] = useState('');
-
-    // Social links editing
     const [editingSocials, setEditingSocials] = useState(false);
     const [socialLinks, setSocialLinks] = useState({ twitter: '', instagram: '', website: '' });
-
-    // More options menu
     const [showMoreMenu, setShowMoreMenu] = useState(false);
     const moreMenuRef = useRef(null);
+    const [showPendingModal, setShowPendingModal] = useState(false); // NEW
 
     // Collection management state
     const [editingCollection, setEditingCollection] = useState(null);
@@ -95,15 +108,13 @@ const Profile = ({ currentUser }) => {
 
     // Lock background scrolling when any modal popup is open
     useEffect(() => {
-        if (showCreateCollection || showEditModal || showDeleteConfirm || showAddArtworkModal || showViewCollectionModal || showEditArtworkModal || showDeleteArtworkConfirm) {
+        if (showCreateCollection || showEditModal || showDeleteConfirm || showAddArtworkModal || showViewCollectionModal || showEditArtworkModal || showDeleteArtworkConfirm || showPendingModal) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
         }
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
-    }, [showCreateCollection, showEditModal, showDeleteConfirm, showAddArtworkModal, showViewCollectionModal, showEditArtworkModal, showDeleteArtworkConfirm]);
+        return () => { document.body.style.overflow = 'auto'; };
+    }, [showCreateCollection, showEditModal, showDeleteConfirm, showAddArtworkModal, showViewCollectionModal, showEditArtworkModal, showDeleteArtworkConfirm, showPendingModal]);
 
     // Close more menu when clicking outside
     useEffect(() => {
@@ -116,20 +127,49 @@ const Profile = ({ currentUser }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Auto-dismiss avatar success message after 3 seconds
+    // Auto-dismiss avatar success message
     useEffect(() => {
         if (!avatarSuccess) return;
         const timer = setTimeout(() => setAvatarSuccess(''), 3000);
         return () => clearTimeout(timer);
     }, [avatarSuccess]);
 
-    // Auto-dismiss profile action messages after 3 seconds
+    // Auto-dismiss profile action messages
     useEffect(() => {
         if (!profileMessage) return;
         const timer = setTimeout(() => setProfileMessage(null), 3000);
         return () => clearTimeout(timer);
     }, [profileMessage]);
 
+    // Fetch current user if not provided via props
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setIsFetchingCurrentUser(false);
+                return;
+            }
+            try {
+                const res = await axios.get(`${API_BASE}/api/auth/me`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setFetchedCurrentUser(res.data);
+            } catch (err) {
+                console.error("Failed to fetch current user:", err);
+                // If token is invalid, clear it
+                localStorage.removeItem('token');
+            } finally {
+                setIsFetchingCurrentUser(false);
+            }
+        };
+        if (!propCurrentUser && localStorage.getItem('token')) {
+            fetchCurrentUser();
+        } else {
+            setIsFetchingCurrentUser(false);
+        }
+    }, [propCurrentUser]);
+
+    // Main profile fetch – now waits until currentUser is resolved
     useEffect(() => {
         const fetchProfile = async () => {
             let targetId = userId;
@@ -137,21 +177,9 @@ const Profile = ({ currentUser }) => {
                 if (currentUser) {
                     targetId = currentUser._id || currentUser.id;
                 } else {
-                    const token = localStorage.getItem('token');
-                    if (token) {
-                        try {
-                            const meRes = await axios.get(`${API_BASE}/api/auth/me`, {
-                                headers: { Authorization: `Bearer ${token}` }
-                            });
-                            targetId = meRes.data._id || meRes.data.id;
-                        } catch {
-                            navigate('/login');
-                            return;
-                        }
-                    } else {
-                        navigate('/login');
-                        return;
-                    }
+                    // No user and no userId – redirect to login
+                    navigate('/login');
+                    return;
                 }
             }
             if (!targetId) {
@@ -204,16 +232,21 @@ const Profile = ({ currentUser }) => {
                 }
 
                 setError('');
-            } catch {
+            } catch (err) {
+                console.error("Profile fetch error:", err);
                 setError("Profile not found.");
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfile();
-    }, [userId, currentUser, navigate]);
 
-    // Pre-fetch available artworks for the "add to collection" modal (only user's own artworks)
+        // Wait until we have either a currentUser or we are sure no user exists
+        if (!isFetchingCurrentUser && (currentUser !== undefined || !localStorage.getItem('token'))) {
+            fetchProfile();
+        }
+    }, [userId, currentUser, navigate, isFetchingCurrentUser]);
+
+    // Pre-fetch available artworks (unchanged)
     useEffect(() => {
         const currentUserId = currentUser?._id || currentUser?.id;
         if (showAddArtworkModal && selectedCollection && currentUserId === profileUser?._id) {
@@ -237,7 +270,7 @@ const Profile = ({ currentUser }) => {
         }
     }, [showAddArtworkModal, selectedCollection, currentUser, profileUser, artworks]);
 
-    // Collection CRUD handlers
+    // Collection CRUD handlers (with pending error handling)
     const handleCreateCollection = async () => {
         if (!newCollectionName.trim()) return;
         try {
@@ -254,6 +287,11 @@ const Profile = ({ currentUser }) => {
             setShowCreateCollection(false);
         } catch (error) {
             console.error('Collection creation error:', error);
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Failed to create collection.' });
+            }
         }
     };
 
@@ -279,6 +317,11 @@ const Profile = ({ currentUser }) => {
             setEditingCollection(null);
         } catch (error) {
             console.error('Update error:', error);
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update collection.' });
+            }
         }
     };
 
@@ -292,6 +335,11 @@ const Profile = ({ currentUser }) => {
             setShowDeleteConfirm(null);
         } catch (error) {
             console.error('Delete error:', error);
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Failed to delete collection.' });
+            }
         }
     };
 
@@ -329,7 +377,11 @@ const Profile = ({ currentUser }) => {
             setSelectedArtworkIds([]);
         } catch (error) {
             console.error('Add artworks error:', error);
-            alert('Failed to add some artworks. Please try again.');
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                alert('Failed to add some artworks. Please try again.');
+            }
         } finally {
             setAddingArtworks(false);
         }
@@ -368,7 +420,11 @@ const Profile = ({ currentUser }) => {
             setSelectedArtworkIdsToRemove([]);
         } catch (error) {
             console.error('Remove artworks error:', error);
-            alert('Failed to remove some artworks. Please try again.');
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                alert('Failed to remove some artworks. Please try again.');
+            }
         } finally {
             setRemovingArtworks(false);
         }
@@ -448,15 +504,15 @@ const Profile = ({ currentUser }) => {
             return;
         }
         if (!editArtworkForm.title.trim()) {
-            alert('Title is required.');
+            setProfileMessage({ type: 'error', text: 'Title is required.' });
             return;
         }
         if (!editArtworkForm.description.trim()) {
-            alert('Description is required.');
+            setProfileMessage({ type: 'error', text: 'Description is required.' });
             return;
         }
         if (!editArtworkForm.tags.trim()) {
-            alert('Tags are required.');
+            setProfileMessage({ type: 'error', text: 'Tags are required.' });
             return;
         }
 
@@ -492,11 +548,19 @@ const Profile = ({ currentUser }) => {
                 setProfileMessage({ type: 'success', text: 'Artwork successfully updated.' });
             } else {
                 const err = await res.json();
-                setProfileMessage({ type: 'error', text: err.message || 'Failed to update artwork.' });
+                if (res.status === 403 && err.message?.includes('pending admin approval')) {
+                    setShowPendingModal(true);
+                } else {
+                    setProfileMessage({ type: 'error', text: err.message || 'Failed to update artwork.' });
+                }
             }
         } catch (error) {
             console.error(error);
-            setProfileMessage({ type: 'error', text: 'Server error. Could not update artwork.' });
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: 'Server error. Could not update artwork.' });
+            }
         } finally {
             setIsUpdatingArtwork(false);
         }
@@ -525,11 +589,19 @@ const Profile = ({ currentUser }) => {
                 setProfileMessage({ type: 'success', text: 'Artwork successfully removed.' });
             } else {
                 const err = await res.json().catch(() => ({}));
-                setProfileMessage({ type: 'error', text: err.message || 'Failed to delete artwork.' });
+                if (res.status === 403 && err.message?.includes('pending admin approval')) {
+                    setShowPendingModal(true);
+                } else {
+                    setProfileMessage({ type: 'error', text: err.message || 'Failed to delete artwork.' });
+                }
             }
         } catch (error) {
             console.error(error);
-            setProfileMessage({ type: 'error', text: 'Server error. Could not delete artwork.' });
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: 'Server error. Could not delete artwork.' });
+            }
         }
     };
 
@@ -560,7 +632,11 @@ const Profile = ({ currentUser }) => {
             }
         } catch (error) {
             console.error('Follow error:', error);
-            setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Unable to update follow status.' });
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Unable to update follow status.' });
+            }
         } finally {
             setFollowLoading(false);
         }
@@ -574,9 +650,14 @@ const Profile = ({ currentUser }) => {
             });
             setProfileUser(prev => ({ ...prev, bio: bioText }));
             setEditingBio(false);
+            setProfileMessage({ type: 'success', text: 'Bio updated successfully.' });
         } catch (error) {
             console.error('Bio update error:', error);
-            alert('Failed to update bio. Please try again.');
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update bio.' });
+            }
         }
     };
 
@@ -588,9 +669,14 @@ const Profile = ({ currentUser }) => {
             });
             setProfileUser(prev => ({ ...prev, socials: socialLinks }));
             setEditingSocials(false);
+            setProfileMessage({ type: 'success', text: 'Social links updated successfully.' });
         } catch (error) {
             console.error('Social update error:', error);
-            alert('Failed to update social links. Please try again.');
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update social links.' });
+            }
         }
     };
 
@@ -631,7 +717,11 @@ const Profile = ({ currentUser }) => {
             window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: res.data.avatar }));
         } catch (error) {
             console.error('Avatar upload error:', error);
-            alert('Failed to upload avatar. Please try again.');
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                alert('Failed to upload avatar. Please try again.');
+            }
         } finally {
             setUploadingAvatar(false);
             if (fileInputRef.current) {
@@ -663,10 +753,14 @@ const Profile = ({ currentUser }) => {
             });
         } catch (error) {
             console.error('Privacy update error:', error);
-            setProfileMessage({
-                type: 'error',
-                text: error.response?.data?.message || 'Unable to update privacy settings.'
-            });
+            if (error.response?.status === 403 && error.response?.data?.message?.includes('pending admin approval')) {
+                setShowPendingModal(true);
+            } else {
+                setProfileMessage({
+                    type: 'error',
+                    text: error.response?.data?.message || 'Unable to update privacy settings.'
+                });
+            }
         }
     };
 
@@ -695,7 +789,9 @@ const Profile = ({ currentUser }) => {
             fetchFollowingFollowers(activeTab);
         }
     }, [activeTab, fetchFollowingFollowers]);
-    
+
+    const closePendingModal = () => setShowPendingModal(false);
+
     if (loading) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>Loading The Aether...</div></div>;
     if (error) return <div className={styles.pageWrapper}><Navbar /><div style={{color:'white', textAlign:'center', marginTop: '10vh'}}>{error}</div></div>;
     if (!profileUser) return null;
@@ -712,7 +808,7 @@ const Profile = ({ currentUser }) => {
 
     return (
         <div className={styles.pageWrapper}>
-            <div className="background-fx"></div>
+            <StarsBackground />
             <Navbar />
             <div className={styles.profileContainer}>
                 {/* Profile Card */}
@@ -905,7 +1001,7 @@ const Profile = ({ currentUser }) => {
                     {isOwnProfile && <button className={`${styles.tab} ${activeTab === 'bookmarks' ? styles.activeTab : ''}`} onClick={() => setActiveTab('bookmarks')}>Bookmarks</button>}
                 </div>
 
-                {/* Content area */}
+                {/* Content area – same as before, unchanged */}
                 <div className={styles.portfolioSection}>
                     <div className={styles.sectionHeader}>
                         <h3>
@@ -1499,6 +1595,12 @@ const Profile = ({ currentUser }) => {
                     )}
                 </div>
             </div>
+            {/* Pending Approval Modal */}
+            <PendingApprovalModal 
+                isOpen={showPendingModal}
+                onClose={closePendingModal}
+                actionName="perform this action"
+            />
         </div>
     );
 };

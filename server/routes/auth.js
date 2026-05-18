@@ -86,29 +86,51 @@ router.post("/register", async (req, res) => {
                 : requestedRole === "student"
                     ? "Student"
                     : "Student";
-        const userStatus = status || 'pending';
-        const user = await User.create({ name, email, password, role: userRole, status: userStatus });
+
+        // ========== NEW: Use global auto-approve for student accounts ==========
+        const autoApproveStudents = settings ? settings.autoApproveStudents : false;
+        // Student accounts are auto-approved if the setting is true; faculty and admin always require admin approval.
+        let userStatus;
+        if (userRole === "Student") {
+            userStatus = autoApproveStudents ? "active" : "pending";
+        } else {
+            // Faculty and Admin accounts always require admin approval
+            userStatus = "pending";
+        }
+        // =====================================================================
+
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role: userRole,
+            status: userStatus
+        });
 
         await Notification.create({
             recipient: user._id,
             type: 'account_created',
-            message: "Your account has been created and is currently pending approval.",
+            message: userStatus === "active"
+                ? "Your account has been automatically approved. Welcome!"
+                : "Your account has been created and is currently pending approval.",
         });
 
         const token = generateToken(user._id);
-        res.status(201).json({ 
-            message: "User registered successfully", 
+        res.status(201).json({
+            message: userStatus === "active"
+                ? "User registered and automatically approved."
+                : "User registered successfully. Awaiting admin approval.",
             id: user._id,
-            name: user.name, 
-            email: user.email, 
+            name: user.name,
+            email: user.email,
             role: user.role,
             token,
         });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: "Server error" });
     }
-})
-
+});
 router.post("/register/admin", protect, requireAdmin, async (req, res) => {
     const { name, email, password, status } = req.body;
 

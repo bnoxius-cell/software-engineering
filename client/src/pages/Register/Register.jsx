@@ -14,9 +14,9 @@ const Register = () => {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPopup, setShowPopup] = useState(false);
+    const [popupMessage, setPopupMessage] = useState('');
     const [showTermsModal, setShowTermsModal] = useState(false);
-    const [modalContent, setModalContent] = useState('terms'); // 'terms' or 'privacy'
+    const [modalContent, setModalContent] = useState('terms');
     const [allowRegistration, setAllowRegistration] = useState(true);
     const [checkingSettings, setCheckingSettings] = useState(true);
     const navigate = useNavigate();
@@ -79,13 +79,19 @@ const Register = () => {
         setError('');
         
         try {
-            await axios.post(`${API_BASE}/api/auth/register`, {
+            const response = await axios.post(`${API_BASE}/api/auth/register`, {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password
             });
             
-            setShowPopup(true);
+            // Use the message from the backend to decide what to show in the popup
+            const backendMessage = response.data.message;
+            if (backendMessage && backendMessage.includes("automatically approved")) {
+                setPopupMessage("Account created successfully! You can now log in.");
+            } else {
+                setPopupMessage("Your account will be created once an admin accepts your user registration.");
+            }
         } catch (err) {
             console.error(err);
             if (err.code === 'ERR_NETWORK') {
@@ -246,13 +252,11 @@ const Register = () => {
                 </p>
             </div>
 
-            {/* Success Popup */}
-{showPopup && (
+            {/* Conditional Success Popup */}
+            {popupMessage && (
                 <div className={styles["popup-overlay"]}>
                     <div className={styles["popup-content"]}>
-                        <p className={styles["popup-message"]}>
-                            Your account will be created once an admin accepts your user registration.
-                        </p>
+                        <p className={styles["popup-message"]}>{popupMessage}</p>
                         <button 
                             type="button" 
                             className={styles["popup-button"]}
@@ -317,4 +321,3 @@ const Register = () => {
 };
 
 export default Register;
-

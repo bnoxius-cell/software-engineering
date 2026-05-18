@@ -97,5 +97,42 @@ router.post('/settings', protect, requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin/settings/autoapprove-artworks
+router.get('/settings/autoapprove-artworks', protect, requireAdmin, async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    res.json({ autoApproveArtworks: settings.autoApproveArtworks });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch auto-approve setting' });
+  }
+});
+
+// PUT /api/admin/settings/autoapprove-artworks
+router.put('/settings/autoapprove-artworks', protect, requireAdmin, async (req, res) => {
+  try {
+    const { autoApproveArtworks } = req.body;
+    if (typeof autoApproveArtworks !== 'boolean') {
+      return res.status(400).json({ message: 'autoApproveArtworks must be a boolean' });
+    }
+
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
+    }
+    settings.autoApproveArtworks = autoApproveArtworks;
+    await settings.save();
+
+    res.json({ 
+      message: `Auto-approve artworks ${autoApproveArtworks ? 'enabled' : 'disabled'}`,
+      autoApproveArtworks: settings.autoApproveArtworks
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update auto-approve setting' });
+  }
+});
+
 module.exports = router;
 

@@ -382,10 +382,11 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
 
     const artistName = currentUser.username || currentUser.name || "Unknown Artist";
 
+    // ========== NEW: Use global auto-approve for artworks ==========
     const settings = await Settings.findOne();
-    const globalAutoApproveStudents = settings ? settings.autoApproveStudents : false;
-    const autoApprove = currentUser.role.toLowerCase() !== 'student' || globalAutoApproveStudents;
-    const artworkStatus = autoApprove ? 'published' : 'pending';
+    const autoApproveArtworksGlobal = settings ? settings.autoApproveArtworks : false;
+    const artworkStatus = autoApproveArtworksGlobal ? 'published' : 'pending';
+    // ================================================================
 
     const maxSizeMB = settings ? settings.maxUploadSize : 10;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -408,6 +409,7 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
       uploadedBy: currentUser._id,
       status: artworkStatus
     };
+
 
     if (newArtworkData.mediaType === 'video') {
       if (thumbnailFile) {
@@ -443,7 +445,7 @@ router.post("/", protect, artworkAndThumbnailUpload, async (req, res) => {
 
     const newArtwork = await Artwork.create(newArtworkData);
 
-    if (autoApprove && currentUser.notifications?.artworkAdded !== false) {
+    if (autoApproveArtworksGlobal && currentUser.notifications?.artworkAdded !== false) {
       await Notification.create({
         recipient: currentUser._id,
         type: 'artwork_approved',

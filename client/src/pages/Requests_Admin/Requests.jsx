@@ -42,25 +42,18 @@ const formatLabel = (value, fallback = "Pending") => {
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
-const storageKeyByType = {
-  artworks: "requests-auto-approve-artworks",
-  accounts: "requests-auto-approve-accounts",
-};
-
 const Requests = () => {
   const [activeView, setActiveView] = useState("artworks");
   const [artworkRequests, setArtworkRequests] = useState([]);
   const [accountRequests, setAccountRequests] = useState([]);
   const [selectedArtworkIds, setSelectedArtworkIds] = useState([]);
   const [selectedAccountIds, setSelectedAccountIds] = useState([]);
-  const [autoApproveArtworks, setAutoApproveArtworks] = useState(() => {
-    const saved = localStorage.getItem(storageKeyByType.artworks);
-    return saved === null ? true : saved === "true";
-  });
-  const [autoApproveAccounts, setAutoApproveAccounts] = useState(() => {
-    const saved = localStorage.getItem(storageKeyByType.accounts);
-    return saved === null ? true : saved === "true";
-  });
+  
+  // Auto‑approve settings fetched from backend
+  const [autoApproveArtworks, setAutoApproveArtworks] = useState(false);
+  const [autoApproveAccounts, setAutoApproveAccounts] = useState(false);
+  const [loadingAutoApprove, setLoadingAutoApprove] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -80,6 +73,7 @@ const Requests = () => {
 
   const getToken = useCallback(() => localStorage.getItem("token"), []);
 
+  // Fetch pending requests
   const fetchRequests = useCallback(async () => {
     const token = getToken();
     if (!token) return;
@@ -118,28 +112,48 @@ const Requests = () => {
     }
   }, [getToken]);
 
+  // Fetch auto‑approve settings from backend
+  const fetchAutoApproveSettings = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const [artworksRes, accountsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/admin/settings/autoapprove-artworks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/auth/settings/autoapprove`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      if (artworksRes.ok) {
+        const data = await artworksRes.json();
+        setAutoApproveArtworks(data.autoApproveArtworks);
+      }
+      if (accountsRes.ok) {
+        const data = await accountsRes.json();
+        setAutoApproveAccounts(data.autoApproveStudents);
+      }
+    } catch (err) {
+      console.error('Failed to fetch auto-approve settings:', err);
+    }
+  }, [getToken]);
+
+  // Initial data load
   useEffect(() => {
     fetchRequests();
-  }, [fetchRequests]);
+    fetchAutoApproveSettings();
+  }, [fetchRequests, fetchAutoApproveSettings]);
 
-  useEffect(() => {
-    localStorage.setItem(storageKeyByType.artworks, String(autoApproveArtworks));
-  }, [autoApproveArtworks]);
-
-  useEffect(() => {
-    localStorage.setItem(storageKeyByType.accounts, String(autoApproveAccounts));
-  }, [autoApproveAccounts]);
-
+  // Auto‑dismiss success message
   useEffect(() => {
     if (!successMessage) return undefined;
-
     const timeoutId = window.setTimeout(() => {
       setSuccessMessage("");
     }, 4000);
-
     return () => window.clearTimeout(timeoutId);
   }, [successMessage]);
 
+  // Sync selections when the list changes
   useEffect(() => {
     setSelectedArtworkIds((current) =>
       current.filter((id) => artworkRequests.some((request) => request._id === id))
@@ -185,7 +199,6 @@ const Requests = () => {
 
   const executeConfirmDialog = async () => {
     if (!confirmDialog.onConfirm) return;
-
     const action = confirmDialog.onConfirm;
     closeConfirmDialog();
     await action();
@@ -232,9 +245,7 @@ const Requests = () => {
 
   const updateArtworkRequest = useCallback(async (requestId, payload, nextStatus) => {
     const token = getToken();
-    if (!token) {
-      throw new Error("Missing admin session.");
-    }
+    if (!token) throw new Error("Missing admin session.");
 
     const updateRes = await fetch(`${API_BASE_URL}/api/artworks/${requestId}`, {
       method: "PUT",
@@ -300,9 +311,7 @@ const Requests = () => {
 
   const updateAccountRequest = useCallback(async (requestId, payload, nextStatus) => {
     const token = getToken();
-    if (!token) {
-      throw new Error("Missing admin session.");
-    }
+    if (!token) throw new Error("Missing admin session.");
 
     const updateRes = await fetch(`${API_BASE_URL}/api/auth/${requestId}`, {
       method: "PUT",
@@ -345,7 +354,6 @@ const Requests = () => {
         setReviewError("Password must be at least 6 characters.");
         return;
       }
-
       if (accountForm.password !== accountForm.confirmPassword) {
         setReviewError("Passwords do not match.");
         return;
@@ -361,7 +369,6 @@ const Requests = () => {
         email: accountForm.email,
         role: accountForm.role,
       };
-
       if (accountForm.password) {
         updatePayload.password = accountForm.password;
       }
@@ -401,7 +408,6 @@ const Requests = () => {
       );
       return;
     }
-
     setSelectedAccountIds((current) =>
       current.length === accountRequests.length ? [] : accountRequests.map((request) => request._id)
     );
@@ -559,63 +565,56 @@ const Requests = () => {
     }
   };
 
-  useEffect(() => {
-    const runAutoApprove = async () => {
-      if (!isAdmin) return;
-      if (isLoading || isSubmitting) return;
+  // Toggle auto‑approve for the current view (artworks or accounts)
+  const toggleAutoApproveCurrentView = async () => {
+    const isArtworkView = activeView === "artworks";
+    const currentlyEnabled = isArtworkView ? autoApproveArtworks : autoApproveAccounts;
+    const targetLabel = isArtworkView ? "artwork requests" : "account requests";
 
-      if (autoApproveArtworks && artworkRequests.length > 0) {
-        setIsSubmitting(true);
+    openConfirmDialog({
+      title: currentlyEnabled ? "Disable auto approve?" : "Enable auto approve?",
+      description: currentlyEnabled
+        ? `This will stop automatic approval for future ${targetLabel}.`
+        : `Future pending ${targetLabel} will be automatically approved right after they are submitted.`,
+      confirmLabel: currentlyEnabled ? "Disable" : "Enable",
+      confirmClassName: currentlyEnabled ? styles.confirmSecondary : styles.confirmPrimary,
+      onConfirm: async () => {
+        setLoadingAutoApprove(true);
         try {
-          const approvedCount = artworkRequests.length;
-          setLastAction(buildActionSnapshot(artworkRequests, "artworks", "auto-approved artworks"));
-          await processArtworkBatch(artworkRequests);
-          setSelectedArtworkIds([]);
-          setSuccessMessage(
-            approvedCount === 1
-              ? "Artwork successfully added and published."
-              : `${approvedCount} artworks successfully added and published.`
-          );
-          await fetchRequests();
-        } catch (autoError) {
-          console.error("Auto-approve artworks failed:", autoError);
-          setError(autoError.message || "Artwork auto-approve failed.");
+          const token = getToken();
+          const endpoint = isArtworkView
+            ? `${API_BASE_URL}/api/admin/settings/autoapprove-artworks`
+            : `${API_BASE_URL}/api/auth/settings/autoapprove`;
+          const response = await fetch(endpoint, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              [isArtworkView ? 'autoApproveArtworks' : 'autoApproveStudents']: !currentlyEnabled 
+            })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (isArtworkView) {
+              setAutoApproveArtworks(data.autoApproveArtworks);
+            } else {
+              setAutoApproveAccounts(data.autoApproveStudents);
+            }
+            setSuccessMessage(`Auto-approve ${!currentlyEnabled ? 'enabled' : 'disabled'} for ${targetLabel}.`);
+          } else {
+            throw new Error('Failed to update setting');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Unable to update auto-approve setting.');
         } finally {
-          setIsSubmitting(false);
-        }
-        return;
-      }
-
-      if (autoApproveAccounts && accountRequests.length > 0) {
-        setIsSubmitting(true);
-        try {
-          setLastAction(buildActionSnapshot(accountRequests, "accounts", "auto-approved accounts"));
-          await processAccountBatch(accountRequests);
-          setSelectedAccountIds([]);
-          await fetchRequests();
-        } catch (autoError) {
-          console.error("Auto-approve accounts failed:", autoError);
-          setError(autoError.message || "Account auto-approve failed.");
-        } finally {
-          setIsSubmitting(false);
+          setLoadingAutoApprove(false);
         }
       }
-    };
-
-    runAutoApprove();
-  }, [
-    artworkRequests,
-    accountRequests,
-    autoApproveArtworks,
-    autoApproveAccounts,
-    buildActionSnapshot,
-    fetchRequests,
-    isLoading,
-    isSubmitting,
-    processAccountBatch,
-    processArtworkBatch,
-    isAdmin,
-  ]);
+    });
+  };
 
   const currentSelectionCount =
     activeView === "artworks" ? selectedArtworkIds.length : selectedAccountIds.length;
@@ -627,28 +626,6 @@ const Requests = () => {
 
   const currentAutoApproveEnabled =
     activeView === "artworks" ? autoApproveArtworks : autoApproveAccounts;
-
-  const toggleAutoApproveCurrentView = () => {
-    const isArtworkView = activeView === "artworks";
-    const currentlyEnabled = isArtworkView ? autoApproveArtworks : autoApproveAccounts;
-    const targetLabel = isArtworkView ? "artwork requests" : "account requests";
-
-    openConfirmDialog({
-      title: currentlyEnabled ? "Disable auto approve?" : "Enable auto approve?",
-      description: currentlyEnabled
-        ? `This will stop automatic approval for future ${targetLabel}.`
-        : `Future pending ${targetLabel} will be automatically approved after they are loaded.`,
-      confirmLabel: currentlyEnabled ? "Disable" : "Enable",
-      confirmClassName: currentlyEnabled ? styles.confirmSecondary : styles.confirmPrimary,
-      onConfirm: async () => {
-        if (isArtworkView) {
-          setAutoApproveArtworks((current) => !current);
-          return;
-        }
-        setAutoApproveAccounts((current) => !current);
-      },
-    });
-  };
 
   return (
     <>
@@ -689,7 +666,6 @@ const Requests = () => {
               </button>
             </div>
 
-            {/* data-tut="request-tabs" */}
             <div className={styles.viewToggle} data-tut="request-tabs">
               <button
                 type="button"
@@ -713,7 +689,6 @@ const Requests = () => {
 
             {error && <p className={styles.errorMessage}>{error}</p>}
 
-            {/* data-tut="bulk-actions" */}
             <div className={styles.bulkToolbar} data-tut="bulk-actions">
               <label className={styles.selectAllToggle}>
                 <label className={`${styles["ios-checkbox"]} ${styles.green}`}>
@@ -791,12 +766,15 @@ const Requests = () => {
                       currentAutoApproveEnabled ? styles.autoApproveActive : ""
                     }`}
                     onClick={toggleAutoApproveCurrentView}
-                    disabled={isSubmitting}
+                    disabled={loadingAutoApprove}
                   >
-                    {currentAutoApproveEnabled ? "Auto Approve On" : "Auto Approve Off"}
+                    {loadingAutoApprove
+                      ? "Updating..."
+                      : currentAutoApproveEnabled
+                      ? "Auto Approve On"
+                      : "Auto Approve Off"}
                   </button>
                 )}
-                {/* data-tut="undo-last" */}
                 <button
                   type="button"
                   className={styles.inlineAction}
@@ -822,7 +800,6 @@ const Requests = () => {
             {isLoading ? (
               <div className={styles.emptyState}>Loading requests...</div>
             ) : activeView === "artworks" ? (
-              /* data-tut="requests-table" */
               <div className={styles.tableWrap} data-tut="requests-table">
                 <table>
                   <thead>
@@ -900,7 +877,6 @@ const Requests = () => {
                 </table>
               </div>
             ) : (
-              /* data-tut="requests-table" */
               <div className={styles.tableWrap} data-tut="requests-table">
                 <table>
                   <thead>
@@ -986,6 +962,7 @@ const Requests = () => {
         </main>
       </div>
 
+      {/* Artwork Review Modal */}
       {reviewType === "artwork" && selectedArtwork && (
         <div className={styles.modalOverlay} onClick={closeReview}>
           <div className={styles.modalShell} onClick={(e) => e.stopPropagation()}>
@@ -1130,6 +1107,7 @@ const Requests = () => {
         </div>
       )}
 
+      {/* Account Review Modal */}
       {reviewType === "account" && selectedAccount && (
         <div className={styles.modalOverlay} onClick={closeReview}>
           <div className={styles.accountModalShell} onClick={(e) => e.stopPropagation()}>

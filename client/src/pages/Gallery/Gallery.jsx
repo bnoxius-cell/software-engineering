@@ -33,6 +33,74 @@ const CATEGORY_MAP = ARTWORK_CATEGORIES.reduce((acc, category) => {
     return acc;
 }, {});
 
+// ========== TV EMPTY STATE COMPONENT ==========
+const NoArtworksTV = () => {
+    return (
+        <div className={styles.main_wrapper}>
+            <div className={styles.main}>
+                <div className={styles.antenna}>
+                    <div className={styles.antenna_shadow}></div>
+                    <div className={styles.a1}></div>
+                    <div className={styles.a1d}></div>
+                    <div className={styles.a2}></div>
+                    <div className={styles.a2d}></div>
+                    <div className={styles.a_base}></div>
+                </div>
+                <div className={styles.tv}>
+                    <div className={styles.cruve}>
+                        <svg
+                            className={styles.curve_svg}
+                            version="1.1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlnsXlink="http://www.w3.org/1999/xlink"
+                            viewBox="0 0 189.929 189.929"
+                            xmlSpace="preserve"
+                        >
+                            <path
+                                d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13
+                            C86.34,11.918,137.664-5.445,189.928,1.502l-3.95,29.738C143.041,25.54,100.895,39.789,70.343,70.343z"
+                            ></path>
+                        </svg>
+                    </div>
+                    <div className={styles.display_div}>
+                        <div className={styles.screen_out}>
+                            <div className={styles.screen_out1}>
+                                <div className={styles.screen}>
+                                    <span className={styles.notfound_text}>No artworks in this category</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={styles.lines}>
+                        <div className={styles.line1}></div>
+                        <div className={styles.line2}></div>
+                        <div className={styles.line3}></div>
+                    </div>
+                    <div className={styles.buttons_div}>
+                        <div className={styles.b1}><div></div></div>
+                        <div className={styles.b2}></div>
+                        <div className={styles.speakers}>
+                            <div className={styles.g1}>
+                                <div className={styles.g11}></div>
+                                <div className={styles.g12}></div>
+                                <div className={styles.g13}></div>
+                            </div>
+                            <div className={styles.g}></div>
+                            <div className={styles.g}></div>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.bottom}>
+                    <div className={styles.base1}></div>
+                    <div className={styles.base2}></div>
+                    <div className={styles.base3}></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ========== MAIN GALLERY COMPONENT ==========
 const Gallery = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -60,8 +128,12 @@ const Gallery = () => {
     const [submittingComment, setSubmittingComment] = useState(false);
     const [commentLikeStates, setCommentLikeStates] = useState({});
     
+    // Sort dropdown state
+    const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+    
     const modalRef = useRef(null);
     const videoRefs = useRef({});
+    const sortMenuRef = useRef(null);
 
     // Fetch artworks
     useEffect(() => {
@@ -132,6 +204,18 @@ const Gallery = () => {
             document.body.style.overflow = 'auto';
         };
     }, []);
+
+    // Close sort menu when clicking outside
+    useEffect(() => {
+        if (!isSortMenuOpen) return;
+        const handleClickOutside = (event) => {
+            if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+                setIsSortMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isSortMenuOpen]);
 
     // Handle Escape key to close modal
     useEffect(() => {
@@ -235,6 +319,17 @@ const Gallery = () => {
         setSelectedArtwork(null);
         document.body.style.overflow = 'auto';
         navigate({ pathname: '/gallery', search: location.search });
+    };
+
+    // Helper for sort label
+    const getSortLabel = () => {
+        switch (sortOption) {
+            case 'recent': return 'Recently Added';
+            case 'oldest': return 'Oldest First';
+            case 'popular': return 'Most Liked';
+            case 'title': return 'Title A-Z';
+            default: return 'Sort';
+        }
     };
 
     // --- Comment functions ---
@@ -574,9 +669,9 @@ const Gallery = () => {
         <>
             <div className={styles.uiverseMidnightSky}>
                 <div className={styles.skyCanvas}>
-<div className={styles.stars1}></div>
-<div className={styles.stars2}></div>
-<div className={styles.stars3}></div>
+                    <div className={styles.stars1}></div>
+                    <div className={styles.stars2}></div>
+                    <div className={styles.stars3}></div>
 
                     <div className={`${styles.meteor} ${styles.m1}`}></div>
                     <div className={`${styles.meteor} ${styles.m2}`}></div>
@@ -607,19 +702,57 @@ const Gallery = () => {
                     </nav>
 
                     <div className={styles.filterTools}>
-                        <label className={styles.controlGroup}>
-                            <span>Sort</span>
-                            <select
-                                className={styles.sortSelect}
-                                value={sortOption}
-                                onChange={(event) => setSortOption(event.target.value)}
+                        {/* Custom Sort Dropdown */}
+                        <div className={styles.sortWrapper} ref={sortMenuRef}>
+                            <button
+                                className={styles.sortButton}
+                                onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                                aria-expanded={isSortMenuOpen}
+                                aria-label="Sort options"
                             >
-                                <option value="recent">Recently Added</option>
-                                <option value="oldest">Oldest First</option>
-                                <option value="popular">Most Liked</option>
-                                <option value="title">Title A-Z</option>
-                            </select>
-                        </label>
+                                <span>{getSortLabel()}</span>
+                                <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    style={{ transform: isSortMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                                >
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+
+                            {isSortMenuOpen && (
+                                <ul className={styles.customFilterMenu}>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'recent' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('recent'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Recently Added
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'oldest' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('oldest'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Oldest First
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'popular' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('popular'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Most Liked
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'title' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('title'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Title A-Z
+                                    </li>
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
                     {popularTags.length > 0 && (
@@ -652,12 +785,10 @@ const Gallery = () => {
                     </div>
                 )}
 
-                <main className={styles.masonryGrid}>
+                <main className={`${styles.masonryGrid} ${!loading && !error && filteredArtworks.length === 0 ? styles.emptyGallery : ''}`}>
                     {!loading && !error && filteredArtworks.length === 0 && (
-                        <div className={styles.emptyStateLoader}>
-                            <div className={styles.emptyStateMessage}>
-                                ⟡ No artworks found in this category ⟡
-                            </div>
+                        <div className={styles.emptyStateTV}>
+                            <NoArtworksTV />
                         </div>
                     )}
                     {!loading && !error && filteredArtworks.map((art) => (
@@ -713,7 +844,7 @@ const Gallery = () => {
                 )}
             </div>
 
-            {/* Modal Popup */}
+            {/* Modal Popup (unchanged) */}
             {isModalOpen && selectedArtwork && (
                 <div className={styles.modalOverlay} onClick={closeModal}>
                     <div

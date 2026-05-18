@@ -24,8 +24,12 @@ const settingsSchema = new mongoose.Schema({
   autoApproveStudents: {
     type: Boolean,
     default: false
+  },
+  // NEW: auto-approve for artwork uploads
+  autoApproveArtworks: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Settings", settingsSchema);
-

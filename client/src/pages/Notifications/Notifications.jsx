@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import styles from './Notifications.module.css';
+import '../../styles/mainstarsbackground.css';  // <-- import external star CSS
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -18,6 +19,14 @@ const typeClassMap = {
     artwork_approved: styles.typeSuccess,
     info_modified: styles.typeInfo,
 };
+
+const StarsBackground = () => (
+    <div className="starsContainer">   {/* plain class name (no CSS module) */}
+        <div className="stars"></div>
+        <div className="stars2"></div>
+        <div className="stars3"></div>
+    </div>
+);
 
 const Notifications = () => {
     const navigate = useNavigate();
@@ -103,7 +112,7 @@ const Notifications = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
+            <StarsBackground />
             <Navbar />
 
             <div className={styles.pageWrapper}>
