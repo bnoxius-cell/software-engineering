@@ -3,6 +3,167 @@
     padding-top: 140px; 
     padding-bottom: 4rem;
     position: relative;
+    z-index: 1;
+}
+
+/* ===== UIVERSE MIDNIGHT SKY BACKGROUND (BRIGHTER – ORIGINAL METEOR POSITIONS) ===== */
+.uiverseMidnightSky {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    background-color: #050505;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Base Sky Layer – added subtle green ambient glow */
+.skyCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 40%, rgba(161, 255, 20, 0.12), #050505 80%);
+}
+
+/* Apply shared star layer layout */
+.stars1,
+.stars2,
+.stars3 {
+    position: absolute;
+    inset: 0;
+    background-repeat: repeat;
+    pointer-events: none;
+}
+
+/* Layer 1: Small fast twinkling stars – denser & brighter */
+.stars1 {
+    background-image: radial-gradient(circle 1px at 10% 10%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 30% 20%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 50% 50%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 70% 30%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 90% 10%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 15% 78%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 45% 35%, #a1ff14 90%, transparent),
+                      radial-gradient(circle 1px at 85% 65%, #a1ff14 90%, transparent);
+    background-size: 250px 250px;
+    animation: twinkle 3s ease-in-out infinite;
+    opacity: 1;
+}
+
+/* Layer 2: Medium stars – brighter */
+.stars2 {
+    background-image: radial-gradient(1.5px 1.5px at 20% 40%, #ccff66 90%, transparent),
+                      radial-gradient(1.5px 1.5px at 60% 85%, #ccff66 90%, transparent),
+                      radial-gradient(1.5px 1.5px at 85% 65%, #ccff66 90%, transparent),
+                      radial-gradient(1.5px 1.5px at 35% 15%, #ccff66 90%, transparent),
+                      radial-gradient(1.5px 1.5px at 75% 25%, #ccff66 90%, transparent);
+    background-size: 350px 350px;
+    animation: twinkle 5s ease-in-out infinite 1s;
+    opacity: 0.95;
+}
+
+/* Layer 3: Larger, slower stars – bright */
+.stars3 {
+    background-image: radial-gradient(2px 2px at 40% 70%, #d4ff80 90%, transparent),
+                      radial-gradient(2px 2px at 10% 80%, #d4ff80 90%, transparent),
+                      radial-gradient(2px 2px at 80% 40%, #d4ff80 90%, transparent),
+                      radial-gradient(2px 2px at 25% 95%, #d4ff80 90%, transparent),
+                      radial-gradient(2px 2px at 65% 10%, #d4ff80 90%, transparent);
+    background-size: 500px 500px;
+    animation: twinkle 7s ease-in-out infinite 2s;
+    opacity: 0.9;
+}
+
+/* Meteor / Shooting Star (unchanged, only brightness increased) */
+.meteor {
+    position: absolute;
+    width: 2.5px;
+    height: 2.5px;
+    background: #a1ff14;
+    border-radius: 50%;
+    box-shadow: 0 0 12px 2px rgba(161, 255, 20, 0.8);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meteor::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 90px;
+    height: 1.5px;
+    background: linear-gradient(90deg, #a1ff14, transparent);
+}
+
+/* ===== YOUR ORIGINAL METEOR POSITIONS (unchanged) ===== */
+.m1 {
+    top: 10%;
+    left: 95%;
+    animation: shoot 8s linear infinite;
+}
+
+.m2 {
+    top: 15%;
+    left: 55%;
+    animation: shoot 12s linear infinite 2s;
+}
+
+.m3 {
+    top: 5%;
+    left: 30%;
+    animation: shoot 10s linear infinite 4s;
+}
+
+/* Moon – only glow, no other changes */
+.moon {
+    position: absolute;
+    top: 15%;
+    right: 15%;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 15px 15px 0 0 #fdfbd3;          /* original half‑moon shape */
+    filter: drop-shadow(0 0 18px rgba(161, 255, 20, 0.8)); /* stronger green glow */
+    z-index: 10;
+}
+
+/* Twinkle Animation */
+@keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+}
+
+/* Shooting Star Animation – same as before */
+@keyframes shoot {
+    0% {
+        transform: translateX(0) translateY(0) rotate(-35deg);
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    15% {
+        transform: translateX(-1500px) translateY(1000px) rotate(-35deg);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(-1500px) translateY(1000px) rotate(-35deg);
+        opacity: 0;
+    }
 }
 
 .feedHeader {
@@ -26,11 +187,120 @@
     justify-content: center;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 3rem;
     padding: 0 2rem;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.galleryControls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.filterTools {
+    display: flex;
+    justify-content: center;
+    padding: 0 2rem;
+}
+
+.controlGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #c9d1d9;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sortSelect {
+    min-width: 180px;
+    background-color: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(55, 65, 81, 1);
+    color: #ffffff;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.sortSelect:focus {
+    outline: none;
+    border-color: #a1ff14;
+    box-shadow: 0 0 0 3px rgba(161, 255, 20, 0.12);
+}
+
+.tagFilterRow {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.tagFilterBtn,
+.tagButton {
+    background: rgba(161, 255, 20, 0.08);
+    border: 1px solid rgba(161, 255, 20, 0.28);
+    color: #a1ff14;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tagFilterBtn:hover,
+.tagButton:hover,
+.tagFilterBtn:focus-visible,
+.tagButton:focus-visible {
+    background: rgba(161, 255, 20, 0.18);
+    border-color: #a1ff14;
+    transform: translateY(-1px);
+}
+
+.tagFilterBtn.activeTag {
+    background: #a1ff14;
+    color: #000;
+    border-color: #a1ff14;
+}
+
+.activeTagNotice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: #c9d1d9;
+    margin: -1.5rem auto 2rem;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+.activeTagNotice strong {
+    color: #a1ff14;
+}
+
+.clearTagBtn {
+    background: transparent;
+    border: 1px solid rgba(161, 255, 20, 0.45);
+    color: #a1ff14;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.clearTagBtn:hover {
+    background: rgba(161, 255, 20, 0.12);
 }
 
 .filterBtn {
@@ -324,6 +594,12 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+.modalTagsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 /* Upload Date - Below tag */

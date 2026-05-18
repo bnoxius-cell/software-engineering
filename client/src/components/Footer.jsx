@@ -30,7 +30,7 @@ const Footer = () => {
                 </div>
 
                 <div className={styles.copyright}>
-                    <span>© {currentYear} EMC Artisan | BSCS – SOFE311</span>
+                    <span>© {currentYear} EMC Artisan | BSCS – SOFE312</span>
                     <span className={styles.separator}>•</span>
                     <span>All Rights Reserved</span>
                 </div>

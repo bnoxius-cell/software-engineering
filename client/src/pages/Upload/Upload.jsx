@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './Upload.module.css';
 import { useNavigate } from 'react-router-dom';
+import { ARTWORK_CATEGORIES } from '../../constants/artworkCategories';
 
 const Upload = () => {
     const [file, setFile] = useState(null);
@@ -281,12 +282,9 @@ const Upload = () => {
                                 onChange={handleInputChange}
                                 required
                             >
-                                <option value="digital_2d">Digital 2D Illustration</option>
-                                <option value="3d_model">3D Modeling & Render</option>
-                                <option value="traditional">Traditional (Paint, Ink, Pencil)</option>
-                                <option value="animation">Animation / Motion Graphics</option>
-                                <option value="ui_ux">UI/UX & Web Design</option>
-                                <option value="photography">Photography</option>
+                                {ARTWORK_CATEGORIES.map(category => (
+                                    <option key={category.value} value={category.value}>{category.label}</option>
+                                ))}
                             </select>
                         </div>
 

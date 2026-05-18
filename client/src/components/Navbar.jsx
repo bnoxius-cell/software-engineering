@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.css';
 import artisanLogo from '../assets/images/artisanLogo.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { getAvatarUrl } from '../utils/avatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const DEFAULT_AVATAR = '/assets/images/profile_icon.png';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,38 +13,53 @@ const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState('all');
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [avatar, setAvatar] = useState('/assets/images/profile_icon.png');
+    const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     
     const menuRef = useRef(null);
     const filterRef = useRef(null);
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
 
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
+    // Populate search field from URL when on gallery page
+    useEffect(() => {
+        if (location.pathname === '/gallery') {
+            const query = searchParams.get('search') || '';
+            const type = searchParams.get('type') || 'all';
+            setSearchQuery(query);
+            setSearchType(type);
+        }
+    }, [location.pathname, searchParams]);
+
     // Load avatar from localStorage + fetch from API for accuracy
     useEffect(() => {
+        if (!token) {
+            setAvatar(DEFAULT_AVATAR);
+            return;
+        }
+
         const storedAvatar = localStorage.getItem('avatar');
         if (storedAvatar) {
             setAvatar(getAvatarUrl(storedAvatar));
         }
 
-        // Fetch fresh user data if logged in
-        if (token) {
-            fetch(`${API_BASE}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` },
+        fetch(`${API_BASE}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => res.ok ? res.json() : null)
+            .then((data) => {
+                if (localStorage.getItem('token') !== token) return;
+                if (data?.avatar) {
+                    const resolved = getAvatarUrl(data.avatar);
+                    setAvatar(resolved);
+                    localStorage.setItem('avatar', data.avatar);
+                }
             })
-                .then((res) => res.ok ? res.json() : null)
-                .then((data) => {
-                    if (data?.avatar) {
-                        const resolved = getAvatarUrl(data.avatar);
-                        setAvatar(resolved);
-                        localStorage.setItem('avatar', data.avatar);
-                    }
-                })
-                .catch(() => {});
-        }
+            .catch(() => {});
     }, [token]);
 
     // Listen for avatar changes from other tabs/components
@@ -80,9 +96,7 @@ const Navbar = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
-                if (!res.ok) {
-                    throw new Error('Failed to fetch notification summary');
-                }
+                if (!res.ok) throw new Error('Failed to fetch notification summary');
 
                 const data = await res.json();
                 if (isMounted) {
@@ -96,7 +110,6 @@ const Navbar = () => {
         fetchNotificationSummary();
         window.addEventListener('focus', fetchNotificationSummary);
 
-        // Poll every 10 seconds
         const interval = setInterval(fetchNotificationSummary, 10000);
 
         return () => {
@@ -104,23 +117,19 @@ const Navbar = () => {
             window.removeEventListener('focus', fetchNotificationSummary);
             clearInterval(interval);
         };
-    }, [token, unreadNotifications]); // Refetch if count changes
+    }, [token]);
 
     const toggleMenu = () => {
         if (isMenuOpen) {
             setIsMenuOpen(false);
-            if (token) {
-                navigate('/profile');
-            } else {
-                navigate('/login');
-            }
+            if (token) navigate('/profile');
+            else navigate('/login');
         } else {
             setIsMenuOpen(true);
         }
     };
     const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 
-    // Handle clicks outside of dropdowns to close them
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -152,6 +161,9 @@ const Navbar = () => {
 
     const handleLogout = () => {
         localStorage.clear();
+        setAvatar(DEFAULT_AVATAR);
+        setUnreadNotifications(0);
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: null }));
         navigate('/login');
         setIsMenuOpen(false);
     };
@@ -161,6 +173,15 @@ const Navbar = () => {
     const isFaculty = normalizedRole === 'faculty';
     const canAccessDashboard = isAdmin || isFaculty;
 
+    const getFilterLabel = () => {
+        switch(searchType) {
+            case 'student': return 'Student';
+            case 'artwork': return 'Artwork';
+            case 'category': return 'Category';
+            default: return 'Filter';
+        }
+    };
+
     return (
         <nav className={styles.navbar}>
             <div className={styles.leftSection}>
@@ -169,7 +190,6 @@ const Navbar = () => {
                 </Link>
             </div>
 
-            {/* Premium Neon Search Bar */}
             <form onSubmit={handleSearch} className={styles.searchContainer}>
                 <div className={styles.searchIcon}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -186,8 +206,7 @@ const Navbar = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
-                {/* Custom Filter Dropdown */}
-                <div className={styles.filterWrapper} title="Search Filter" ref={filterRef} onClick={toggleFilter}>
+                <div className={styles.filterWrapper} title={`Search filter: ${getFilterLabel()}`} ref={filterRef} onClick={toggleFilter}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="4.8 4.56 14.832 15.408" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z"></path>
                     </svg>
@@ -257,7 +276,6 @@ const Navbar = () => {
                     )}
                 </li>
 
-                {/* ===== NOTIFICATION BUTTON ===== */}
                 <li>
                     {token ? (
                         <Link 
@@ -279,7 +297,6 @@ const Navbar = () => {
                                     d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
                                 />
                             </svg>
-                            {/* Replace `true` with actual condition (e.g., unreadCount > 0) */}
                             {unreadNotifications > 0 && (
                                 <span className={styles.notificationBadge}>
                                     <span className={styles.badgePulse}></span>
@@ -314,7 +331,7 @@ const Navbar = () => {
                 <li ref={menuRef} className={styles.menuContainer}>
                     <button type="button" className={styles.profileBtn} onClick={toggleMenu}>
                         <img src={avatar} alt="Profile" className={styles.avatar} onError={(e) => {
-                            e.target.src = '/assets/images/profile_icon.png';
+                            e.target.src = DEFAULT_AVATAR;
                         }} />
                     </button>
 
@@ -333,8 +350,6 @@ const Navbar = () => {
                                             {isAdmin ? 'Admin Dashboard' : 'Faculty Dashboard'}
                                         </Link>
                                     )}
-                                    
-
 
                                     <Link to="/settings" className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>
                                         <svg className={styles.dropdownIcon} viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
@@ -381,4 +396,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

@@ -7,6 +7,7 @@ import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import Badge from "../../components/ui/Badge/Badge";
 import { isVideoArtwork } from "../../utils/artworkMedia";
+import { ARTWORK_CATEGORIES } from "../../constants/artworkCategories";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -1076,12 +1077,9 @@ const Requests = () => {
                     value={artworkForm.medium}
                     onChange={handleArtworkFormChange}
                   >
-                    <option value="digital_2d">Digital 2D Illustration</option>
-                    <option value="3d_model">3D Modeling & Render</option>
-                    <option value="traditional">Traditional (Paint, Ink, Pencil)</option>
-                    <option value="animation">Animation / Motion Graphics</option>
-                    <option value="ui_ux">UI/UX & Web Design</option>
-                    <option value="photography">Photography</option>
+                    {ARTWORK_CATEGORIES.map(category => (
+                      <option key={category.value} value={category.value}>{category.label}</option>
+                    ))}
                   </select>
                 </div>
 

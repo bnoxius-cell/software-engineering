@@ -4,6 +4,7 @@ import Topbar from "../../components/Topbar";
 import Sidebar from "../../components/Sidebar";
 import { isVideoArtwork } from "../../utils/artworkMedia";
 import ArtworkVideoPlayer from "../../components/media/ArtworkVideoPlayer";
+import { ARTWORK_CATEGORIES } from "../../constants/artworkCategories";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -752,11 +753,9 @@ const Works = () => {
                       <label>Category</label>
                       <select name="medium" required>
                         <option value="">Select category</option>
-                        <option value="digital_2d">Digital 2D Illustration</option>
-                        <option value="3d_model">3D Modeling</option>
-                        <option value="traditional">Traditional Art</option>
-                        <option value="animation">Animation</option>
-                        <option value="photography">Photography</option>
+                        {ARTWORK_CATEGORIES.map(category => (
+                          <option key={category.value} value={category.value}>{category.label}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -929,7 +928,11 @@ const Works = () => {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <div className={styles["form-group"]}>
                       <label>Medium</label>
-                      <input type="text" name="medium" defaultValue={editingWork.medium || editingWork.category} required />
+                      <select name="medium" defaultValue={editingWork.medium || editingWork.category} required>
+                        {ARTWORK_CATEGORIES.map(category => (
+                          <option key={category.value} value={category.value}>{category.label}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className={styles["form-group"]}>
                       <label>Status</label>

@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Navbar from '../../components/Navbar';
 import styles from './Gallery.module.css';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
 import { getAvatarUrl } from '../../utils/avatar';
+import { ARTWORK_CATEGORIES, getArtworkCategoryLabel, getArtworkCategoryValue, parseArtworkTags } from '../../constants/artworkCategories';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const PLACEHOLDER_ARTWORK = '/assets/images/placeholder-artwork.svg';
@@ -26,14 +27,11 @@ const normalizeText = (value) =>
         .replace(/\s+/g, ' ')
         .trim();
 
-const CATEGORY_MAP = {
-    [normalizeText('digital_2d')]: 'digital_2d',
-    [normalizeText('3d_model')]: '3d_model',
-    [normalizeText('traditional')]: 'traditional',
-    [normalizeText('animation')]: 'animation',
-    [normalizeText('ui_ux')]: 'ui_ux',
-    [normalizeText('photography')]: 'photography',
-};
+const CATEGORY_MAP = ARTWORK_CATEGORIES.reduce((acc, category) => {
+    acc[normalizeText(category.value)] = category.value;
+    acc[normalizeText(category.label)] = category.value;
+    return acc;
+}, {});
 
 const Gallery = () => {
     const navigate = useNavigate();
@@ -44,6 +42,8 @@ const Gallery = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [activeTag, setActiveTag] = useState('');
+    const [sortOption, setSortOption] = useState('recent');
     const [selectedArtwork, setSelectedArtwork] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [likedStates, setLikedStates] = useState({});
@@ -163,16 +163,41 @@ const Gallery = () => {
         setActiveFilter('all');
     }, [searchQuery, searchType]);
 
+    const popularTags = useMemo(() => {
+        const tagCounts = artworks.reduce((acc, artwork) => {
+            parseArtworkTags(artwork.tags).forEach((tag) => {
+                const normalizedTag = normalizeText(tag);
+                if (!normalizedTag) return;
+                acc[normalizedTag] = {
+                    label: tag,
+                    count: (acc[normalizedTag]?.count || 0) + 1,
+                };
+            });
+            return acc;
+        }, {});
+
+        return Object.values(tagCounts)
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+            .slice(0, 12);
+    }, [artworks]);
+
     const filteredArtworks = (() => {
         let result = activeFilter === 'all'
             ? artworks
-            : artworks.filter(art => (art.medium || 'uncategorized') === activeFilter);
-        if (!searchQuery) return result;
-        return result.filter((art) => {
+            : artworks.filter(art => (getArtworkCategoryValue(art.medium) || art.medium || 'uncategorized') === activeFilter);
+
+        if (activeTag) {
+            result = result.filter(art =>
+                parseArtworkTags(art.tags).some(tag => normalizeText(tag) === normalizeText(activeTag))
+            );
+        }
+
+        if (searchQuery) {
+            result = result.filter((art) => {
             const title = normalizeText(art.title);
             const artist = normalizeText(art.artistName);
-            const medium = normalizeText(art.medium);
-            const tags = normalizeText(art.tags);
+            const medium = normalizeText(`${art.medium} ${getArtworkCategoryLabel(art.medium)}`);
+            const tags = normalizeText(parseArtworkTags(art.tags).join(' '));
             const description = normalizeText(art.description);
             switch (searchType) {
                 case 'student': return artist.includes(searchQuery);
@@ -180,8 +205,37 @@ const Gallery = () => {
                 case 'category': return medium.includes(searchQuery) || tags.includes(searchQuery);
                 default: return [title, artist, medium, tags, description].some(v => v.includes(searchQuery));
             }
+            });
+        }
+
+        return [...result].sort((a, b) => {
+            const aDate = new Date(a.createdAt || 0).getTime();
+            const bDate = new Date(b.createdAt || 0).getTime();
+            switch (sortOption) {
+                case 'oldest':
+                    return aDate - bDate;
+                case 'title':
+                    return (a.title || '').localeCompare(b.title || '');
+                case 'popular':
+                    return (b.likes || 0) - (a.likes || 0) || bDate - aDate;
+                case 'recent':
+                default:
+                    return bDate - aDate;
+            }
         });
     })();
+
+    const handleCategoryFilter = (filterValue) => {
+        setActiveFilter(filterValue);
+    };
+
+    const handleTagFilter = (tag) => {
+        setActiveTag(tag);
+        setIsModalOpen(false);
+        setSelectedArtwork(null);
+        document.body.style.overflow = 'auto';
+        navigate({ pathname: '/gallery', search: location.search });
+    };
 
     // --- Comment functions ---
     const fetchComments = useCallback(async (artworkId) => {
@@ -518,7 +572,19 @@ const Gallery = () => {
 
     return (
         <>
-            <div className="background-fx"></div>
+            <div className={styles.uiverseMidnightSky}>
+                <div className={styles.skyCanvas}>
+<div className={styles.stars1}></div>
+<div className={styles.stars2}></div>
+<div className={styles.stars3}></div>
+
+                    <div className={`${styles.meteor} ${styles.m1}`}></div>
+                    <div className={`${styles.meteor} ${styles.m2}`}></div>
+                    <div className={`${styles.meteor} ${styles.m3}`}></div>
+
+                    <div className={styles.moon}></div>
+                </div>
+            </div>
             <Navbar />
             <div className={styles.pageContainer}>
                 <header className={styles.feedHeader}>
@@ -527,17 +593,64 @@ const Gallery = () => {
                 </header>
 
                 {/* Filter Navigation */}
-                <nav className={styles.filterContainer}>
-                    {['all', 'digital_2d', '3d_model', 'traditional', 'animation', 'ui_ux', 'photography'].map(filter => (
+                <div className={styles.galleryControls}>
+                    <nav className={styles.filterContainer} aria-label="Artwork categories">
+                        {[{ value: 'all', label: 'All Works' }, ...ARTWORK_CATEGORIES].map(filter => (
                         <button
-                            key={filter}
-                            className={`${styles.filterBtn} ${activeFilter === filter ? styles.active : ''}`}
-                            onClick={() => setActiveFilter(filter)}
+                            key={filter.value}
+                            className={`${styles.filterBtn} ${activeFilter === filter.value ? styles.active : ''}`}
+                            onClick={() => handleCategoryFilter(filter.value)}
                         >
-                            {filter === 'all' ? 'All Works' : filter.replace('_', ' ').toUpperCase()}
+                            {filter.label}
                         </button>
-                    ))}
-                </nav>
+                        ))}
+                    </nav>
+
+                    <div className={styles.filterTools}>
+                        <label className={styles.controlGroup}>
+                            <span>Sort</span>
+                            <select
+                                className={styles.sortSelect}
+                                value={sortOption}
+                                onChange={(event) => setSortOption(event.target.value)}
+                            >
+                                <option value="recent">Recently Added</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="popular">Most Liked</option>
+                                <option value="title">Title A-Z</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    {popularTags.length > 0 && (
+                        <div className={styles.tagFilterRow} aria-label="Artwork tags">
+                            <button
+                                type="button"
+                                className={`${styles.tagFilterBtn} ${!activeTag ? styles.activeTag : ''}`}
+                                onClick={() => setActiveTag('')}
+                            >
+                                All Tags
+                            </button>
+                            {popularTags.map(tag => (
+                                <button
+                                    type="button"
+                                    key={normalizeText(tag.label)}
+                                    className={`${styles.tagFilterBtn} ${normalizeText(activeTag) === normalizeText(tag.label) ? styles.activeTag : ''}`}
+                                    onClick={() => setActiveTag(tag.label)}
+                                >
+                                    #{tag.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {activeTag && (
+                    <div className={styles.activeTagNotice}>
+                        Showing artworks tagged <strong>#{activeTag}</strong>
+                        <button type="button" onClick={() => setActiveTag('')} className={styles.clearTagBtn}>Clear</button>
+                    </div>
+                )}
 
                 <main className={styles.masonryGrid}>
                     {!loading && !error && filteredArtworks.length === 0 && (
@@ -686,8 +799,27 @@ const Gallery = () => {
                                 <div className={styles.modalTags}>
                                     <h4>Medium</h4>
                                     <span className={styles.tag}>
-                                        {selectedArtwork.medium ? selectedArtwork.medium.replace('_', ' ').toUpperCase() : "Digital Art"}
+                                        {getArtworkCategoryLabel(selectedArtwork.medium)}
                                     </span>
+                                </div>
+                                <div className={styles.modalTags}>
+                                    <h4>Tags</h4>
+                                    {parseArtworkTags(selectedArtwork.tags).length > 0 ? (
+                                        <div className={styles.modalTagsGrid}>
+                                            {parseArtworkTags(selectedArtwork.tags).map(tag => (
+                                                <button
+                                                    key={normalizeText(tag)}
+                                                    type="button"
+                                                    className={styles.tagButton}
+                                                    onClick={() => handleTagFilter(tag)}
+                                                >
+                                                    #{tag}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className={styles.tag}>No tags</span>
+                                    )}
                                 </div>
                                 <div className={styles.modalStats}>
                                     <div className={styles.statItem}>

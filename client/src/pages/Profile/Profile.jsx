@@ -6,6 +6,7 @@ import styles from './Profile.module.css';
 import { isVideoArtwork } from '../../utils/artworkMedia';
 import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
 import { getAvatarUrl } from '../../utils/avatar';
+import { ARTWORK_CATEGORIES } from '../../constants/artworkCategories';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -1458,12 +1459,9 @@ const Profile = ({ currentUser }) => {
                                         <div className={styles.inputGroup}>
                                             <label>Medium / Category</label>
                                             <select name="medium" value={editArtworkForm.medium} onChange={handleEditArtworkChange} className={styles.select}>
-                                                <option value="digital_2d">Digital 2D Illustration</option>
-                                                <option value="3d_model">3D Modeling & Render</option>
-                                                <option value="traditional">Traditional (Paint, Ink, Pencil)</option>
-                                                <option value="animation">Animation / Motion Graphics</option>
-                                                <option value="ui_ux">UI/UX & Web Design</option>
-                                                <option value="photography">Photography</option>
+                                                {ARTWORK_CATEGORIES.map(category => (
+                                                    <option key={category.value} value={category.value}>{category.label}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className={styles.inputGroup}>
