@@ -1,0 +1,260 @@
+/* ===== GLOBAL PAGE STYLES ===== */
+.contactWrapper {
+  position: relative;
+  min-height: 100vh;
+  padding: 100px 2rem 4rem 2rem;
+  background: radial-gradient(ellipse at bottom, #0a0a0a 0%, #000000 100%);
+  overflow: hidden;
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== STARFIELD (animated) ===== */
+.starsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  background: #a1ff14;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: twinkle 3s infinite alternate;
+  box-shadow: 0 0 4px rgba(161, 255, 20, 0.6);
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ===== HEADER SECTION ===== */
+.pageHeader {
+  text-align: center;
+  margin-bottom: 4rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.pageHeader h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff, #a1ff14);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(161, 255, 20, 0.3);
+}
+
+.pageHeader p {
+  font-size: 1.2rem;
+  color: #9ca3af;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ===== 2x2 GRID ===== */
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+/* ===== GLASS CARD WITH NEON BORDER & GLOW ===== */
+.glassCard {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(161, 255, 20, 0.2);
+  border-radius: 24px;
+  padding: 2rem;
+  transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  animation: fadeSlideUp 0.6s ease-out backwards;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Staggered animation for cards */
+.contactGrid .glassCard:nth-child(1) { animation-delay: 0s; }
+.contactGrid .glassCard:nth-child(2) { animation-delay: 0.1s; }
+.contactGrid .glassCard:nth-child(3) { animation-delay: 0.2s; }
+.contactGrid .glassCard:nth-child(4) { animation-delay: 0.3s; }
+
+/* Animated gradient border on hover */
+.glassCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(161, 255, 20, 0), rgba(161, 255, 20, 0.6), rgba(161, 255, 20, 0));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.glassCard:hover::before {
+  opacity: 1;
+}
+
+.glassCard:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(161, 255, 20, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(161, 255, 20, 0.3);
+}
+
+/* ===== CARD CONTENT ===== */
+.cardHeader {
+  border-bottom: 1px solid rgba(161, 255, 20, 0.3);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.cardHeader h3 {
+  font-size: 1.5rem;
+  color: #a1ff14;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.desc {
+  font-size: 0.95rem;
+  color: #c9d1d9;
+  margin: 0 0 1.2rem 0;
+  line-height: 1.5;
+}
+
+.locationBlock {
+  margin-bottom: 1.5rem;
+}
+.locationBlock:last-child {
+  margin-bottom: 0;
+}
+
+.contactInfo strong {
+  color: #ffffff;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.locationBlock p {
+  margin: 0;
+  color: #d1d5db;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.contactList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.contactList li {
+  color: #d1d5db;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.contactList li strong {
+  color: #a1ff14;
+  display: inline;
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* ===== FLOATING GLOW ORB (ambient effect) ===== */
+.contactWrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  left: -5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(161, 255, 20, 0.12), transparent 70%);
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+  animation: floatOrb 14s ease-in-out infinite;
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.1); }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 850px) {
+  .contactGrid {
+    grid-template-columns: 1fr;
+  }
+  .contactWrapper {
+    padding: 80px 1.5rem 3rem 1.5rem;
+  }
+  .pageHeader h1 {
+    font-size: 2.2rem;
+  }
+  .glassCard {
+    padding: 1.5rem;
+  }
+  .cardHeader h3 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contactWrapper::after {
+    width: 200px;
+    height: 200px;
+    bottom: 5%;
+    left: -20%;
+  }
+}

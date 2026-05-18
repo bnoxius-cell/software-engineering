@@ -1,0 +1,130 @@
+import React, { useState } from "react";
+import styles from "./Sidebar.module.css";
+import { Link, useNavigate } from "react-router-dom";
+import { useTutorial } from "../context/TutorialContext";
+
+const Sidebar = ({ activePage = "dashboard" }) => {
+    const navigate = useNavigate();
+    const role = localStorage.getItem("role");
+    const isFaculty = role && role.toLowerCase().trim() === "faculty";
+    const [showConfirmLogout, setShowConfirmLogout] = useState(false);
+    const { startTutorial } = useTutorial();
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate("/login");
+    };
+
+    return (
+        <>
+            <aside className={styles.sidebar}>
+                <h2 className={styles.brand}>{isFaculty ? "Faculty Panel" : "Admin Panel"}</h2>
+                
+                <nav className={styles.sidebarNav}>
+                    <ul className={styles.navList}>
+                        <li className={`${styles.navItem} ${activePage === "dashboard" ? styles.active : ""}`}>
+                            <Link to="/dashboard" className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                                </svg>
+                                Dashboard
+                            </Link>
+                        </li>
+                        
+                        <li className={`${styles.navItem} ${activePage === "users" ? styles.active : ""}`}>
+                            <Link to="/user" className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                </svg>
+                                Users
+                            </Link>
+                        </li>
+                        
+                        <li className={`${styles.navItem} ${activePage === "works" ? styles.active : ""}`}>
+                            <Link to="/works" className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                                Works
+                            </Link>
+                        </li>
+                        
+                        <li className={`${styles.navItem} ${activePage === "requests" ? styles.active : ""}`}>
+                            <Link to="/requests" className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                </svg>
+                                Requests
+                            </Link>
+                        </li>
+                        
+                        {role === "Admin" && (
+                            <li className={`${styles.navItem} ${activePage === "settings" ? styles.active : ""}`}>
+                                <Link to="/admin/settings" className={styles.navLink}>
+                                    <svg className={styles.icon} viewBox="0 0 24 24">
+                                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                                    </svg>
+                                    Site Settings
+                                </Link>
+                            </li>
+                        )}
+                    </ul>
+
+                    <ul className={styles.navList} style={{ marginTop: 'auto' }}>
+                        {/* 🏠 HOME button */}
+                        <li className={styles.navItem}>
+                            <Link to="/" className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                                </svg>
+                                Home
+                            </Link>
+                        </li>
+
+                        {/* 📘 TUTORIAL button */}
+                        <li className={styles.navItem}>
+                            <button onClick={startTutorial} className={styles.navLink}>
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                </svg>
+                                Tutorial
+                            </button>
+                        </li>
+                        
+                        <li className={`${styles.navItem} ${styles.logoutItem}`}>
+                            <button 
+                                onClick={() => setShowConfirmLogout(true)} 
+                                className={`${styles.navLink} ${styles.logoutLink}`}
+                            >
+                                <svg className={styles.icon} viewBox="0 0 24 24">
+                                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                                </svg>
+                                Logout
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            {/* Confirmation Modal for Logout */}
+            {showConfirmLogout && (
+                <div className={styles.modalOverlay} onClick={() => setShowConfirmLogout(false)}>
+                    <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+                        <h3>Logout</h3>
+                        <p>Are you sure you want to log out? You will need to sign in again.</p>
+                        <div className={styles.confirmActions}>
+                            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowConfirmLogout(false)}>
+                                Cancel
+                            </button>
+                            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleLogout}>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default Sidebar;

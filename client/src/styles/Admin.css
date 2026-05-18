@@ -1,0 +1,59 @@
+/* src/styles/Admin.css */
+
+/* The Background Effect */
+@keyframes neonRain {
+    from { background-position: 0 0; }
+    to { background-position: 0 6000px; }
+}
+
+/* Base Admin Layout */
+.admin-theme-root .admin-layout {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+    color: #ffffff;
+}
+
+.admin-theme-root .main-view {
+    margin-left: 280px;
+    flex: 1;
+    padding: 1.75rem;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Scoped Admin Tables */
+.admin-theme-root table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+.admin-theme-root thead { 
+    background-color: rgba(55, 65, 81, 0.3); 
+}
+.admin-theme-root th, .admin-theme-root td { 
+    text-align: left; 
+    padding: 0.75rem 1rem; 
+    font-size: 0.875rem; 
+}
+.admin-theme-root th { 
+    color: rgba(156, 163, 175, 1); 
+    font-weight: 600; 
+    border-bottom: 2px solid rgba(55, 65, 81, 1); 
+}
+.admin-theme-root td { 
+    color: rgba(243, 244, 246, 1); 
+    border-bottom: 1px solid rgba(55, 65, 81, 0.5); 
+}
+.admin-theme-root tbody tr:hover { 
+    background-color: rgba(161, 255, 20, 0.05); 
+}
+
+/* Global Media Queries for Admin Base */
+@media (max-width: 1024px) {
+    .admin-theme-root .admin-layout { flex-direction: column; }
+    .admin-theme-root .main-view { margin-left: 0; width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .admin-theme-root table { display: block; overflow-x: auto; }
+}
+

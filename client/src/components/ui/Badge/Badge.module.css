@@ -1,0 +1,17 @@
+.badge { 
+    padding: 0.25rem 0.75rem; 
+    border-radius: 1rem; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    display: inline-block; 
+}
+
+/* Status variants */
+.active { background-color: rgba(161, 255, 20, 0.15); color: rgb(161, 255, 20); border: 1px solid rgba(161, 255, 20, 0.3); }
+.pending { background-color: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+.suspended { background-color: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); }
+
+/* Role variants */
+.student { background-color: rgba(33, 150, 243, 0.15); color: #2196f3; border: 1px solid rgba(33, 150, 243, 0.3); }
+.faculty { background-color: rgba(156, 39, 176, 0.15); color: #9c27b0; border: 1px solid rgba(156, 39, 176, 0.3); }
+.admin { background-color: rgba(161, 255, 20, 0.15); color: rgb(161, 255, 20); border: 1px solid rgba(161, 255, 20, 0.3); }

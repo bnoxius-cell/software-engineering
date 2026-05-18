@@ -1,0 +1,1099 @@
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import Navbar from '../../components/Navbar';
+import styles from './Gallery.module.css';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { isVideoArtwork } from '../../utils/artworkMedia';
+import ArtworkVideoPlayer from '../../components/media/ArtworkVideoPlayer';
+import { getAvatarUrl } from '../../utils/avatar';
+import { ARTWORK_CATEGORIES, getArtworkCategoryLabel, getArtworkCategoryValue, parseArtworkTags } from '../../constants/artworkCategories';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const PLACEHOLDER_ARTWORK = '/assets/images/placeholder-artwork.svg';
+const PROFILE_PLACEHOLDER = '/assets/images/profile_icon.png';
+
+const formatDuration = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const normalizeText = (value) =>
+    (value || '')
+        .toString()
+        .toLowerCase()
+        .replace(/[_/-]+/g, ' ')
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+const CATEGORY_MAP = ARTWORK_CATEGORIES.reduce((acc, category) => {
+    acc[normalizeText(category.value)] = category.value;
+    acc[normalizeText(category.label)] = category.value;
+    return acc;
+}, {});
+
+// ========== TV EMPTY STATE COMPONENT ==========
+const NoArtworksTV = () => {
+    return (
+        <div className={styles.main_wrapper}>
+            <div className={styles.main}>
+                <div className={styles.antenna}>
+                    <div className={styles.antenna_shadow}></div>
+                    <div className={styles.a1}></div>
+                    <div className={styles.a1d}></div>
+                    <div className={styles.a2}></div>
+                    <div className={styles.a2d}></div>
+                    <div className={styles.a_base}></div>
+                </div>
+                <div className={styles.tv}>
+                    <div className={styles.cruve}>
+                        <svg
+                            className={styles.curve_svg}
+                            version="1.1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlnsXlink="http://www.w3.org/1999/xlink"
+                            viewBox="0 0 189.929 189.929"
+                            xmlSpace="preserve"
+                        >
+                            <path
+                                d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13
+                            C86.34,11.918,137.664-5.445,189.928,1.502l-3.95,29.738C143.041,25.54,100.895,39.789,70.343,70.343z"
+                            ></path>
+                        </svg>
+                    </div>
+                    <div className={styles.display_div}>
+                        <div className={styles.screen_out}>
+                            <div className={styles.screen_out1}>
+                                <div className={styles.screen}>
+                                    <span className={styles.notfound_text}>No artworks in this category</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={styles.lines}>
+                        <div className={styles.line1}></div>
+                        <div className={styles.line2}></div>
+                        <div className={styles.line3}></div>
+                    </div>
+                    <div className={styles.buttons_div}>
+                        <div className={styles.b1}><div></div></div>
+                        <div className={styles.b2}></div>
+                        <div className={styles.speakers}>
+                            <div className={styles.g1}>
+                                <div className={styles.g11}></div>
+                                <div className={styles.g12}></div>
+                                <div className={styles.g13}></div>
+                            </div>
+                            <div className={styles.g}></div>
+                            <div className={styles.g}></div>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.bottom}>
+                    <div className={styles.base1}></div>
+                    <div className={styles.base2}></div>
+                    <div className={styles.base3}></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ========== MAIN GALLERY COMPONENT ==========
+const Gallery = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { artworkId } = useParams();
+    const [searchParams] = useSearchParams();
+    const [artworks, setArtworks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [activeTag, setActiveTag] = useState('');
+    const [sortOption, setSortOption] = useState('recent');
+    const [selectedArtwork, setSelectedArtwork] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [likedStates, setLikedStates] = useState({});
+    const [savedStates, setSavedStates] = useState({});
+    const [followingStates, setFollowingStates] = useState({});
+    const [currentUserId, setCurrentUserId] = useState('');
+    const [followMessage, setFollowMessage] = useState('');
+    const [followLoading, setFollowLoading] = useState({});
+    const [videoDurations, setVideoDurations] = useState({});
+    
+    // Comment-related state
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [submittingComment, setSubmittingComment] = useState(false);
+    const [commentLikeStates, setCommentLikeStates] = useState({});
+    
+    // Sort dropdown state
+    const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+    
+    const modalRef = useRef(null);
+    const videoRefs = useRef({});
+    const sortMenuRef = useRef(null);
+
+    // Fetch artworks
+    useEffect(() => {
+        const abortController = new AbortController();
+        const fetchArtworks = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const response = await fetch(`${API_BASE}/api/artworks?status=published`, {
+                    signal: abortController.signal,
+                });
+                if (!response.ok) throw new Error('Failed to fetch artworks');
+                const data = await response.json();
+                setArtworks(data);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    setError('Unable to load artworks. Please try again later.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchArtworks();
+        return () => abortController.abort();
+    }, []);
+
+    // Fetch user interactions (likes/saves)
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const abortController = new AbortController();
+
+        const fetchInteractions = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/artworks/interactions`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: abortController.signal,
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch interactions');
+
+                const data = await response.json();
+                setCurrentUserId(data.currentUserId || '');
+                setLikedStates((data.likedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
+                setSavedStates((data.savedArtworkIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
+                setFollowingStates((data.followingUserIds || []).reduce((acc, id) => ({ ...acc, [id]: true }), {}));
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                }
+            }
+        };
+
+        fetchInteractions();
+        return () => abortController.abort();
+    }, []);
+
+    useEffect(() => {
+        if (!followMessage) return;
+        const timer = setTimeout(() => setFollowMessage(''), 3000);
+        return () => clearTimeout(timer);
+    }, [followMessage]);
+
+    // Restore body overflow on unmount
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, []);
+
+    // Close sort menu when clicking outside
+    useEffect(() => {
+        if (!isSortMenuOpen) return;
+        const handleClickOutside = (event) => {
+            if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+                setIsSortMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isSortMenuOpen]);
+
+    // Handle Escape key to close modal
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && isModalOpen) {
+                setIsModalOpen(false);
+                setSelectedArtwork(null);
+                document.body.style.overflow = 'auto';
+                navigate({ pathname: '/gallery', search: location.search });
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isModalOpen, location.search, navigate]);
+
+    // Search & filter logic
+    const rawSearchQuery = searchParams.get('search')?.trim() || '';
+    const searchQuery = normalizeText(rawSearchQuery);
+    const searchType = searchParams.get('type') || 'all';
+
+    useEffect(() => {
+        if (searchType === 'category') {
+            const requestedCategory = CATEGORY_MAP[searchQuery];
+            if (requestedCategory) {
+                setActiveFilter(requestedCategory);
+                return;
+            }
+        }
+        setActiveFilter('all');
+    }, [searchQuery, searchType]);
+
+    const popularTags = useMemo(() => {
+        const tagCounts = artworks.reduce((acc, artwork) => {
+            parseArtworkTags(artwork.tags).forEach((tag) => {
+                const normalizedTag = normalizeText(tag);
+                if (!normalizedTag) return;
+                acc[normalizedTag] = {
+                    label: tag,
+                    count: (acc[normalizedTag]?.count || 0) + 1,
+                };
+            });
+            return acc;
+        }, {});
+
+        return Object.values(tagCounts)
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+            .slice(0, 12);
+    }, [artworks]);
+
+    const filteredArtworks = (() => {
+        let result = activeFilter === 'all'
+            ? artworks
+            : artworks.filter(art => (getArtworkCategoryValue(art.medium) || art.medium || 'uncategorized') === activeFilter);
+
+        if (activeTag) {
+            result = result.filter(art =>
+                parseArtworkTags(art.tags).some(tag => normalizeText(tag) === normalizeText(activeTag))
+            );
+        }
+
+        if (searchQuery) {
+            result = result.filter((art) => {
+            const title = normalizeText(art.title);
+            const artist = normalizeText(art.artistName);
+            const medium = normalizeText(`${art.medium} ${getArtworkCategoryLabel(art.medium)}`);
+            const tags = normalizeText(parseArtworkTags(art.tags).join(' '));
+            const description = normalizeText(art.description);
+            switch (searchType) {
+                case 'student': return artist.includes(searchQuery);
+                case 'artwork': return title.includes(searchQuery);
+                case 'category': return medium.includes(searchQuery) || tags.includes(searchQuery);
+                default: return [title, artist, medium, tags, description].some(v => v.includes(searchQuery));
+            }
+            });
+        }
+
+        return [...result].sort((a, b) => {
+            const aDate = new Date(a.createdAt || 0).getTime();
+            const bDate = new Date(b.createdAt || 0).getTime();
+            switch (sortOption) {
+                case 'oldest':
+                    return aDate - bDate;
+                case 'title':
+                    return (a.title || '').localeCompare(b.title || '');
+                case 'popular':
+                    return (b.likes || 0) - (a.likes || 0) || bDate - aDate;
+                case 'recent':
+                default:
+                    return bDate - aDate;
+            }
+        });
+    })();
+
+    const handleCategoryFilter = (filterValue) => {
+        setActiveFilter(filterValue);
+    };
+
+    const handleTagFilter = (tag) => {
+        setActiveTag(tag);
+        setIsModalOpen(false);
+        setSelectedArtwork(null);
+        document.body.style.overflow = 'auto';
+        navigate({ pathname: '/gallery', search: location.search });
+    };
+
+    // Helper for sort label
+    const getSortLabel = () => {
+        switch (sortOption) {
+            case 'recent': return 'Recently Added';
+            case 'oldest': return 'Oldest First';
+            case 'popular': return 'Most Liked';
+            case 'title': return 'Title A-Z';
+            default: return 'Sort';
+        }
+    };
+
+    // --- Comment functions ---
+    const fetchComments = useCallback(async (artworkId) => {
+        setComments([]);
+        setCommentLikeStates({});
+        try {
+            const res = await fetch(`${API_BASE}/api/artworks/${artworkId}/comments`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const likeRes = await fetch(`${API_BASE}/api/comments/likes`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (likeRes.ok) {
+                        const likedIds = await likeRes.json();
+                        const newLikes = {};
+                        likedIds.forEach(id => { newLikes[id] = true; });
+                        setCommentLikeStates(newLikes);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch comments', err);
+        }
+    }, []);
+
+    // URL direct artwork opening
+    useEffect(() => {
+        if (!artworkId || loading) return;
+        setError('');
+        const requestedArtwork = artworks.find((art) => art._id === artworkId);
+        if (requestedArtwork) {
+            setSelectedArtwork(requestedArtwork);
+            setIsModalOpen(true);
+            document.body.style.overflow = 'hidden';
+            fetchComments(requestedArtwork._id);
+            setTimeout(() => modalRef.current?.focus(), 10);
+        } else if (!loading) {
+            setError('The requested artwork could not be found.');
+        }
+    }, [artworkId, artworks, fetchComments, loading]);
+
+    const handleAddComment = async () => {
+        if (!newComment.trim()) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        setSubmittingComment(true);
+        try {
+            const res = await fetch(`${API_BASE}/api/artworks/${selectedArtwork._id}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: newComment })
+            });
+            if (res.ok) {
+                const addedComment = await res.json();
+                setComments(prev => [addedComment, ...prev]);
+                setNewComment('');
+            } else {
+                console.error('Failed to post comment');
+            }
+        } catch (err) {
+            console.error('Error posting comment', err);
+        } finally {
+            setSubmittingComment(false);
+        }
+    };
+
+    const handleLikeComment = async (commentId) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        const isLiked = !!commentLikeStates[commentId];
+
+        // Optimistically update UI for immediate feedback
+        setCommentLikeStates(prev => ({ ...prev, [commentId]: !isLiked }));
+        setComments(prev => prev.map(c => {
+            if (c._id === commentId) {
+                return { ...c, likes: (c.likes || 0) + (!isLiked ? 1 : -1) };
+            }
+            return c;
+        }));
+
+        try {
+            const res = await fetch(`${API_BASE}/api/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error('Server request failed');
+
+            const data = await res.json();
+            setComments(prev => prev.map(c => 
+                c._id === commentId ? { ...c, likes: data.likes } : c
+            ));
+        } catch (err) {
+            // Revert optimistic changes on any error
+            setCommentLikeStates(prev => ({ ...prev, [commentId]: isLiked }));
+            setComments(prev => prev.map(c => {
+                if (c._id === commentId) {
+                    return { ...c, likes: (c.likes || 0) - (!isLiked ? 1 : -1) };
+                }
+                return c;
+            }));
+            console.error('Failed to like comment', err);
+        }
+    };
+
+    const openModal = (artwork) => {
+        setSelectedArtwork(artwork);
+        setIsModalOpen(true);
+        document.body.style.overflow = 'hidden';
+        navigate({ pathname: `/gallery/${artwork._id}`, search: location.search });
+        fetchComments(artwork._id);
+        setTimeout(() => modalRef.current?.focus(), 10);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedArtwork(null);
+        document.body.style.overflow = 'auto';
+        navigate({ pathname: '/gallery', search: location.search });
+    };
+
+    const handleLike = async (artworkId) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const newLiked = !likedStates[artworkId];
+        setLikedStates(prev => ({ ...prev, [artworkId]: newLiked }));
+        setArtworks(prev => prev.map((art) => (
+            art._id === artworkId
+                ? { ...art, likes: Math.max(0, (art.likes || 0) + (newLiked ? 1 : -1)) }
+                : art
+        )));
+        setSelectedArtwork(prev => (
+            prev && prev._id === artworkId
+                ? { ...prev, likes: Math.max(0, (prev.likes || 0) + (newLiked ? 1 : -1)) }
+                : prev
+        ));
+        try {
+            await fetch(`${API_BASE}/api/artworks/${artworkId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ liked: newLiked }),
+            });
+        } catch {
+            setLikedStates(prev => ({ ...prev, [artworkId]: !newLiked }));
+            setArtworks(prev => prev.map((art) => (
+                art._id === artworkId
+                    ? { ...art, likes: Math.max(0, (art.likes || 0) + (newLiked ? -1 : 1)) }
+                    : art
+            )));
+            setSelectedArtwork(prev => (
+                prev && prev._id === artworkId
+                    ? { ...prev, likes: Math.max(0, (prev.likes || 0) + (newLiked ? -1 : 1)) }
+                    : prev
+            ));
+        }
+    };
+
+    const handleSave = async (artworkId) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const newSaved = !savedStates[artworkId];
+        setSavedStates(prev => ({ ...prev, [artworkId]: newSaved }));
+        try {
+            await fetch(`${API_BASE}/api/auth/saved`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ artworkId, saved: newSaved }),
+            });
+        } catch {
+            setSavedStates(prev => ({ ...prev, [artworkId]: !newSaved }));
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Unknown date';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Invalid date';
+            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch {
+            return 'Invalid date';
+        }
+    };
+
+    const handleImageError = (e) => {
+        if (e.target.dataset.fallbackApplied === 'true') return;
+        e.target.dataset.fallbackApplied = 'true';
+        e.target.src = PLACEHOLDER_ARTWORK;
+    };
+
+    const handleVideoMetadataLoaded = (artworkId, duration) => {
+        setVideoDurations(prev => ({ ...prev, [artworkId]: duration }));
+    };
+
+    const goToArtistProfile = (artwork, event) => {
+        event?.stopPropagation();
+        if (!artwork?.uploadedBy) return;
+        const artistId = typeof artwork.uploadedBy === 'object' ? artwork.uploadedBy._id : artwork.uploadedBy;
+        closeModal();
+        navigate(`/profile/${artistId}`);
+    };
+
+    const getCommentAuthorId = (comment) => {
+        const author = comment?.user;
+        if (!author) return '';
+        return typeof author === 'object' ? author._id || author.id || '' : author;
+    };
+
+    const goToCommentAuthorProfile = (comment) => {
+        const authorId = getCommentAuthorId(comment);
+        if (!authorId) return;
+        closeModal();
+        navigate(`/profile/${authorId}`);
+    };
+
+    const getArtistId = (artwork) => {
+        const artist = artwork?.uploadedBy;
+        if (!artist) return '';
+        return typeof artist === 'object' ? artist._id || artist.id || '' : artist;
+    };
+
+    const handleFollowArtist = async (artwork, event) => {
+        event?.stopPropagation();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const artistId = getArtistId(artwork);
+        if (!artistId || String(artistId) === String(currentUserId)) return;
+
+        const wasFollowing = !!followingStates[artistId];
+        setFollowLoading(prev => ({ ...prev, [artistId]: true }));
+        setFollowingStates(prev => ({ ...prev, [artistId]: !wasFollowing }));
+
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/follow/${artistId}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update follow status');
+            }
+
+            const data = await res.json();
+            setFollowingStates(prev => ({ ...prev, [artistId]: data.following }));
+            setFollowMessage(data.following ? `Following ${artwork.artistName}` : `Unfollowed ${artwork.artistName}`);
+        } catch (error) {
+            setFollowingStates(prev => ({ ...prev, [artistId]: wasFollowing }));
+            setFollowMessage(error.message || 'Unable to update follow status.');
+        } finally {
+            setFollowLoading(prev => ({ ...prev, [artistId]: false }));
+        }
+    };
+
+    // --- VIDEO CARD RENDERING (hover play restored) ---
+    const renderCardMedia = (artwork) => {
+        if (!isVideoArtwork(artwork)) {
+            return (
+                <img
+                    src={`${API_BASE}${artwork.image}`}
+                    alt={artwork.title}
+                    className={styles.artImage}
+                    loading="lazy"
+                    onError={handleImageError}
+                />
+            );
+        }
+
+        const posterUrl = artwork.thumbnail ? `${API_BASE}${artwork.thumbnail}` : undefined;
+        const videoUrl = `${API_BASE}${artwork.image}${!artwork.thumbnail ? '#t=0.05' : ''}`;
+
+        return (
+            <div className={styles.videoCardWrapper}>
+                <video
+                    ref={el => videoRefs.current[artwork._id] = el}
+                    src={videoUrl}
+                    poster={posterUrl}
+                    className={styles.artImage}
+                    muted
+                    loop
+                    preload="auto"
+                    playsInline
+                    onLoadedMetadata={(e) => handleVideoMetadataLoaded(artwork._id, e.target.duration)}
+                    onMouseEnter={() => videoRefs.current[artwork._id]?.play()}
+                    onMouseLeave={() => {
+                        const vid = videoRefs.current[artwork._id];
+                        if (vid) {
+                            vid.pause();
+                            vid.currentTime = 0;
+                        }
+                    }}
+                />
+                <div className={styles.videoBadge}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    <span className={styles.videoDuration}>
+                        {formatDuration(videoDurations[artwork._id] || artwork.duration)}
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <>
+            <div className={styles.uiverseMidnightSky}>
+                <div className={styles.skyCanvas}>
+                    <div className={styles.stars1}></div>
+                    <div className={styles.stars2}></div>
+                    <div className={styles.stars3}></div>
+
+                    <div className={`${styles.meteor} ${styles.m1}`}></div>
+                    <div className={`${styles.meteor} ${styles.m2}`}></div>
+                    <div className={`${styles.meteor} ${styles.m3}`}></div>
+
+                    <div className={styles.moon}></div>
+                </div>
+            </div>
+            <Navbar />
+            <div className={styles.pageContainer}>
+                <header className={styles.feedHeader}>
+                    <h1>Discover Art</h1>
+                    <p>Curated works from our top students</p>
+                </header>
+
+                {/* Filter Navigation */}
+                <div className={styles.galleryControls}>
+                    <nav className={styles.filterContainer} aria-label="Artwork categories">
+                        {[{ value: 'all', label: 'All Works' }, ...ARTWORK_CATEGORIES].map(filter => (
+                        <button
+                            key={filter.value}
+                            className={`${styles.filterBtn} ${activeFilter === filter.value ? styles.active : ''}`}
+                            onClick={() => handleCategoryFilter(filter.value)}
+                        >
+                            {filter.label}
+                        </button>
+                        ))}
+                    </nav>
+
+                    <div className={styles.filterTools}>
+                        {/* Custom Sort Dropdown */}
+                        <div className={styles.sortWrapper} ref={sortMenuRef}>
+                            <button
+                                className={styles.sortButton}
+                                onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                                aria-expanded={isSortMenuOpen}
+                                aria-label="Sort options"
+                            >
+                                <span>{getSortLabel()}</span>
+                                <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    style={{ transform: isSortMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                                >
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+
+                            {isSortMenuOpen && (
+                                <ul className={styles.customFilterMenu}>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'recent' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('recent'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Recently Added
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'oldest' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('oldest'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Oldest First
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'popular' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('popular'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Most Liked
+                                    </li>
+                                    <li
+                                        className={`${styles.filterOption} ${sortOption === 'title' ? styles['filterOptionActive'] : ''}`}
+                                        onClick={() => { setSortOption('title'); setIsSortMenuOpen(false); }}
+                                    >
+                                        Title A-Z
+                                    </li>
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+
+                    {popularTags.length > 0 && (
+                        <div className={styles.tagFilterRow} aria-label="Artwork tags">
+                            <button
+                                type="button"
+                                className={`${styles.tagFilterBtn} ${!activeTag ? styles.activeTag : ''}`}
+                                onClick={() => setActiveTag('')}
+                            >
+                                All Tags
+                            </button>
+                            {popularTags.map(tag => (
+                                <button
+                                    type="button"
+                                    key={normalizeText(tag.label)}
+                                    className={`${styles.tagFilterBtn} ${normalizeText(activeTag) === normalizeText(tag.label) ? styles.activeTag : ''}`}
+                                    onClick={() => setActiveTag(tag.label)}
+                                >
+                                    #{tag.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {activeTag && (
+                    <div className={styles.activeTagNotice}>
+                        Showing artworks tagged <strong>#{activeTag}</strong>
+                        <button type="button" onClick={() => setActiveTag('')} className={styles.clearTagBtn}>Clear</button>
+                    </div>
+                )}
+
+                <main className={`${styles.masonryGrid} ${!loading && !error && filteredArtworks.length === 0 ? styles.emptyGallery : ''}`}>
+                    {!loading && !error && filteredArtworks.length === 0 && (
+                        <div className={styles.emptyStateTV}>
+                            <NoArtworksTV />
+                        </div>
+                    )}
+                    {!loading && !error && filteredArtworks.map((art) => (
+                        <div key={art._id} className={styles.artCard} onClick={() => openModal(art)}>
+                            {renderCardMedia(art)}
+                            <div className={styles.cardOverlay}>
+                                <div className={styles.cardInfoBlock}>
+                                    <h3 className={styles.artTitle}>{art.title}</h3>
+                                    <button className={styles.artistLink} onClick={(event) => goToArtistProfile(art, event)} type="button">
+                                        by {art.artistName}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </main>
+
+                {/* Loading and error states */}
+                {loading && (
+                    <div className={styles.fullscreenOverlay}>
+                        <div className={styles.hackerLoader}>
+                            <div className={styles.loaderText}>
+                                <span data-text="Loading Artworks..." className={styles.textGlitch}>Loading Artworks...</span>
+                            </div>
+                            <div className={styles.loaderBar}>
+                                <div className={styles.barFill}></div>
+                                <div className={styles.barGlitch}></div>
+                            </div>
+                            <div className={styles.particles}>
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className={styles.particle}></div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {error && (
+                    <div className={styles.fullscreenOverlay}>
+                        <div className={styles.errorState}>
+                            <div className={styles.errorGlitch}>
+                                <span className={styles.errorText}>⚠️ {error}</span>
+                            </div>
+                            <button onClick={() => window.location.reload()} className={styles.retryBtn}>
+                                ⟳ RETRY
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {followMessage && (
+                    <div className={styles.followNotice}>
+                        {followMessage}
+                    </div>
+                )}
+            </div>
+
+            {/* Modal Popup (unchanged) */}
+            {isModalOpen && selectedArtwork && (
+                <div className={styles.modalOverlay} onClick={closeModal}>
+                    <div
+                        className={styles.modalContainer}
+                        onClick={(e) => e.stopPropagation()}
+                        ref={modalRef}
+                        tabIndex={-1}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={`Artwork: ${selectedArtwork.title}`}
+                    >
+                        <button className={styles.closeBtn} onClick={closeModal} aria-label="Close">×</button>
+                        <div className={styles.modalContent}>
+                            {/* Left Side - Artwork Display */}
+                            <div className={styles.modalArtwork}>
+                                {isVideoArtwork(selectedArtwork) ? (
+                                    <ArtworkVideoPlayer
+                                        src={`${API_BASE}${selectedArtwork.image}${!selectedArtwork.thumbnail ? '#t=0.05' : ''}`}
+                                        poster={selectedArtwork.thumbnail ? `${API_BASE}${selectedArtwork.thumbnail}` : undefined}
+                                        alt={selectedArtwork.title}
+                                        keyboardActive={isModalOpen}
+                                    />
+                                ) : (
+                                    <img
+                                        src={`${API_BASE}${selectedArtwork.image}`}
+                                        alt={selectedArtwork.title}
+                                        className={styles.modalArtImage}
+                                        onError={handleImageError}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Right Side - Artwork Info */}
+                            <div className={styles.modalInfo}>
+                                <div className={styles.modalHeader}>
+                                    <h2 className={styles.modalTitle}>{selectedArtwork.title}</h2>
+                                    <div className={styles.modalHeaderActions}>
+                                        {/* Heart Like Button */}
+                                        <div className={styles.heartContainer} title="Like">
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id={`like-${selectedArtwork._id}`}
+                                                checked={likedStates[selectedArtwork._id] || false}
+                                                onChange={() => handleLike(selectedArtwork._id)}
+                                            />
+                                            <div className={styles.svgContainer}>
+                                                <svg viewBox="0 0 24 24" className={styles.svgOutline}>
+                                                    <path d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Zm-3.585,18.4a2.973,2.973,0,0,1-3.83,0C4.947,16.006,2,11.87,2,8.967a4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,11,8.967a1,1,0,0,0,2,0,4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,22,8.967C22,11.87,19.053,16.006,13.915,20.313Z"/>
+                                                </svg>
+                                                <svg viewBox="0 0 24 24" className={styles.svgFilled}>
+                                                    <path d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Z"/>
+                                                </svg>
+                                                <svg className={styles.svgCelebrate} width="100" height="100">
+                                                    <polygon points="10,10 20,20"></polygon>
+                                                    <polygon points="10,50 20,50"></polygon>
+                                                    <polygon points="20,80 30,70"></polygon>
+                                                    <polygon points="90,10 80,20"></polygon>
+                                                    <polygon points="90,50 80,50"></polygon>
+                                                    <polygon points="80,80 70,70"></polygon>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {/* Save Button */}
+                                        <button
+                                            className={`${styles.saveBtn} ${savedStates[selectedArtwork._id] ? styles.savedActive : ''}`}
+                                            onClick={() => handleSave(selectedArtwork._id)}
+                                            title="Save"
+                                        >
+                                            <svg viewBox="0 -0.5 25 25" height="20px" width="20px">
+                                                <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="1.5" d="M18.507 19.853V6.034C18.5116 5.49905 18.3034 4.98422 17.9283 4.60277C17.5532 4.22131 17.042 4.00449 16.507 4H8.50705C7.9721 4.00449 7.46085 4.22131 7.08577 4.60277C6.7107 4.98422 6.50252 5.49905 6.50705 6.034V19.853C6.45951 20.252 6.65541 20.6407 7.00441 20.8399C7.35342 21.039 7.78773 21.0099 8.10705 20.766L11.907 17.485C12.2496 17.1758 12.7705 17.1758 13.113 17.485L16.9071 20.767C17.2265 21.0111 17.6611 21.0402 18.0102 20.8407C18.3593 20.6413 18.5551 20.2522 18.507 19.853Z" clipRule="evenodd" fillRule="evenodd"/>
+                                            </svg>
+                                            <span className={styles.saveText}>
+                                                {savedStates[selectedArtwork._id] ? 'Saved' : 'Save Post'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={styles.modalDescription}>
+                                    <h4>Description</h4>
+                                    <p>{selectedArtwork.description || "No description available for this artwork."}</p>
+                                </div>
+                                <div className={styles.modalTags}>
+                                    <h4>Medium</h4>
+                                    <span className={styles.tag}>
+                                        {getArtworkCategoryLabel(selectedArtwork.medium)}
+                                    </span>
+                                </div>
+                                <div className={styles.modalTags}>
+                                    <h4>Tags</h4>
+                                    {parseArtworkTags(selectedArtwork.tags).length > 0 ? (
+                                        <div className={styles.modalTagsGrid}>
+                                            {parseArtworkTags(selectedArtwork.tags).map(tag => (
+                                                <button
+                                                    key={normalizeText(tag)}
+                                                    type="button"
+                                                    className={styles.tagButton}
+                                                    onClick={() => handleTagFilter(tag)}
+                                                >
+                                                    #{tag}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className={styles.tag}>No tags</span>
+                                    )}
+                                </div>
+                                <div className={styles.modalStats}>
+                                    <div className={styles.statItem}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        </svg>
+                                        <span>{formatDate(selectedArtwork.createdAt)}</span>
+                                    </div>
+                                    <div className={styles.statItem}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                        </svg>
+                                        <span>{selectedArtwork.likes || 0} likes</span>
+                                    </div>
+                                </div>
+                                <div className={styles.modalArtistRow}>
+                                    <div
+                                        className={styles.modalArtistLink}
+                                        onClick={(event) => goToArtistProfile(selectedArtwork, event)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                goToArtistProfile(selectedArtwork, event);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                    >
+                                        <div className={styles.modalArtist}>
+                                            <img
+                                                src={getAvatarUrl(selectedArtwork.artistAvatar)}
+                                                alt={`${selectedArtwork.artistName}'s avatar`}
+                                                className={styles.artistAvatar}
+                                                onError={(event) => {
+                                                    event.target.src = PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                            <div>
+                                                <p className={styles.artistNameModal}>{selectedArtwork.artistName}</p>
+                                                <p className={styles.artistRole}>Artist</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {getArtistId(selectedArtwork) && String(getArtistId(selectedArtwork)) !== String(currentUserId) && (
+                                        <button
+                                            type="button"
+                                            className={`${styles.followArtistBtn} ${followingStates[getArtistId(selectedArtwork)] ? styles.followingArtistBtn : ''}`}
+                                            onClick={(event) => handleFollowArtist(selectedArtwork, event)}
+                                            disabled={!!followLoading[getArtistId(selectedArtwork)]}
+                                        >
+                                            {followLoading[getArtistId(selectedArtwork)]
+                                                ? 'Updating...'
+                                                : followingStates[getArtistId(selectedArtwork)]
+                                                    ? 'Following'
+                                                    : 'Follow'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* ===== COMMENTS SECTION ===== */}
+                                <div className={styles.commentsSection}>
+                                    <div className={styles.commentsHeader}>
+                                        <h4>Comments</h4>
+                                        <span className={styles.commentCount}>{comments.length}</span>
+                                    </div>
+
+                                    <div className={styles.commentsList}>
+                                        {comments.length === 0 && (
+                                            <div className={styles.noComments}>No comments yet. Be the first to share your thoughts!</div>
+                                        )}
+                                        {comments.map(comment => (
+                                            <div key={comment._id} className={styles.commentItem}>
+                                                <button
+                                                    type="button"
+                                                    className={styles.commentAvatar}
+                                                    onClick={() => goToCommentAuthorProfile(comment)}
+                                                    aria-label={`View ${(comment.user?.name || comment.user?.username || 'comment author')}'s profile`}
+                                                    disabled={!getCommentAuthorId(comment)}
+                                                >
+                                                    <img
+                                                        src={getAvatarUrl(comment.user?.avatar)}
+                                                        alt=""
+                                                        onError={(event) => {
+                                                            event.target.src = PROFILE_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </button>
+                                                <div className={styles.commentContent}>
+                                                    <div className={styles.commentMeta}>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.commentAuthorLink}
+                                                            onClick={() => goToCommentAuthorProfile(comment)}
+                                                            disabled={!getCommentAuthorId(comment)}
+                                                        >
+                                                            {comment.user?.name || comment.user?.username || 'Anonymous'}
+                                                        </button>
+                                                        <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className={styles.commentText}>{comment.content}</p>
+                                                    <div className={styles.commentActions}>
+                                                        <button 
+                                                            className={`${styles.commentLikeBtn} ${commentLikeStates[comment._id] ? styles.liked : ''}`}
+                                                            onClick={() => handleLikeComment(comment._id)}
+                                                        >
+                                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                                            </svg>
+                                                            <span>{comment.likes || 0}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className={styles.addCommentBox}>
+                                        <textarea
+                                            placeholder="Share your thoughts..."
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            rows={2}
+                                            className={styles.commentTextarea}
+                                        />
+                                        <div className={styles.commentActionsBar}>
+                                            <button 
+                                                className={styles.submitCommentBtn}
+                                                onClick={handleAddComment}
+                                                disabled={submittingComment || !newComment.trim()}
+                                            >
+                                                {submittingComment ? 'Posting...' : 'Post Comment'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default Gallery;
